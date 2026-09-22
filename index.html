@@ -18,7 +18,8 @@
     #difficulty { margin-left:auto; font-size:12px; font-weight:900; letter-spacing:.08em; opacity:.82; }
     #coinsPill { padding:0 15px; gap:7px; font-weight:900; }
     #pause { width:56px; justify-content:center; pointer-events:auto; color:white; font-size:22px; }
-    #message { position:fixed; z-index:4; top:105px; left:50%; transform:translate(-50%,-12px); max-width:calc(100% - 38px); padding:11px 17px; border-radius:999px; color:white; font-size:13px; font-weight:900; letter-spacing:.02em; background:rgba(5,13,30,.62); border:1px solid rgba(255,255,255,.17); backdrop-filter:blur(12px); opacity:0; transition:.22s ease; pointer-events:none; text-align:center; white-space:nowrap; }
+    #revivesPill { position:fixed; z-index:3; top:calc(max(18px,env(safe-area-inset-top)) + 64px); left:50%; transform:translateX(-50%); height:30px; padding:0 13px; border-radius:999px; background:rgba(5,13,30,.38); border:1px solid rgba(255,255,255,.13); color:#fff; display:flex; align-items:center; font-size:13px; letter-spacing:.14em; pointer-events:none; transition:.25s ease; }
+    #message { position:fixed; z-index:4; top:calc(max(18px,env(safe-area-inset-top)) + 103px); left:50%; transform:translate(-50%,-12px); max-width:calc(100% - 38px); padding:11px 17px; border-radius:999px; color:white; font-size:13px; font-weight:900; letter-spacing:.02em; background:rgba(5,13,30,.62); border:1px solid rgba(255,255,255,.17); backdrop-filter:blur(12px); opacity:0; transition:.22s ease; pointer-events:none; text-align:center; white-space:nowrap; }
     #message.show { opacity:1; transform:translate(-50%,0); }
     .overlay { position:fixed; z-index:10; inset:0; display:grid; place-items:center; padding:28px 22px max(28px,env(safe-area-inset-bottom)); background:linear-gradient(160deg,rgba(2,17,49,.48),rgba(4,8,24,.78)); backdrop-filter:blur(14px); transition:.25s ease; }
     .overlay.hidden { opacity:0; visibility:hidden; pointer-events:none; }
@@ -38,7 +39,7 @@
     .stat strong { display:block; font-size:29px; }
     .stat span { display:block; margin-top:4px; font-size:11px; font-weight:800; letter-spacing:.1em; opacity:.62; }
     #rank { margin-top:18px; font-weight:800; color:#fff; }
-    #adCountdown { margin:20px auto 8px; width:96px; height:96px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.11); border:2px solid rgba(255,255,255,.3); font-size:42px; font-weight:950; }
+    #adCountdown, #reviveCountdown { margin:20px auto 8px; width:96px; height:96px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.11); border:2px solid rgba(255,255,255,.3); font-size:42px; font-weight:950; }
     #shopPanel { position:fixed; z-index:20; inset:0; padding:max(22px,env(safe-area-inset-top)) 18px max(22px,env(safe-area-inset-bottom)); background:#07142d; color:#fff; overflow:auto; transition:.28s ease; touch-action:pan-y; }
     #shopPanel.hidden { transform:translateY(105%); visibility:hidden; }
     .shopHead { max-width:560px; margin:0 auto 18px; display:flex; align-items:center; justify-content:space-between; }
@@ -62,6 +63,7 @@
     <div class="pill" id="coinsPill">● <span id="coinCount">0</span></div>
     <button class="pill" id="pause" aria-label="Pausar">Ⅱ</button>
   </div>
+  <div id="revivesPill">♥ ♥ ♥</div>
   <div id="message"></div>
 
   <section class="overlay" id="start">
@@ -82,7 +84,7 @@
   <section class="overlay hidden" id="gameOver">
     <div class="card">
       <div class="brand">GAME OVER</div>
-      <h2>Foi quase.</h2>
+      <h2 id="gameOverTitle">Foi quase.</h2>
       <div class="result">
         <div class="stat"><strong id="finalScore">0</strong><span>PONTOS</span></div>
         <div class="stat"><strong id="bestScore">0</strong><span>RECORDE</span></div>
@@ -116,6 +118,18 @@
     </div>
   </section>
 
+  <section class="overlay hidden" id="reviveScreen">
+    <div class="card">
+      <div class="brand" id="reviveBrand">AINDA NÃO ACABOU</div>
+      <h2 id="reviveTitle" style="font-size:42px;margin:0">Continuar?</h2>
+      <div id="reviveCountdown">7</div>
+      <p class="tag" id="reviveStatus" style="font-size:15px;margin-top:12px">Você tem sete segundos para decidir.</p>
+      <button class="primary" id="watchReviveAd" style="margin-top:20px">▶ ASSISTIR E CONTINUAR</button>
+      <button class="secondary" id="giveUp" style="width:100%;margin-top:10px">ENCERRAR PARTIDA</button>
+      <p class="micro" id="reviveHearts">RESGATES: ♥ ♥ ♥</p>
+    </div>
+  </section>
+
   <section id="shopPanel" class="hidden">
     <div class="shopHead"><h2>ZANON STORE</h2><button id="closeShop">×</button></div>
     <div id="shopBalance">● 0 moedas</div>
@@ -139,7 +153,8 @@
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
   let score=0, best=storage.get('best',0), coins=storage.get('coins',0);
   let targetX=0, pointerX=0, dragging=false, shake=0, flash=0;
-  let nextCoin=6, nextBox=15, elapsed=0, controlsSign=1, adTimer=0;
+  let nextCoin=6, nextBox=15, elapsed=0, controlsSign=1, adTimer=0, reviveTimer=0;
+  let revivesLeft=3;
   let modifiers=[], objects=[], particles=[];
 
   const skins = [
@@ -168,8 +183,10 @@
     {score:60,top:'#ff8a28',bottom:'#8a3200',name:'Laranja Solar'},
     {score:70,top:'#ffe45b',bottom:'#8d7000',name:'Amarelo Dourado'},
     {score:80,top:'#4dde78',bottom:'#08713a',name:'Verde Esmeralda'},
-    {score:90,top:'#27d8d1',bottom:'#006b74',name:'Turquesa'},
-    {score:95,top:'#74dfff',bottom:'#07518c',name:'Azul Glacial'},
+    {score:85,top:'#92933b',bottom:'#3f4214',name:'Verde Oliva'},
+    {score:90,top:'#8a5b3d',bottom:'#342016',name:'Marrom Terra'},
+    {score:93,top:'#666c75',bottom:'#252a30',name:'Cinza Chumbo'},
+    {score:95,top:'#343941',bottom:'#111418',name:'Grafite'},
     {score:96,top:'#000000',bottom:'#000000',name:'Modo Blackout'},
     {score:100,top:'#000000',bottom:'#000000',name:'Preto Absoluto'}
   ];
@@ -215,7 +232,9 @@
   function haptic(ms=15){ if(navigator.vibrate) navigator.vibrate(ms); }
 
   function reset(startScore=0){
+    clearInterval(reviveTimer);
     score=startScore; elapsed=0; nextCoin=rand(5,8); nextBox=15;
+    revivesLeft=3;
     objects=[];particles=[];modifiers=[];controlsSign=1;shake=0;flash=0;
     paddle.baseW=clamp(W*.31,112,158); paddle.w=paddle.baseW*currentPaddleFactor(); paddle.h=clamp(H*.025,19,25); paddle.vx=0;
     paddle.x=W/2-paddle.w/2; paddle.y=H-Math.max(86,H*.09);
@@ -226,15 +245,17 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer); reset(startScore); mode='playing'; hideAll(); last=performance.now(); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
+    clearInterval(adTimer); clearInterval(reviveTimer); reset(startScore); mode='playing'; hideAll(); last=performance.now(); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
   }
-  function hideAll(){ ['#start','#gameOver','#paused','#adScreen'].forEach(s=>$(s).classList.add('hidden')); }
+  function hideAll(){ ['#start','#gameOver','#paused','#adScreen','#reviveScreen'].forEach(s=>$(s).classList.add('hidden')); }
   function show(sel){ hideAll(); $(sel).classList.remove('hidden'); }
 
   function updateHUD(){
     $('#score').textContent='SCORE '+String(score).padStart(4,'0');
     $('#difficulty').textContent='+'+score+'%';
     $('#coinCount').textContent=coins;
+    $('#revivesPill').textContent='♥ '.repeat(revivesLeft)+'♡ '.repeat(3-revivesLeft);
+    $('#revivesPill').style.opacity=score>=96?'0':'1';
   }
 
   function addScore(n=1){
@@ -242,6 +263,7 @@
     score+=n;
     if(score>=50 && !owned.includes('matte')){ owned.push('matte'); storage.set('owned',owned); toast('SKIN PRETA FOSCA DESBLOQUEADA'); }
     updateHUD(); flash=.12;
+    if(before<96&&score>=96){toast('BLACKOUT · SEM SEGUNDA CHANCE');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
     if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(navigator.vibrate)navigator.vibrate([80,50,140]);}
   }
 
@@ -329,8 +351,9 @@
         addScore(1); burst(ball.x,paddle.y,'#ffffff',9); tone(490+Math.min(score,50)*7,.055,'sine',.045); haptic(11);
       }
     }
-    ball.trail.push({x:ball.x,y:ball.y,life:1}); if(ball.trail.length>12)ball.trail.shift();
-    ball.trail.forEach(t=>t.life-=dt*4);
+    const trailLimit=score>=96?28:12;
+    ball.trail.push({x:ball.x,y:ball.y,life:1}); if(ball.trail.length>trailLimit)ball.trail.shift();
+    ball.trail.forEach(t=>t.life-=dt*(score>=96?1.8:4));
 
     for(let i=objects.length-1;i>=0;i--){
       const o=objects[i]; o.y+=o.vy*dt; o.spin+=dt*2;
@@ -345,11 +368,68 @@
   }
 
   function endGame(){
-    mode='over'; cancelAnimationFrame(raf); shake=8; haptic(120); tone(105,.28,'sawtooth',.06);
+    cancelAnimationFrame(raf); shake=8; haptic(120); tone(105,.28,'sawtooth',.06);
+    if(score>=96){finishGame('Morreu, acabou.');return;}
+    if(revivesLeft<=0){finishGame('Sem resgates.');return;}
+    offerRevive();
+  }
+
+  function finishGame(title='Foi quase.'){
+    mode='over'; clearInterval(reviveTimer); clearInterval(adTimer);
     if(score>best){best=score;storage.set('best',best);}
     $('#finalScore').textContent=score; $('#bestScore').textContent=best;
+    $('#gameOverTitle').textContent=title;
     $('#rank').textContent='Você chegou ao '+visualState().name;
     setTimeout(()=>show('#gameOver'),220);
+  }
+
+  function offerRevive(){
+    mode='revive'; clearInterval(reviveTimer); clearInterval(adTimer);
+    let remaining=7;
+    $('#reviveBrand').textContent='AINDA NÃO ACABOU';
+    $('#reviveTitle').textContent='Continuar?';
+    $('#reviveCountdown').textContent=remaining;
+    $('#reviveStatus').textContent='Você tem sete segundos para decidir.';
+    $('#reviveHearts').textContent='RESGATES: '+'♥ '.repeat(revivesLeft)+'♡ '.repeat(3-revivesLeft);
+    $('#watchReviveAd').style.display='block'; $('#watchReviveAd').disabled=false;
+    $('#giveUp').style.display='block';
+    show('#reviveScreen');
+    reviveTimer=setInterval(()=>{
+      remaining--;
+      $('#reviveCountdown').textContent=remaining;
+      if(remaining<=0){clearInterval(reviveTimer);finishGame('Tempo esgotado.');}
+    },1000);
+  }
+
+  function requestReviveAd(){
+    if(mode!=='revive')return;
+    clearInterval(reviveTimer); clearInterval(adTimer);
+    $('#watchReviveAd').disabled=true; $('#giveUp').style.display='none';
+    $('#reviveBrand').textContent='ANÚNCIO RECOMPENSADO';
+    $('#reviveTitle').textContent='Preparando resgate';
+    $('#reviveStatus').textContent='Simulação do anúncio para este protótipo.';
+    let remaining=3; $('#reviveCountdown').textContent=remaining;
+    adTimer=setInterval(()=>{
+      remaining--;
+      $('#reviveCountdown').textContent=remaining>0?remaining:'✓';
+      if(remaining<=0){clearInterval(adTimer);revivesLeft--;prepareRevive();}
+    },1000);
+  }
+
+  function prepareRevive(){
+    modifiers=[];controlsSign=1;objects=[];
+    nextCoin=elapsed+rand(6,10);nextBox=elapsed+15;
+    paddle.w=paddle.baseW*currentPaddleFactor();paddle.x=W/2-paddle.w/2;paddle.vx=0;targetX=paddle.x;
+    const speed=clamp(H*.49,390,525)*currentSpeedFactor();
+    ball.x=W/2;ball.y=H*.36;ball.vx=speed*(Math.random()<.5?-.36:.36);ball.vy=-Math.sqrt(Math.max(1,speed*speed-ball.vx*ball.vx));ball.trail=[];
+    modifiers.push({type:'slow',end:elapsed+1.2});updateHUD();render();
+    mode='countdown';$('#reviveBrand').textContent='RESGATE ATIVADO';$('#reviveTitle').textContent='Prepare-se';
+    $('#reviveStatus').textContent='A partida continuará na mesma dificuldade.';$('#watchReviveAd').style.display='none';
+    let remaining=3;$('#reviveCountdown').textContent=remaining;
+    reviveTimer=setInterval(()=>{
+      remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
+      if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();last=performance.now();raf=requestAnimationFrame(loop);}
+    },1000);
   }
 
   function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
@@ -363,10 +443,19 @@
   }
   function drawBall(){
     const skin=activeSkin(),blackout=visualState().blackout;
-    ball.trail.forEach((t,i)=>{ctx.globalAlpha=Math.max(0,t.life)*(blackout ? .3 : .08);ctx.fillStyle=blackout?'#ffffff':skin.color;ctx.beginPath();ctx.arc(t.x,t.y,ball.r*(i/ball.trail.length),0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
+    if(blackout){
+      ctx.save();ctx.lineCap='round';ctx.shadowColor='#ffffff';ctx.shadowBlur=16;
+      for(let i=1;i<ball.trail.length;i++){
+        const from=ball.trail[i-1],to=ball.trail[i],strength=i/(ball.trail.length-1);
+        ctx.globalAlpha=clamp(to.life,0,1)*(.16+strength*.84);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.5+strength*5.5;
+        ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();
+      }
+      ctx.restore();ctx.globalAlpha=1;return;
+    }
+    ball.trail.forEach((t,i)=>{ctx.globalAlpha=Math.max(0,t.life)*.08;ctx.fillStyle=skin.color;ctx.beginPath();ctx.arc(t.x,t.y,ball.r*(i/ball.trail.length),0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
     if(['fire','ice','angry'].includes(skin.id)){ctx.font=`${ball.r*2}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(skin.icon,ball.x,ball.y+1);}
     else{
-      const g=ctx.createRadialGradient(ball.x-ball.r*.35,ball.y-ball.r*.45,2,ball.x,ball.y,ball.r*1.1);g.addColorStop(0,skin.id==='matte'?'#323237':'#6b7280');g.addColorStop(.35,skin.color);g.addColorStop(1,'#000');ctx.fillStyle=g;ctx.shadowColor=blackout?'rgba(255,255,255,.72)':'rgba(0,0,0,.35)';ctx.shadowBlur=blackout?22:15;ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();if(blackout){ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2;ctx.stroke();}ctx.shadowBlur=0;
+      const g=ctx.createRadialGradient(ball.x-ball.r*.35,ball.y-ball.r*.45,2,ball.x,ball.y,ball.r*1.1);g.addColorStop(0,skin.id==='matte'?'#323237':'#6b7280');g.addColorStop(.35,skin.color);g.addColorStop(1,'#000');ctx.fillStyle=g;ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
       if(skin.id==='eight'){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r*.45,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.font=`bold ${ball.r*.62}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('8',ball.x,ball.y);}
     }
   }
@@ -419,10 +508,12 @@
   $('#play').onclick=()=>startGame(0); $('#again').onclick=()=>startGame(0);
   $('#boostedStart').onclick=requestRewardedStart;
   $('#cancelAd').onclick=()=>{clearInterval(adTimer);mode='menu';show('#start');render();};
-  $('#home').onclick=()=>{mode='menu';show('#start');render();};
+  $('#watchReviveAd').onclick=requestReviveAd;
+  $('#giveUp').onclick=()=>finishGame('Partida encerrada.');
+  $('#home').onclick=()=>{reset(0);mode='menu';show('#start');render();};
   $('#pause').onclick=()=>{if(mode==='playing'){mode='paused';cancelAnimationFrame(raf);show('#paused');}};
   $('#resume').onclick=()=>{mode='playing';hideAll();last=performance.now();raf=requestAnimationFrame(loop);};
-  $('#quit').onclick=()=>{mode='menu';show('#start');render();};
+  $('#quit').onclick=()=>{reset(0);mode='menu';show('#start');render();};
   $('#sound').onclick=()=>{soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');};
   $('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');
 
