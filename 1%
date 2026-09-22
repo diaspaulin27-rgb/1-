@@ -1,0 +1,1641 @@
+Claro. Copie tudo abaixo e cole no seu index.html:
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0769f7">
+  <title>1% — ZANON Prototype</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #061126;
+      touch-action: none;
+    }
+    button {
+      font: inherit;
+      border: 0;
+      cursor: pointer;
+    }
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #hud {
+      position: fixed;
+      z-index: 3;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: max(18px, env(safe-area-inset-top)) 18px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .pill {
+      height: 56px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      color: white;
+    }
+    #scorePill {
+      flex: 1;
+      min-width: 0;
+      padding: 0 19px;
+      gap: 10px;
+    }
+    #score {
+      font-size: clamp(23px, 7vw, 32px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    #difficulty {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      opacity: 0.82;
+    }
+    #coinsPill {
+      padding: 0 15px;
+      gap: 7px;
+      font-weight: 900;
+    }
+    #pause {
+      width: 56px;
+      justify-content: center;
+      pointer-events: auto;
+      color: white;
+      font-size: 22px;
+    }
+    #message {
+      position: fixed;
+      z-index: 4;
+      top: 105px;
+      left: 50%;
+      transform: translate(-50%, -12px);
+      max-width: calc(100% - 38px);
+      padding: 11px 17px;
+      border-radius: 999px;
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      background: rgba(5, 13, 30, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transition: 0.22s ease;
+      pointer-events: none;
+      text-align: center;
+      white-space: nowrap;
+    }
+    #message.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .overlay {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px 22px max(28px, env(safe-area-inset-bottom));
+      background: linear-gradient(
+        160deg,
+        rgba(2, 17, 49, 0.48),
+        rgba(4, 8, 24, 0.78)
+      );
+      backdrop-filter: blur(14px);
+      transition: 0.25s ease;
+    }
+    .overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .card {
+      width: min(440px, 100%);
+      text-align: center;
+      color: white;
+    }
+    .brand {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.36em;
+      opacity: 0.68;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(70px, 25vw, 116px);
+      font-weight: 950;
+      letter-spacing: -0.09em;
+      line-height: 0.82;
+      text-shadow: 0 16px 45px rgba(0, 0, 0, 0.2);
+    }
+    .tag {
+      margin: 22px auto 0;
+      max-width: 340px;
+      font-size: 18px;
+      line-height: 1.4;
+      font-weight: 650;
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .primary {
+      width: 100%;
+      height: 62px;
+      margin-top: 32px;
+      border-radius: 22px;
+      color: #0865ec;
+      background: #fff;
+      font-weight: 950;
+      font-size: 18px;
+      box-shadow: 0 16px 45px rgba(1, 17, 53, 0.26);
+    }
+    .secondaryRow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .secondary {
+      height: 52px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-weight: 800;
+    }
+    .micro {
+      margin-top: 18px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.54);
+      line-height: 1.5;
+    }
+    #gameOver h2 {
+      margin: 0;
+      font-size: 44px;
+      letter-spacing: -0.045em;
+    }
+    .result {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat {
+      padding: 18px 8px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .stat strong {
+      display: block;
+      font-size: 29px;
+    }
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      opacity: 0.62;
+    }
+    #rank {
+      margin-top: 18px;
+      font-weight: 800;
+      color: #fff;
+    }
+    #shopPanel {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      padding:
+        max(22px, env(safe-area-inset-top))
+        18px
+        max(22px, env(safe-area-inset-bottom));
+      background: #07142d;
+      color: #fff;
+      overflow: auto;
+      transition: 0.28s ease;
+      touch-action: pan-y;
+    }
+    #shopPanel.hidden {
+      transform: translateY(105%);
+      visibility: hidden;
+    }
+    .shopHead {
+      max-width: 560px;
+      margin: 0 auto 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .shopHead h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+    #closeShop {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 21px;
+    }
+    #shopBalance {
+      max-width: 560px;
+      margin: 0 auto 18px;
+      opacity: 0.72;
+      font-weight: 800;
+    }
+    .shopGrid {
+      max-width: 560px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .item {
+      min-height: 142px;
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 2px solid transparent;
+      color: #fff;
+      text-align: left;
+    }
+    .item.selected {
+      border-color: #3f8cff;
+      background: rgba(50, 126, 255, 0.16);
+    }
+    .preview {
+      height: 48px;
+      display: grid;
+      place-items: center;
+      font-size: 38px;
+    }
+    .item strong,
+    .item small {
+      display: block;
+    }
+    .item small {
+      margin-top: 5px;
+      opacity: 0.6;
+    }
+    @media (min-width: 700px) {
+      #hud {
+        width: 520px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Jogo 1%"></canvas>
+  <div id="hud">
+    <div class="pill" id="scorePill">
+      <span id="score">SCORE 0000</span>
+      <span id="difficulty">+0%</span>
+    </div>
+    <div class="pill" id="coinsPill">
+      ● <span id="coinCount">0</span>
+    </div>
+    <button class="pill" id="pause" aria-label="Pausar">Ⅱ</button>
+  </div>
+  <div id="message"></div>
+  <section class="overlay" id="start">
+    <div class="card">
+      <div class="brand">ZANON PRESENTS</div>
+      <h1>1%</h1>
+      <p class="tag">
+        Cada rebatida deixa tudo 1% mais difícil. Quanto você aguenta?
+      </p>
+      <button class="primary" id="play">JOGAR</button>
+      <div class="secondaryRow">
+        <button class="secondary openShop">LOJA</button>
+        <button class="secondary" id="sound">SOM: ON</button>
+      </div>
+      <p class="micro">
+        Arraste o dedo em qualquer lugar da tela para mover a barra.
+      </p>
+    </div>
+  </section>
+  <section class="overlay hidden" id="gameOver">
+    <div class="card">
+      <div class="brand">GAME OVER</div>
+      <h2>Foi quase.</h2>
+      <div class="result">
+        <div class="stat">
+          <strong id="finalScore">0</strong>
+          <span>PONTOS</span>
+        </div>
+        <div class="stat">
+          <strong id="bestScore">0</strong>
+          <span>RECORDE</span>
+        </div>
+      </div>
+      <div id="rank">Você chegou ao Azul Bebê</div>
+      <button class="primary" id="again">TENTAR DE NOVO</button>
+      <div class="secondaryRow">
+        <button class="secondary openShop">LOJA</button>
+        <button class="secondary" id="home">INÍCIO</button>
+      </div>
+    </div>
+  </section>
+  <section class="overlay hidden" id="paused">
+    <div class="card">
+      <div class="brand">PAUSADO</div>
+      <h2 style="font-size: 46px; margin: 0">Respire.</h2>
+      <button class="primary" id="resume">CONTINUAR</button>
+      <button
+        class="secondary"
+        id="quit"
+        style="width: 100%; margin-top: 10px"
+      >
+        SAIR
+      </button>
+    </div>
+  </section>
+  <section id="shopPanel" class="hidden">
+    <div class="shopHead">
+      <h2>ZANON STORE</h2>
+      <button id="closeShop">×</button>
+    </div>
+    <div id="shopBalance">● 0 moedas</div>
+    <div class="shopGrid" id="shopGrid"></div>
+  </section>
+  <script>
+    (() => {
+      "use strict";
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const $ = (selector) => document.querySelector(selector);
+      const clamp = (value, minimum, maximum) =>
+        Math.max(minimum, Math.min(maximum, value));
+      const rand = (minimum, maximum) =>
+        minimum + Math.random() * (maximum - minimum);
+      const storage = {
+        get(key, fallback) {
+          try {
+            const value = localStorage.getItem("zanon1_" + key);
+            return value === null
+              ? fallback
+              : JSON.parse(value);
+          } catch {
+            return fallback;
+          }
+        },
+        set(key, value) {
+          try {
+            localStorage.setItem(
+              "zanon1_" + key,
+              JSON.stringify(value)
+            );
+          } catch {}
+        }
+      };
+      let W = 0;
+      let H = 0;
+      let dpr = 1;
+      let last = 0;
+      let raf = 0;
+      let mode = "menu";
+      let soundOn = storage.get("sound", true);
+      let score = 0;
+      let best = storage.get("best", 0);
+      let coins = storage.get("coins", 0);
+      let targetX = 0;
+      let pointerX = 0;
+      let dragging = false;
+      let shake = 0;
+      let flash = 0;
+      let nextCoin = 6;
+      let nextBox = 15;
+      let elapsed = 0;
+      let controlsSign = 1;
+      let modifiers = [];
+      let objects = [];
+      let particles = [];
+      const skins = [
+        {
+          id: "classic",
+          name: "Clássica",
+          icon: "●",
+          price: 0,
+          color: "#111827"
+        },
+        {
+          id: "fire",
+          name: "Fogo",
+          icon: "🔥",
+          price: 30,
+          color: "#ff5c35"
+        },
+        {
+          id: "ice",
+          name: "Gelo",
+          icon: "❄️",
+          price: 45,
+          color: "#b9efff"
+        },
+        {
+          id: "eight",
+          name: "Bola 8",
+          icon: "➑",
+          price: 60,
+          color: "#111"
+        },
+        {
+          id: "angry",
+          name: "Bravo",
+          icon: "😡",
+          price: 80,
+          color: "#ef4444"
+        },
+        {
+          id: "matte",
+          name: "Preta Fosca",
+          icon: "●",
+          price: 0,
+          color: "#020205",
+          locked: true
+        }
+      ];
+      let owned = storage.get("owned", ["classic"]);
+      let selected = storage.get("skin", "classic");
+      const activeSkin = () =>
+        skins.find((skin) => skin.id === selected) || skins[0];
+      const paddle = {
+        x: 0,
+        y: 0,
+        w: 145,
+        h: 24,
+        baseW: 145
+      };
+      const ball = {
+        x: 0,
+        y: 0,
+        r: 15,
+        vx: 0,
+        vy: 0,
+        trail: []
+      };
+      const palettes = [
+        ["#42b5ff", "#0868f7"],
+        ["#1478ff", "#0636a9"],
+        ["#082b78", "#1b164e"],
+        ["#241356", "#7645ad"],
+        ["#4c145f", "#160b2b"],
+        ["#5e102c", "#160810"],
+        ["#26030a", "#020205"]
+      ];
+      const rankNames = [
+        "Azul Bebê",
+        "Azul Royal",
+        "Azul Marinho",
+        "Lilás",
+        "Roxo Meia-Noite",
+        "Vermelho Sangue",
+        "Modo Inferno"
+      ];
+      const paletteIndex = () =>
+        score < 5
+          ? 0
+          : score < 11
+          ? 1
+          : score < 16
+          ? 2
+          : score < 21
+          ? 3
+          : score < 31
+          ? 4
+          : score < 41
+          ? 5
+          : 6;
+      function resize() {
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        W = innerWidth;
+        H = innerHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        paddle.y = H - Math.max(88, 62);
+        paddle.x = clamp(
+          paddle.x || W / 2 - paddle.w / 2,
+          8,
+          W - paddle.w - 8
+        );
+        if (mode === "menu") {
+          ball.x = W / 2;
+          ball.y = H * 0.38;
+        }
+      }
+      let audioCtx = null;
+      function tone(
+        frequency = 440,
+        duration = 0.05,
+        type = "sine",
+        volume = 0.035
+      ) {
+        if (!soundOn) return;
+        try {
+          audioCtx ||=
+            new (window.AudioContext ||
+              window.webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          oscillator.type = type;
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(
+            volume,
+            audioCtx.currentTime
+          );
+          gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audioCtx.currentTime + duration
+          );
+          oscillator
+            .connect(gain)
+            .connect(audioCtx.destination);
+          oscillator.start();
+          oscillator.stop(audioCtx.currentTime + duration);
+        } catch {}
+      }
+      function haptic(duration = 15) {
+        if (navigator.vibrate) {
+          navigator.vibrate(duration);
+        }
+      }
+      function reset() {
+        score = 0;
+        elapsed = 0;
+        nextCoin = rand(5, 8);
+        nextBox = 15;
+        objects = [];
+        particles = [];
+        modifiers = [];
+        controlsSign = 1;
+        shake = 0;
+        flash = 0;
+        paddle.baseW = clamp(W * 0.31, 112, 158);
+        paddle.w = paddle.baseW;
+        paddle.h = clamp(H * 0.025, 19, 25);
+        paddle.x = W / 2 - paddle.w / 2;
+        paddle.y = H - Math.max(86, H * 0.09);
+        targetX = paddle.x;
+        pointerX = W / 2;
+        ball.r = clamp(W * 0.035, 12, 17);
+        ball.x = W / 2;
+        ball.y = H * 0.42;
+        const speed = clamp(H * 0.48, 380, 520);
+        ball.vx =
+          speed * (Math.random() < 0.5 ? -0.42 : 0.42);
+        ball.vy = speed * 0.9;
+        ball.trail = [];
+        updateHUD();
+      }
+      function startGame() {
+        reset();
+        mode = "playing";
+        hideAll();
+        last = performance.now();
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(loop);
+      }
+      function hideAll() {
+        ["#start", "#gameOver", "#paused"].forEach(
+          (selector) => {
+            $(selector).classList.add("hidden");
+          }
+        );
+      }
+      function show(selector) {
+        hideAll();
+        $(selector).classList.remove("hidden");
+      }
+      function updateHUD() {
+        $("#score").textContent =
+          "SCORE " + String(score).padStart(4, "0");
+        $("#difficulty").textContent = "+" + score + "%";
+        $("#coinCount").textContent = coins;
+      }
+      function addScore(amount = 1) {
+        score += amount;
+        if (
+          score >= 50 &&
+          !owned.includes("matte")
+        ) {
+          owned.push("matte");
+          storage.set("owned", owned);
+          toast("SKIN PRETA FOSCA DESBLOQUEADA");
+        }
+        updateHUD();
+        flash = 0.12;
+      }
+      function currentSpeedFactor() {
+        let factor = Math.pow(1.01, score);
+        for (const modifier of modifiers) {
+          if (modifier.type === "slow") {
+            factor *= 0.8;
+          } else if (modifier.type === "fast") {
+            factor *= 1.2;
+          }
+        }
+        return clamp(factor, 0.7, 2.25);
+      }
+      function currentPaddleFactor() {
+        let factor = Math.pow(0.995, score);
+        for (const modifier of modifiers) {
+          if (modifier.type === "wide") {
+            factor *= 1.3;
+          } else if (modifier.type === "small") {
+            factor *= 0.8;
+          }
+        }
+        return clamp(factor, 0.48, 1.5);
+      }
+      function spawn(type) {
+        const size = type === "box" ? 50 : 39;
+        objects.push({
+          type,
+          x: rand(18, W - size - 18),
+          y: -size,
+          size,
+          vy: clamp(H * 0.13, 105, 145),
+          spin: 0
+        });
+      }
+      function burst(
+        x,
+        y,
+        color,
+        count = 12
+      ) {
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x,
+            y,
+            vx: rand(-130, 130),
+            vy: rand(-160, 50),
+            life: rand(0.3, 0.7),
+            color,
+            r: rand(2, 5)
+          });
+        }
+      }
+      let toastTimer = 0;
+      function toast(text) {
+        const element = $("#message");
+        element.textContent = text;
+        element.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          element.classList.remove("show");
+        }, 1500);
+      }
+      function modifier(
+        type,
+        duration,
+        label
+      ) {
+        modifiers.push({
+          type,
+          end: elapsed + duration
+        });
+        toast(label);
+      }
+      function openBox() {
+        const good = Math.random() < 0.6;
+        const options = good
+          ? [
+              () =>
+                modifier(
+                  "slow",
+                  3,
+                  "ALÍVIO: BOLA 20% MAIS LENTA"
+                ),
+              () =>
+                modifier(
+                  "wide",
+                  5,
+                  "ALÍVIO: BARRA 30% MAIOR"
+                ),
+              () => {
+                addScore(5);
+                toast("BÔNUS: +5 PONTOS");
+              }
+            ]
+          : [
+              () =>
+                modifier(
+                  "fast",
+                  4,
+                  "TROLL: BOLA 20% MAIS RÁPIDA"
+                ),
+              () => {
+                ball.x = rand(
+                  ball.r + 8,
+                  W - ball.r - 8
+                );
+                ball.y = clamp(
+                  ball.y,
+                  H * 0.18,
+                  H * 0.52
+                );
+                ball.vy = Math.abs(ball.vy);
+                toast("TROLL: TELETRANSPORTE");
+              },
+              () => {
+                controlsSign = -1;
+                modifier(
+                  "invert",
+                  3,
+                  "TROLL: CONTROLES INVERTIDOS"
+                );
+              },
+              () =>
+                modifier(
+                  "small",
+                  5,
+                  "TROLL: BARRA 20% MENOR"
+                )
+            ];
+        options[
+          Math.floor(Math.random() * options.length)
+        ]();
+        tone(
+          good ? 720 : 155,
+          0.16,
+          good ? "sine" : "sawtooth",
+          0.05
+        );
+        haptic(good ? 25 : 55);
+      }
+      function update(deltaTime) {
+        elapsed += deltaTime;
+        shake = Math.max(
+          0,
+          shake - deltaTime * 30
+        );
+        flash = Math.max(
+          0,
+          flash - deltaTime
+        );
+        const hadInvert = modifiers.some(
+          (modifier) => modifier.type === "invert"
+        );
+        modifiers = modifiers.filter(
+          (modifier) => modifier.end > elapsed
+        );
+        if (
+          hadInvert &&
+          !modifiers.some(
+            (modifier) => modifier.type === "invert"
+          )
+        ) {
+          controlsSign = 1;
+        }
+        paddle.w +=
+          (
+            paddle.baseW *
+              currentPaddleFactor() -
+            paddle.w
+          ) *
+          Math.min(1, deltaTime * 9);
+        const desired =
+          controlsSign === 1
+            ? targetX
+            : W - paddle.w - targetX;
+        paddle.x +=
+          (
+            clamp(
+              desired,
+              7,
+              W - paddle.w - 7
+            ) -
+            paddle.x
+          ) *
+          Math.min(1, deltaTime * 24);
+        if (elapsed >= nextCoin) {
+          spawn("coin");
+          nextCoin =
+            elapsed + rand(6, 10);
+        }
+        if (elapsed >= nextBox) {
+          spawn("box");
+          nextBox = elapsed + 15;
+        }
+        const speedFactor =
+          currentSpeedFactor();
+        const baseSpeed = clamp(
+          H * 0.49,
+          390,
+          525
+        );
+        const targetVelocity =
+          baseSpeed * speedFactor;
+        const length =
+          Math.hypot(ball.vx, ball.vy) || 1;
+        ball.vx =
+          (ball.vx / length) *
+          targetVelocity;
+        ball.vy =
+          (ball.vy / length) *
+          targetVelocity;
+        const steps = Math.max(
+          1,
+          Math.ceil(
+            targetVelocity *
+              deltaTime /
+              (ball.r * 0.7)
+          )
+        );
+        const step = deltaTime / steps;
+        for (let i = 0; i < steps; i++) {
+          ball.x += ball.vx * step;
+          ball.y += ball.vy * step;
+          if (ball.x - ball.r < 0) {
+            ball.x = ball.r;
+            ball.vx = Math.abs(ball.vx);
+            tone(260, 0.025);
+          }
+          if (ball.x + ball.r > W) {
+            ball.x = W - ball.r;
+            ball.vx = -Math.abs(ball.vx);
+            tone(260, 0.025);
+          }
+          if (ball.y - ball.r < 0) {
+            ball.y = ball.r;
+            ball.vy = Math.abs(ball.vy);
+            tone(320, 0.03);
+          }
+          const touchedPaddle =
+            ball.vy > 0 &&
+            ball.y + ball.r >= paddle.y &&
+            ball.y - ball.r <=
+              paddle.y + paddle.h &&
+            ball.x >= paddle.x - ball.r &&
+            ball.x <=
+              paddle.x +
+                paddle.w +
+                ball.r;
+          if (touchedPaddle) {
+            ball.y = paddle.y - ball.r;
+            const hitPosition = clamp(
+              (
+                ball.x -
+                (
+                  paddle.x +
+                  paddle.w / 2
+                )
+              ) /
+                (paddle.w / 2),
+              -1,
+              1
+            );
+            const angle =
+              hitPosition * 1.08;
+            ball.vx =
+              Math.sin(angle) *
+              targetVelocity;
+            ball.vy =
+              -Math.cos(angle) *
+              targetVelocity;
+            addScore(1);
+            burst(
+              ball.x,
+              paddle.y,
+              "#ffffff",
+              9
+            );
+            tone(
+              490 +
+                Math.min(score, 50) * 7,
+              0.055,
+              "sine",
+              0.045
+            );
+            haptic(11);
+          }
+        }
+        ball.trail.push({
+          x: ball.x,
+          y: ball.y,
+          life: 1
+        });
+        if (ball.trail.length > 12) {
+          ball.trail.shift();
+        }
+        ball.trail.forEach((point) => {
+          point.life -= deltaTime * 4;
+        });
+        for (
+          let index = objects.length - 1;
+          index >= 0;
+          index--
+        ) {
+          const object = objects[index];
+          object.y +=
+            object.vy * deltaTime;
+          object.spin += deltaTime * 2;
+          const touchedObject =
+            object.y + object.size >=
+              paddle.y &&
+            object.y <=
+              paddle.y + paddle.h &&
+            object.x + object.size >=
+              paddle.x &&
+            object.x <=
+              paddle.x + paddle.w;
+          if (touchedObject) {
+            objects.splice(index, 1);
+            burst(
+              object.x +
+                object.size / 2,
+              object.y +
+                object.size / 2,
+              object.type === "coin"
+                ? "#ffd84a"
+                : "#50dd79",
+              18
+            );
+            if (object.type === "coin") {
+              coins++;
+              storage.set(
+                "coins",
+                coins
+              );
+              updateHUD();
+              tone(
+                880,
+                0.11,
+                "sine",
+                0.05
+              );
+              toast("+1 MOEDA");
+              haptic(18);
+            } else {
+              openBox();
+            }
+          } else if (
+            object.y >
+            H + object.size
+          ) {
+            objects.splice(index, 1);
+          }
+        }
+        for (
+          let index = particles.length - 1;
+          index >= 0;
+          index--
+        ) {
+          const particle =
+            particles[index];
+          particle.x +=
+            particle.vx * deltaTime;
+          particle.y +=
+            particle.vy * deltaTime;
+          particle.vy +=
+            260 * deltaTime;
+          particle.life -= deltaTime;
+          if (particle.life <= 0) {
+            particles.splice(index, 1);
+          }
+        }
+        if (ball.y - ball.r > H) {
+          endGame();
+        }
+      }
+      function endGame() {
+        mode = "over";
+        cancelAnimationFrame(raf);
+        shake = 8;
+        haptic(120);
+        tone(
+          105,
+          0.28,
+          "sawtooth",
+          0.06
+        );
+        if (score > best) {
+          best = score;
+          storage.set(
+            "best",
+            best
+          );
+        }
+        $("#finalScore").textContent =
+          score;
+        $("#bestScore").textContent =
+          best;
+        $("#rank").textContent =
+          "Você chegou ao " +
+          rankNames[paletteIndex()];
+        setTimeout(() => {
+          show("#gameOver");
+        }, 220);
+      }
+      function roundRect(
+        context,
+        x,
+        y,
+        width,
+        height,
+        radius
+      ) {
+        context.beginPath();
+        context.roundRect(
+          x,
+          y,
+          width,
+          height,
+          radius
+        );
+      }
+      function drawBackground() {
+        const palette =
+          palettes[paletteIndex()];
+        const gradient =
+          ctx.createLinearGradient(
+            0,
+            0,
+            W,
+            H
+          );
+        gradient.addColorStop(
+          0,
+          palette[0]
+        );
+        gradient.addColorStop(
+          1,
+          palette[1]
+        );
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 0.055;
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = "#fff";
+          ctx.beginPath();
+          ctx.arc(
+            W * (0.15 + i * 0.42),
+            H * (0.28 + i * 0.24),
+            W * (0.48 - i * 0.07),
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        if (flash > 0) {
+          ctx.fillStyle =
+            `rgba(255,255,255,${flash * 0.4})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+      function drawBall() {
+        const skin = activeSkin();
+        ball.trail.forEach(
+          (point, index) => {
+            ctx.globalAlpha =
+              Math.max(0, point.life) *
+              0.08;
+            ctx.fillStyle =
+              skin.color;
+            ctx.beginPath();
+            ctx.arc(
+              point.x,
+              point.y,
+              ball.r *
+                (
+                  index /
+                  ball.trail.length
+                ),
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+        );
+        ctx.globalAlpha = 1;
+        if (
+          ["fire", "ice", "angry"].includes(
+            skin.id
+          )
+        ) {
+          ctx.font =
+            `${ball.r * 2}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            skin.icon,
+            ball.x,
+            ball.y + 1
+          );
+        } else {
+          const gradient =
+            ctx.createRadialGradient(
+              ball.x -
+                ball.r * 0.35,
+              ball.y -
+                ball.r * 0.45,
+              2,
+              ball.x,
+              ball.y,
+              ball.r * 1.1
+            );
+          gradient.addColorStop(
+            0,
+            skin.id === "matte"
+              ? "#323237"
+              : "#6b7280"
+          );
+          gradient.addColorStop(
+            0.35,
+            skin.color
+          );
+          gradient.addColorStop(
+            1,
+            "#000"
+          );
+          ctx.fillStyle = gradient;
+          ctx.shadowColor =
+            "rgba(0,0,0,.35)";
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.arc(
+            ball.x,
+            ball.y,
+            ball.r,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          if (skin.id === "eight") {
+            ctx.fillStyle = "#fff";
+            ctx.beginPath();
+            ctx.arc(
+              ball.x,
+              ball.y,
+              ball.r * 0.45,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.fillStyle = "#111";
+            ctx.font =
+              `bold ${ball.r * 0.62}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+              "8",
+              ball.x,
+              ball.y
+            );
+          }
+        }
+      }
+      function drawPaddle() {
+        ctx.shadowColor =
+          "rgba(0,0,0,.25)";
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetY = 8;
+        const gradient =
+          ctx.createLinearGradient(
+            0,
+            paddle.y,
+            0,
+            paddle.y + paddle.h
+          );
+        gradient.addColorStop(
+          0,
+          "#fff"
+        );
+        gradient.addColorStop(
+          1,
+          "#dce5f4"
+        );
+        ctx.fillStyle = gradient;
+        roundRect(
+          ctx,
+          paddle.x,
+          paddle.y,
+          paddle.w,
+          paddle.h,
+          paddle.h / 2
+        );
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+      }
+      function drawObjects() {
+        for (const object of objects) {
+          const centerX =
+            object.x +
+            object.size / 2;
+          const centerY =
+            object.y +
+            object.size / 2;
+          ctx.save();
+          ctx.translate(
+            centerX,
+            centerY
+          );
+          ctx.rotate(
+            object.type === "coin"
+              ? object.spin
+              : Math.sin(object.spin) *
+                  0.08
+          );
+          ctx.translate(
+            -centerX,
+            -centerY
+          );
+          ctx.shadowColor =
+            "rgba(0,0,0,.22)";
+          ctx.shadowBlur = 14;
+          ctx.shadowOffsetY = 7;
+          if (object.type === "coin") {
+            const gradient =
+              ctx.createRadialGradient(
+                centerX -
+                  object.size * 0.2,
+                centerY -
+                  object.size * 0.25,
+                2,
+                centerX,
+                centerY,
+                object.size * 0.55
+              );
+            gradient.addColorStop(
+              0,
+              "#fff59b"
+            );
+            gradient.addColorStop(
+              0.36,
+              "#ffd83d"
+            );
+            gradient.addColorStop(
+              1,
+              "#ed9d08"
+            );
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(
+              centerX,
+              centerY,
+              object.size * 0.48,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.strokeStyle =
+              "rgba(255,255,255,.45)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle =
+              "#fff3a7";
+            ctx.font =
+              `900 ${object.size * 0.52}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+              "$",
+              centerX,
+              centerY + 1
+            );
+          } else {
+            const gradient =
+              ctx.createLinearGradient(
+                object.x,
+                object.y,
+                object.x +
+                  object.size,
+                object.y +
+                  object.size
+              );
+            gradient.addColorStop(
+              0,
+              "#62e678"
+            );
+            gradient.addColorStop(
+              1,
+              "#159447"
+            );
+            ctx.fillStyle = gradient;
+            roundRect(
+              ctx,
+              object.x,
+              object.y,
+              object.size,
+              object.size,
+              11
+            );
+            ctx.fill();
+            ctx.strokeStyle =
+              "#08723a";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = "#fff";
+            ctx.font =
+              `900 ${object.size * 0.66}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+              "?",
+              centerX,
+              centerY + 2
+            );
+          }
+          ctx.restore();
+        }
+      }
+      function render() {
+        ctx.save();
+        if (shake > 0) {
+          ctx.translate(
+            rand(-shake, shake),
+            rand(-shake, shake)
+          );
+        }
+        drawBackground();
+        drawObjects();
+        for (const particle of particles) {
+          ctx.globalAlpha = clamp(
+            particle.life / 0.55,
+            0,
+            1
+          );
+          ctx.fillStyle =
+            particle.color;
+          ctx.beginPath();
+          ctx.arc(
+            particle.x,
+            particle.y,
+            particle.r,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        drawBall();
+        drawPaddle();
+        ctx.restore();
+      }
+      function loop(now) {
+        if (mode !== "playing") return;
+        const deltaTime = Math.min(
+          0.033,
+          (now - last) / 1000 || 0
+        );
+        last = now;
+        update(deltaTime);
+        render();
+        if (mode === "playing") {
+          raf =
+            requestAnimationFrame(loop);
+        }
+      }
+      function setTarget(clientX) {
+        if (!dragging) {
+          pointerX = clientX;
+          dragging = true;
+          return;
+        }
+        const delta =
+          (clientX - pointerX) * 1.2;
+        pointerX = clientX;
+        targetX = clamp(
+          targetX + delta,
+          7,
+          W - paddle.w - 7
+        );
+      }
+      canvas.addEventListener(
+        "pointerdown",
+        (event) => {
+          canvas.setPointerCapture?.(
+            event.pointerId
+          );
+          dragging = false;
+          setTarget(event.clientX);
+        }
+      );
+      canvas.addEventListener(
+        "pointermove",
+        (event) => {
+          if (
+            event.buttons ||
+            event.pointerType === "touch"
+          ) {
+            setTarget(event.clientX);
+          }
+        }
+      );
+      canvas.addEventListener(
+        "pointerup",
+        () => {
+          dragging = false;
+        }
+      );
+      canvas.addEventListener(
+        "pointercancel",
+        () => {
+          dragging = false;
+        }
+      );
+      $("#play").onclick =
+        startGame;
+      $("#again").onclick =
+        startGame;
+      $("#home").onclick = () => {
+        mode = "menu";
+        show("#start");
+        render();
+      };
+      $("#pause").onclick = () => {
+        if (mode === "playing") {
+          mode = "paused";
+          cancelAnimationFrame(raf);
+          show("#paused");
+        }
+      };
+      $("#resume").onclick = () => {
+        mode = "playing";
+        hideAll();
+        last = performance.now();
+        raf =
+          requestAnimationFrame(loop);
+      };
+      $("#quit").onclick = () => {
+        mode = "menu";
+        show("#start");
+        render();
+      };
+      $("#sound").onclick = () => {
+        soundOn = !soundOn;
+        storage.set(
+          "sound",
+          soundOn
+        );
+        $("#sound").textContent =
+          "SOM: " +
+          (soundOn ? "ON" : "OFF");
+      };
+      $("#sound").textContent =
+        "SOM: " +
+        (soundOn ? "ON" : "OFF");
+      function renderShop() {
+        $("#shopBalance").textContent =
+          "● " +
+          coins +
+          " moedas";
+        const grid = $("#shopGrid");
+        grid.innerHTML = "";
+        for (const skin of skins) {
+          const isOwned =
+            owned.includes(skin.id);
+          const locked =
+            skin.id === "matte" &&
+            !isOwned;
+          const button =
+            document.createElement(
+              "button"
+            );
+          button.className =
+            "item" +
+            (
+              selected === skin.id
+                ? " selected"
+                : ""
+            );
+          button.innerHTML = `
+            <span class="preview">${skin.icon}</span>
+            <strong>${skin.name}</strong>
+            <small>
+              ${
+                locked
+                  ? "Chegue a 50 pontos"
+                  : isOwned
+                  ? "Selecionada / usar"
+                  : skin.price +
+                    " moedas"
+              }
+            </small>
+          `;
+          button.onclick = () => {
+            if (locked) {
+              toast(
+                "CHEGUE A 50 PONTOS"
+              );
+              return;
+            }
+            if (!isOwned) {
+              if (
+                coins < skin.price
+              ) {
+                toast(
+                  "MOEDAS INSUFICIENTES"
+                );
+                return;
+              }
+              coins -= skin.price;
+              owned.push(skin.id);
+              storage.set(
+                "coins",
+                coins
+              );
+              storage.set(
+                "owned",
+                owned
+              );
+              updateHUD();
+            }
+            selected = skin.id;
+            storage.set(
+              "skin",
+              selected
+            );
+            renderShop();
+            render();
+            tone(660, 0.08);
+          };
+          grid.appendChild(button);
+        }
+      }
+      document
+        .querySelectorAll(
+          ".openShop"
+        )
+        .forEach((button) => {
+          button.onclick = () => {
+            $("#shopPanel").classList.remove(
+              "hidden"
+            );
+            renderShop();
+          };
+        });
+      $("#closeShop").onclick = () => {
+        $("#shopPanel").classList.add(
+          "hidden"
+        );
+      };
+      addEventListener(
+        "resize",
+        () => {
+          resize();
+          render();
+        },
+        {
+          passive: true
+        }
+      );
+      addEventListener(
+        "visibilitychange",
+        () => {
+          if (
+            document.hidden &&
+            mode === "playing"
+          ) {
+            $("#pause").click();
+          }
+        }
+      );
+      resize();
+      reset();
+      render();
+    })();
+  </script>
+</body>
+</html>
