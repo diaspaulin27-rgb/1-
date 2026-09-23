@@ -434,7 +434,9 @@
   }
 
   function currentSpeedFactor(){
-    let f=1+score*.01;
+    // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
+    const earlyBoost=.30*(1-clamp(score/60,0,1));
+    let f=1+score*.01+earlyBoost;
     if(score>60) f+=(score-60)*.004;
     if(score>90) f+=(score-90)*.007;
     if(score>120) f+=(score-120)*.012;
