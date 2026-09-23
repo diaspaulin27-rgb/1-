@@ -195,7 +195,8 @@
   const dangerZone={x:0,y:0,w:0,h:0,ttl:0,hitCooldown:0};
   let revivesLeft=3;
   let modifiers=[], objects=[], particles=[];
-  let calmUntil=0, freeBoxQueued=false;
+  let restHits=0, freeBoxQueued=false;
+  function gameplayScore(){return restHits>0?0:score;}
   const mysteryCurse={ignored:0,armed:false,dual:null};
   const eventState={
     activeEffect:null,
@@ -260,7 +261,7 @@
     return '#'+m.map(v=>v.toString(16).padStart(2,'0')).join('');
   }
   function visualState(){
-    const value=Math.max(0,score);
+    const value=Math.max(0,gameplayScore());
     let from=colorStops[0],to=colorStops[colorStops.length-1];
     for(let i=0;i<colorStops.length-1;i++){
       if(value>=colorStops[i].score&&value<colorStops[i+1].score){from=colorStops[i];to=colorStops[i+1];break;}
@@ -320,7 +321,7 @@
   }
   function updateMusicStage(force=false){
     if(!ensureAudio())return;
-    const stage=clamp(Math.floor(score/10),0,14);if(!force&&stage===musicStage)return;musicStage=stage;
+    const stage=clamp(Math.floor(gameplayScore()/10),0,14);if(!force&&stage===musicStage)return;musicStage=stage;
     const now=audioCtx.currentTime,base=110*Math.pow(2,-stage/24),levels=[.026,stage>=2?.014:0,stage>=5?.010:0];
     musicPads.forEach((p,i)=>{p.osc.frequency.setTargetAtTime(base*p.ratio,now,1.1);p.gain.gain.setTargetAtTime(levels[i],now,1.2);});
     musicFilter.frequency.setTargetAtTime(clamp(1050-stage*42,390,1050),now,1.4);
@@ -355,7 +356,7 @@
   }
   function impactSound(kind='paddle'){
     if(!soundOn)return;
-    const progress=clamp(score/140,0,1),base=760*Math.pow(78/760,progress);
+    const progress=clamp(gameplayScore()/140,0,1),base=760*Math.pow(78/760,progress);
     if(kind==='barrier'){tone(980,.14,'sine',.055);tone(490,.20,'triangle',.022);return;}
     const factor=kind==='wall'?.68:kind==='ceiling'?1.18:1;
     const freq=base*factor,dur=.045+progress*.09,type=progress>.72?'triangle':'sine';
@@ -380,7 +381,7 @@
     Object.keys(runStats).forEach(k=>runStats[k]=0);
     revivesLeft=3;
     objects=[];particles=[];modifiers=[];controlsSign=1;shake=0;flash=0;
-    calmUntil=0;freeBoxQueued=false;
+    restHits=0;freeBoxQueued=false;
     mysteryCurse.ignored=0;mysteryCurse.armed=false;mysteryCurse.dual=null;
     eventState.activeEffect=null;eventState.activeChallenge=null;eventState.lastEvent=null;eventState.lastCategory=null;
     eventState.cooldownUntil=0;eventState.hiddenLives=0;eventState.barrierCharges=0;eventState.megaPaddleHits=0;eventState.fakeBallHits=0;
@@ -417,7 +418,7 @@
     if(score>=50 && !owned.includes('matte')){ owned.push('matte'); storage.set('owned',owned); toast('SKIN PRETA FOSCA DESBLOQUEADA'); }
     updateHUD(); flash=.12;
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
-    if(before<96&&score>=96){toast('BLACKOUT · SEM SEGUNDA CHANCE');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
+    if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
     if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(navigator.vibrate)navigator.vibrate([80,50,140]);}
     const newSpectrum=[
       [105,'AZUL ABISSAL'],[110,'CIANO PROFUNDO'],[115,'TURQUESA ELÉTRICA'],
@@ -435,11 +436,11 @@
 
   function currentSpeedFactor(){
     // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
-    const earlyBoost=.30*(1-clamp(score/60,0,1));
-    let f=1+score*.01+earlyBoost;
-    if(score>60) f+=(score-60)*.004;
-    if(score>90) f+=(score-90)*.007;
-    if(score>120) f+=(score-120)*.012;
+    const earlyBoost=.30*(1-clamp(gameplayScore()/60,0,1));
+    let f=1+gameplayScore()*.01+earlyBoost;
+    if(gameplayScore()>60) f+=(gameplayScore()-60)*.004;
+    if(gameplayScore()>90) f+=(gameplayScore()-90)*.007;
+    if(gameplayScore()>120) f+=(gameplayScore()-120)*.012;
     for(const m of modifiers){
       if(m.type==='slow')f*=.8;
       else if(m.type==='cameraSlow')f*=.5;
@@ -448,25 +449,25 @@
     return clamp(f,.7,3.35);
   }
   function currentPaddleFactor(){
-    let f=1-score*.005;
-    if(score>60) f-=(score-60)*.0025;
-    if(score>90) f-=(score-90)*.003;
-    if(score>120) f-=(score-120)*.004;
+    let f=1-gameplayScore()*.005;
+    if(gameplayScore()>60) f-=(gameplayScore()-60)*.0025;
+    if(gameplayScore()>90) f-=(gameplayScore()-90)*.003;
+    if(gameplayScore()>120) f-=(gameplayScore()-120)*.004;
     for(const m of modifiers) if(m.type==='wide')f*=1.3; else if(m.type==='small')f*=.8;
     if(eventState.megaPaddleHits>0)f*=2;
     return clamp(f,.27,2.1);
   }
 
   function paddleResponse(){
-    if(score>=141)return 4.2;
-    if(score>=126)return 5.5;
-    if(score>=111)return 7;
-    if(score>=91)return 9;
-    if(score>=61)return 13;
+    if(gameplayScore()>=141)return 4.2;
+    if(gameplayScore()>=126)return 5.5;
+    if(gameplayScore()>=111)return 7;
+    if(gameplayScore()>=91)return 9;
+    if(gameplayScore()>=61)return 13;
     return 24;
   }
-  function windStrength(){ return score<91?0:clamp((score-90)*7,0,420); }
-  function curveStrength(){ return score<126?0:clamp((score-125)*5.5,0,145); }
+  function windStrength(){ return gameplayScore()<91?0:clamp((gameplayScore()-90)*7,0,420); }
+  function curveStrength(){ return gameplayScore()<126?0:clamp((gameplayScore()-125)*5.5,0,145); }
   function refreshDangerZone(){
     if(score<111)return;
     dangerZone.w=clamp(W*.23,92,178); dangerZone.h=24;
@@ -487,7 +488,7 @@
       y:-size,size,vy:clamp(H*.36,230,340),spin:0});
   }
   function updateBoxSpawns(){
-    if(mysteryCurse.armed||mysteryCurse.dual||eventState.activeChallenge||objects.some(o=>o.type==='box'))return;
+    if(restHits>0||mysteryCurse.armed||mysteryCurse.dual||eventState.activeChallenge||objects.some(o=>o.type==='box'))return;
     if(goldenQueue.length){
       // O marco fica reservado até terminar o efeito/desafio e a caixa anterior sair.
       if(eventState.activeEffect)return;
@@ -519,7 +520,7 @@
     mysteryCurse.ignored++;
     if(mysteryCurse.ignored<3)return;
     mysteryCurse.ignored=0;mysteryCurse.armed=true;
-    eventState.activeChallenge=null;freeBoxQueued=false;
+    eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
     modifiers=[];controlsSign=1;eventState.activeEffect=null;
     eventState.megaPaddleHits=0;eventState.fakeBallHits=0;fakeBall.active=false;fakeBall.trail=[];
     objects=objects.filter(o=>o.type!=='box');nextBox=elapsed+15;
@@ -527,7 +528,7 @@
   }
   function startDualChallenge(speed){
     mysteryCurse.armed=false;
-    eventState.activeChallenge=null;freeBoxQueued=false;
+    eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
     // Temporários ficam suspensos; o desafio usa a barra original e duas bolas reais.
     modifiers=[];controlsSign=1;eventState.activeEffect=null;
     eventState.megaPaddleHits=0;eventState.fakeBallHits=0;fakeBall.active=false;fakeBall.trail=[];
@@ -631,49 +632,45 @@
   const effectNames={slow:'Bola lenta',wide:'Barra maior',cameraSlow:'Câmera lenta',magnet:'Moeda magnética',
     fast:'Bola acelerada',invert:'Controles invertidos',small:'Barra menor',ghostPaddle:'Barra fantasma',ice:'Chão de gelo',earthquake:'Terremoto'};
 
-  const sportNames={basket:'CESTA',goal:'GOL',field:'FIELD GOAL',golf:'GOLFE'};
-  const sportInstructions={
-    basket:['ACERTE O ARO NA SUBIDA','1 tentativa · até 2s após rebater'],
-    goal:['MANDE A BOLA PARA O GOL','1 tentativa na próxima rebatida'],
-    field:['ACERTE ENTRE AS TRAVES','1 tentativa na próxima rebatida'],
-    golf:['ACERTE O BURACO NA DESCIDA','Mire na próxima rebatida · 1 tentativa']
-  };
-  function startSportChallenge(id){
-    if(eventState.activeChallenge||mysteryCurse.armed||mysteryCurse.dual)return;
+  const sportNames={basket:'CESTA'};
+  function startSportChallenge(id='basket'){
+    if(id!=='basket'||restHits>0||eventState.activeChallenge||mysteryCurse.armed||mysteryCurse.dual)return;
     objects=objects.filter(o=>o.type!=='box');nextBox=elapsed+15;
-    const w=id==='field'?clamp(W*.22,64,92):clamp(W*.18,52,76);
-    const y=id==='field'?Math.max(82,H*.15):id==='basket'?H*.32:id==='goal'?H*.42:H*.61;
-    const x=id==='golf'?(Math.random()<.5?38:W-38):rand(w/2+9,W-w/2-9);
-    eventState.activeChallenge={id,pending:true,requestedAt:elapsed,x,y,w,endAt:0};
-    toast(sportInstructions[id][0],{kind:'sport',detail:sportNames[id]+' · '+sportInstructions[id][1],duration:2700,
-      top:id==='field'?Math.max(y+43,155):null});
+    const w=clamp(W*.18,52,76),y=H*.32,x=rand(w/2+9,W-w/2-9);
+    eventState.activeChallenge={id:'basket',pending:false,x,y,w,endAt:elapsed+17};
+    toast('ACERTE A CESTA',{kind:'sport',detail:'17 segundos · ganhe 3 rebatidas de descanso',duration:2700});
     tone(690,.13,'triangle',.042);haptic(20);
   }
-  function prepareSportTarget(){
-    const c=eventState.activeChallenge;if(!c||!c.pending)return;
-    if(elapsed-c.requestedAt>7){eventState.activeChallenge=null;toast(sportNames[c.id]+' · TEMPO ESGOTADO',{kind:'neutral',detail:'Tentativa encerrada · sem prêmio'});}
-  }
   function finishSportChallenge(hit){
-    const c=eventState.activeChallenge;if(!c)return;
+    if(!eventState.activeChallenge)return;
     eventState.activeChallenge=null;
-    if(!hit){toast(sportNames[c.id]+' · TENTATIVA ENCERRADA',{kind:'neutral',detail:'Não acertou a tempo · sem prêmio'});return;}
-    flash=Math.max(flash,.33);burst(ball.x,ball.y,'#ffef9c',18);tone(940,.22,'sine',.055);haptic(30);
-    if(c.id==='basket'){
-      coins+=20;storage.set('coins',coins);updateHUD();toast('CESTA! +20 MOEDAS');
-    }else if(c.id==='goal'){
-      freeBoxQueued=true;toast('GOL! CAIXA GRÁTIS');
-    }else if(c.id==='field'){
-      if(eventState.hiddenLives<=0){eventState.hiddenLives=1;toast('FIELD GOAL! CHANCE EXTRA');}
-      else{coins+=20;storage.set('coins',coins);updateHUD();toast('FIELD GOAL! +20 MOEDAS');}
-    }else{
-      calmUntil=elapsed+5;toast('GOLFE! RESPIRO AZUL · 5S');
+    if(!hit){toast('CESTA · TEMPO ESGOTADO',{kind:'neutral',detail:'Sem prêmio desta vez'});return;}
+    restHits=3;runStats.reliefs++;
+    modifiers=[];controlsSign=1;paddle.vx=0;shake=0;
+    eventState.activeEffect=null;eventState.megaPaddleHits=0;eventState.fakeBallHits=0;fakeBall.active=false;
+    windX=0;windTarget=0;dangerZone.ttl=0;dangerZone.w=0;
+    const center=paddle.x+paddle.w/2;paddle.w=paddle.baseW;
+    paddle.x=clamp(center-paddle.w/2,7,W-paddle.w-7);targetX=paddle.x;
+    const speed=clamp(H*.49,390,525)*currentSpeedFactor(),len=Math.hypot(ball.vx,ball.vy)||1;
+    ball.vx=ball.vx/len*speed;ball.vy=ball.vy/len*speed;ball.trail=[];
+    updateMusicStage(true);
+    flash=Math.max(flash,.2);burst(ball.x,ball.y,'#ffef9c',18);tone(940,.22,'sine',.055);haptic(30);
+    toast('CESTA! RESPIRO',{kind:'good',detail:'Fase inicial por 3 rebatidas · pontos preservados'});
+  }
+  function countRestRebound(){
+    if(restHits<=0)return;
+    restHits--;
+    if(restHits===0){
+      ball.trail=[];updateMusicStage(true);
+      toast('DE VOLTA AO DESAFIO',{kind:'neutral',detail:'Dificuldade do ponto '+score});
+      nextBox=Math.max(nextBox,elapsed+2);
     }
   }
   function checkSportCrossing(oldY){
-    const c=eventState.activeChallenge;if(!c||c.pending)return;
-    const crosses=c.id==='golf'?(oldY<c.y&&ball.y>=c.y&&ball.vy>0)
-      :(oldY>c.y&&ball.y<=c.y&&ball.vy<0);
-    if(crosses)finishSportChallenge(Math.abs(ball.x-c.x)<=c.w*.40);
+    const c=eventState.activeChallenge;if(!c)return;
+    if(elapsed>=c.endAt){finishSportChallenge(false);return;}
+    // Errar o aro não encerra a chance: ele permanece até os 17 segundos.
+    if(oldY>c.y&&ball.y<=c.y&&ball.vy<0&&Math.abs(ball.x-c.x)<=c.w*.40)finishSportChallenge(true);
   }
 
   function eventProbabilities(){
@@ -712,10 +709,7 @@
       {id:'earthquake',temporary:true,run:()=>modifier('earthquake',3,'TROLL: TERREMOTO · 3 SEGUNDOS')}
     ],
     sport:[
-      {id:'basket',temporary:true,run:()=>startSportChallenge('basket')},
-      {id:'goal',temporary:true,run:()=>startSportChallenge('goal')},
-      {id:'field',temporary:true,run:()=>startSportChallenge('field')},
-      {id:'golf',temporary:true,run:()=>startSportChallenge('golf')}
+      {id:'basket',temporary:true,run:()=>startSportChallenge('basket')}
     ]
   };
 
@@ -737,7 +731,7 @@
   }
 
   function openBox({free=false,excludeSport=false}={}){
-    if(eventState.activeChallenge)return;
+    if(restHits>0||eventState.activeChallenge)return;
     if(!free&&elapsed<eventState.cooldownUntil){toast('CAIXA CARREGANDO...');return;}
     runStats.boxes++;
     if(!free&&score>=50&&eventState.hiddenLives<=0&&Math.random()<.02){
@@ -800,11 +794,11 @@
     }
 
     windClock-=dt; dangerZone.ttl-=dt; dangerZone.hitCooldown=Math.max(0,dangerZone.hitCooldown-dt);
-    if(score>=91){
+    if(gameplayScore()>=91){
       if(windClock<=0){windClock=rand(.55,1.1);windTarget=rand(-windStrength(),windStrength());}
       windX+=(windTarget-windX)*Math.min(1,dt*1.6);
     }else windX*=Math.max(0,1-dt*4);
-    if(score>=111&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
+    if(gameplayScore()>=111&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
 
     if(elapsed>=nextCoin){ spawn('coin'); nextCoin=elapsed+rand(6,10); }
     updateBoxSpawns();
@@ -813,7 +807,6 @@
     const base=clamp(H*.49,390,525); const targetV=base*factor;
     const len=Math.hypot(ball.vx,ball.vy)||1;
     ball.vx=ball.vx/len*targetV; ball.vy=ball.vy/len*targetV;
-    prepareSportTarget();
     if(eventState.activeChallenge&&!eventState.activeChallenge.pending&&elapsed>=eventState.activeChallenge.endAt)finishSportChallenge(false);
     const steps=Math.max(1,Math.ceil(targetV*dt/(ball.r*.7))), step=dt/steps;
     for(let s=0;s<steps;s++){
@@ -830,7 +823,8 @@
         ball.y=paddle.y-ball.r;
         const hit=clamp((ball.x-(paddle.x+paddle.w/2))/(paddle.w/2),-1,1);
         const nextScore=score+1;
-        const chaos=clamp(nextScore/150 + Math.max(0,nextScore-90)*.004,0,.98);
+        const difficultyScore=gameplayScore()+1;
+        const chaos=clamp(difficultyScore/150 + Math.max(0,difficultyScore-90)*.004,0,.98);
         const baseAngle=hit*(Math.PI/3);
         const randomAngle=rand(-1,1)*(Math.PI/6)*chaos;
         const movementAngle=clamp(paddle.vx/900,-1,1)*(Math.PI/18);
@@ -844,10 +838,7 @@
         runStats.rebounds++;paddleHitFeedback(ball.x);
         if(nextScore%10===0)shake=Math.max(shake,2.4);
         addScore(1);
-        if(eventState.activeChallenge&&eventState.activeChallenge.pending){
-          eventState.activeChallenge.pending=false;
-          eventState.activeChallenge.endAt=elapsed+(eventState.activeChallenge.id==='basket'?2:4);
-        }
+        countRestRebound();
         if(eventState.megaPaddleHits>0){
           eventState.megaPaddleHits--;
           if(eventState.megaPaddleHits<=0){eventState.activeEffect=null;toast('EFEITO ENCERRADO',{kind:'neutral',detail:'Mega barra · 5 rebatidas concluídas',priority:0});}
@@ -865,7 +856,7 @@
         breakShield(ball.x,barrierY);
       }
       if(beginDefeat(ball))return;
-      if(score>=111&&dangerZone.ttl>0&&dangerZone.hitCooldown<=0&&ball.x+ball.r>dangerZone.x&&ball.x-ball.r<dangerZone.x+dangerZone.w&&ball.y+ball.r>dangerZone.y&&ball.y-ball.r<dangerZone.y+dangerZone.h){
+      if(gameplayScore()>=111&&dangerZone.ttl>0&&dangerZone.hitCooldown<=0&&ball.x+ball.r>dangerZone.x&&ball.x-ball.r<dangerZone.x+dangerZone.w&&ball.y+ball.r>dangerZone.y&&ball.y-ball.r<dangerZone.y+dangerZone.h){
         dangerZone.hitCooldown=.38; ball.vx*=-.72; ball.vy*=.96; shake=Math.max(shake,3.5); toast('ZONA FALSA'); tone(170,.08,'square',.035);
       }
     }
@@ -939,10 +930,10 @@
     defeatAnimation=null;
     if(score>=MAX_SCORE){finishGame('150 · IMPOSSÍVEL');return;}
     mysteryCurse.ignored=0;mysteryCurse.armed=false;mysteryCurse.dual=null;
-    eventState.activeChallenge=null;freeBoxQueued=false;
+    eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
     cancelAnimationFrame(raf);setMusicActive(false);shake=8;haptic(120);tone(105,.28,'sawtooth',.06);
     if(eventState.hiddenLives>0){useHiddenLife();return;}
-    if(score>=96){finishGame('Morreu, acabou.');return;}
+    if(score>=135){finishGame('Morreu, acabou.');return;}
     if(revivesLeft<=0){finishGame('Foi quase.');return;}
     offerRevive();
   }
@@ -959,7 +950,7 @@
   }
 
   function useHiddenLife(){
-    eventState.activeChallenge=null;freeBoxQueued=false;
+    eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
     eventState.hiddenLives--;eventState.activeEffect=null;eventState.megaPaddleHits=0;eventState.fakeBallHits=0;eventState.barrierCharges=0;
     modifiers=[];controlsSign=1;objects=[];fakeBall.active=false;fakeBall.trail=[];
     nextCoin=elapsed+rand(6,10);nextBox=elapsed+15;
@@ -1009,7 +1000,7 @@
   }
 
   function prepareRevive(){
-    eventState.activeChallenge=null;freeBoxQueued=false;
+    eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
     modifiers=[];controlsSign=1;objects=[];
     fakeBall.active=false;fakeBall.trail=[];eventState.fakeBallHits=0;eventState.activeEffect=eventState.megaPaddleHits>0?'megaPaddle':null;
     nextCoin=elapsed+rand(6,10);nextBox=elapsed+15;
@@ -1028,12 +1019,12 @@
 
   function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
   function drawBackground(){
-    const visual=elapsed<calmUntil?{top:'#76d6ff',bottom:'#0877ff',blackout:false}:visualState(),g=ctx.createLinearGradient(0,0,W,H);
+    const visual=visualState(),g=ctx.createLinearGradient(0,0,W,H);
     g.addColorStop(0,visual.top);g.addColorStop(1,visual.bottom);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
     ctx.globalAlpha=visual.blackout?0:.055;
     for(let i=0;i<3;i++){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(W*(.15+i*.42),H*(.28+i*.24),W*(.48-i*.07),0,Math.PI*2);ctx.fill();}
     ctx.globalAlpha=1;
-    if(!mysteryCurse.dual&&score>=111&&dangerZone.ttl>0){
+    if(!mysteryCurse.dual&&gameplayScore()>=111&&dangerZone.ttl>0){
       const pulse=.28+Math.sin(elapsed*8)*.08;
       ctx.save();ctx.globalAlpha=pulse;ctx.fillStyle='#ff3b6b';ctx.fillRect(dangerZone.x,dangerZone.y,dangerZone.w,dangerZone.h);
       ctx.globalAlpha=.78;ctx.strokeStyle='#ffd0dc';ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.strokeRect(dangerZone.x,dangerZone.y,dangerZone.w,dangerZone.h);ctx.setLineDash([]);
@@ -1069,8 +1060,8 @@
       ctx.fillStyle='#ffffff';ctx.font=`900 ${ball.r*1.7}px sans-serif`;
       ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('?',ball.x,ball.y+1);ctx.restore();return;
     }
-    const skin=activeSkin(),blackout=elapsed>=calmUntil&&score>=96&&score<=100;
-    const neon=elapsed>=calmUntil&&score>=80;
+    const skin=activeSkin(),blackout=restHits===0&&score>=96&&score<=100;
+    const neon=restHits===0&&score>=80;
     if(neon){
       const style=neonTrailStyle();
       ctx.save();ctx.lineCap='round';ctx.shadowColor='#ffffff';ctx.shadowBlur=style.blur;
@@ -1162,32 +1153,21 @@
     ctx.fillText('ESCUDO · 1 QUEDA',W/2,y+h+5);ctx.restore();
   }
   function drawSportChallenge(){
+    if(restHits>0){
+      ctx.save();ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#123';ctx.shadowBlur=6;
+      ctx.font='800 16px sans-serif';ctx.fillText('RESPIRO · '+restHits+' REBATIDA'+(restHits>1?'S':''),W/2,H*.22);ctx.restore();
+    }
     const c=eventState.activeChallenge;if(!c)return;
-    const x=c.x,y=c.y,w=c.w;
+    const x=c.x,y=c.y,w=c.w,remaining=Math.max(0,c.endAt-elapsed);
     ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.textAlign='center';ctx.textBaseline='bottom';
     ctx.shadowColor='#ffffff';ctx.shadowBlur=12;ctx.lineWidth=4;
-    if(c.id==='basket'){
-      ctx.strokeStyle='#ffb443';ctx.beginPath();ctx.ellipse(x,y,w*.42,8,0,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.beginPath();
-      ctx.moveTo(x-w*.38,y+8);ctx.lineTo(x-w*.24,y+26);ctx.lineTo(x+w*.24,y+26);ctx.lineTo(x+w*.38,y+8);ctx.stroke();
-    }else if(c.id==='goal'){
-      ctx.strokeStyle='#ffffff';ctx.strokeRect(x-w*.48,y-8,w*.96,29);
-      ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;
-      for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(x+w*i*.22,y-8);ctx.lineTo(x+w*i*.22,y+21);ctx.stroke();}
-    }else if(c.id==='field'){
-      ctx.strokeStyle='#ffe17a';ctx.beginPath();ctx.moveTo(x-w*.48,y-19);ctx.lineTo(x-w*.48,y+14);
-      ctx.lineTo(x+w*.48,y+14);ctx.lineTo(x+w*.48,y-19);ctx.moveTo(x,y+14);ctx.lineTo(x,y+30);ctx.stroke();
-    }else{
-      ctx.fillStyle='#121e2d';ctx.beginPath();ctx.ellipse(x,y,w*.44,10,0,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x,y-31);ctx.stroke();
-      ctx.fillStyle='#ffef8a';ctx.beginPath();ctx.moveTo(x,y-31);ctx.lineTo(x+17,y-25);ctx.lineTo(x,y-20);ctx.fill();
-    }
+    ctx.strokeStyle='#ffb443';ctx.beginPath();ctx.ellipse(x,y,w*.42,8,0,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.beginPath();
+    ctx.moveTo(x-w*.38,y+8);ctx.lineTo(x-w*.24,y+26);ctx.lineTo(x+w*.24,y+26);ctx.lineTo(x+w*.38,y+8);ctx.stroke();
     ctx.shadowBlur=0;ctx.fillStyle='#ffffff';ctx.font='800 12px sans-serif';
-    ctx.fillText(sportNames[c.id],x,y-33);
-    if(c.id==='basket'){
-      ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(x-w/2,y+36,w,3);
-      ctx.fillStyle='#fff';ctx.fillRect(x-w/2,y+36,w*(c.pending?1:clamp((c.endAt-elapsed)/2,0,1)),3);
-    }
+    ctx.fillText('CESTA · '+Math.ceil(remaining)+'s',x,y-18);
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(x-w/2,y+36,w,3);
+    ctx.fillStyle='#fff';ctx.fillRect(x-w/2,y+36,w*clamp(remaining/17,0,1),3);
     ctx.restore();
   }
   function drawObjects(){
