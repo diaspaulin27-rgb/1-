@@ -140,7 +140,7 @@
         <button class="secondary openShop">LOJA</button>
         <button class="secondary" id="sound">SOM: ON</button>
       </div>
-      <p class="buildLabel">VERSÃO DE TESTE · 45</p>
+      <p class="buildLabel">VERSÃO DE TESTE · 46</p>
     </div>
   </section>
 
@@ -1366,28 +1366,20 @@
   function drawSkin(c,skin,x,y,r){
     c.save();
     if(skin.id==='fire'){
-      // A skin Fogo precisa continuar sendo uma bola: o emoji solto virava uma chama triangular.
-      c.shadowColor='#ff4b16';c.shadowBlur=18;
-      const fire=c.createRadialGradient(x-r*.34,y-r*.42,1,x,y,r*1.08);
-      fire.addColorStop(0,'#fff6b0');fire.addColorStop(.22,'#ffd24a');fire.addColorStop(.55,'#ff6a1d');fire.addColorStop(.84,'#e52e16');fire.addColorStop(1,'#781016');
-      c.fillStyle=fire;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();
+      // A chama emoji é o corpo oficial da skin. O glow só evita que ela se perca no fundo.
+      c.shadowColor='rgba(255,92,28,.72)';c.shadowBlur=12;
+      c.font=`normal ${r*2}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      c.textAlign='center';c.textBaseline='middle';c.fillText('🔥',x,y+1);
       c.shadowBlur=0;
-      // Núcleo em forma de chama, preso dentro da esfera.
-      c.fillStyle='#fff2a0';c.beginPath();
-      c.moveTo(x,y+r*.55);c.bezierCurveTo(x-r*.58,y+r*.22,x-r*.30,y-r*.18,x-r*.06,y-r*.66);
-      c.bezierCurveTo(x+r*.02,y-r*.30,x+r*.34,y-r*.22,x+r*.18,y+r*.10);
-      c.bezierCurveTo(x+r*.08,y+r*.32,x+r*.34,y+r*.34,x,y+r*.55);c.fill();
-      c.fillStyle='#ff8a1c';c.globalAlpha=.72;c.beginPath();c.arc(x-r*.30,y-r*.38,r*.16,0,Math.PI*2);c.fill();
     }else if(skin.id==='ice'||skin.id==='angry'){
-      // Mantém a silhueta circular e usa o ícone apenas como detalhe central.
-      c.fillStyle=skin.id==='ice'?'#b9efff':'#ef4444';c.shadowColor=skin.color;c.shadowBlur=12;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();
-      c.shadowBlur=0;c.font=`${r*1.35}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);
+      c.font=`${r*2}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);
     }else{
       const g=c.createRadialGradient(x-r*.35,y-r*.45,2,x,y,r*1.1);g.addColorStop(0,skin.id==='matte'?'#323237':'#6b7280');g.addColorStop(.35,skin.color);g.addColorStop(1,'#000');c.fillStyle=g;c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=15;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.shadowBlur=0;
       if(skin.id==='eight'){c.fillStyle='#fff';c.beginPath();c.arc(x,y,r*.45,0,Math.PI*2);c.fill();c.fillStyle='#111';c.font=`bold ${r*.62}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('8',x,y);}
     }
     c.restore();
   }
+
   function drawFakeBall(){
     if(!fakeBall.active||eventState.fakeBallUntil<=elapsed)return;
     ctx.save();
