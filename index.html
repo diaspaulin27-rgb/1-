@@ -11,6 +11,7 @@
     html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#061126; touch-action:none; }
     button { font:inherit; border:0; cursor:pointer; }
     #game { position:fixed; inset:0; width:100%; height:100%; display:block; }
+    .fireEmojiOverlay { position:fixed; z-index:2; display:none; pointer-events:none; transform:translate(-50%,-50%); line-height:1; font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
     #hud { position:fixed; z-index:3; left:0; right:0; top:0; padding:max(18px, env(safe-area-inset-top)) 18px 0; display:flex; align-items:center; gap:10px; pointer-events:none; }
     .pill { height:56px; border-radius:22px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.13); box-shadow:0 8px 30px rgba(0,0,0,.12); backdrop-filter:blur(12px); display:flex; align-items:center; color:white; }
     #scorePill { flex:1; min-width:0; height:66px; padding:9px 14px; gap:5px; flex-direction:column; align-items:flex-start; justify-content:center; background:linear-gradient(135deg,rgba(10,24,49,.8),rgba(15,32,60,.66)); border-color:rgba(255,255,255,.24); box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 20px rgba(0,0,0,.16); }
@@ -120,6 +121,8 @@
 </head>
 <body>
   <canvas id="game" aria-label="Jogo 1%"></canvas>
+  <span id="fireEmojiOverlay" class="fireEmojiOverlay" aria-hidden="true">🔥</span>
+  <span id="fakeFireEmojiOverlay" class="fireEmojiOverlay" aria-hidden="true">🔥</span>
 
   <div id="hud">
     <div class="pill" id="scorePill"><div class="scoreLine"><span class="scoreLabel">SCORE</span><span id="score">000</span></div><div id="personalBest">RECORDE <span id="hudBest">0</span></div></div>
@@ -140,7 +143,7 @@
         <button class="secondary openShop">LOJA</button>
         <button class="secondary" id="sound">SOM: ON</button>
       </div>
-      <p class="buildLabel">VERSÃO DE TESTE · 48</p>
+      <p class="buildLabel">VERSÃO DE TESTE · 49</p>
     </div>
   </section>
 
@@ -1348,7 +1351,8 @@
     }
     if(!neon&&skin.id==='fire')drawFireTrail(ctx,movingBall.trail,movingBall.r,elapsed);
     else if(!neon)movingBall.trail.forEach((t,i)=>{ctx.globalAlpha=Math.max(0,t.life)*.08;ctx.fillStyle=skin.color;ctx.beginPath();ctx.arc(t.x,t.y,movingBall.r*(i/movingBall.trail.length),0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-    drawSkin(ctx,skin,movingBall.x,movingBall.y,movingBall.r);
+    // O corpo 🔥 é um elemento DOM estável; drawSkin continua sendo usado na prévia da loja.
+    if(skin.id!=='fire')drawSkin(ctx,skin,movingBall.x,movingBall.y,movingBall.r);
   }
   function drawFireTrail(c,trail,r,time){
     const points=trail.slice(-12);
@@ -1542,13 +1546,24 @@
     ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=8;ctx.font='36px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
     ctx.fillStyle='#fff';ctx.fillText('👆',x,y-8);ctx.restore();
   }
+  function updateFireEmojiOverlay(){
+    const fire=document.querySelector('#fireEmojiOverlay'),fake=document.querySelector('#fakeFireEmojiOverlay');
+    const canShow=mode==='playing'&&activeSkin().id==='fire'&&!mysteryCurse.dual&&!mysteryCurse.armed;
+    const blackout=restHits===0&&score>=96&&score<=100;
+    function place(node,b,visible){
+      if(!visible){node.style.display='none';return;}
+      node.style.display='block';node.style.left=b.x+'px';node.style.top=b.y+'px';node.style.fontSize=(b.r*2)+'px';
+    }
+    place(fire,ball,canShow&&!blackout);
+    place(fake,fakeBall,canShow&&!blackout&&fakeBall.active&&eventState.fakeBallUntil>elapsed);
+  }
   function render(){
     secretPanel.style.visibility=mode==='playing'?'visible':'hidden';secretGlow.style.visibility=mode==='playing'?'visible':'hidden';
     if(elapsed>=achievementUntil||!['playing','paused'].includes(mode))$('#achievement').className='';
     ctx.save(); if(shake>0)ctx.translate(rand(-shake,shake),rand(-shake,shake));
     drawBackground();drawSportChallenge();drawObjects();
     for(const p of particles){ctx.globalAlpha=clamp(p.life/.55,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
-    drawTeleportPulses();drawFakeBall();drawBall();drawPaddle();drawPaddleFlashes();drawBarrier();drawCoinFlights();drawEffectIndicators();drawStartHint();ctx.restore();
+    drawTeleportPulses();drawFakeBall();drawBall();drawPaddle();drawPaddleFlashes();drawBarrier();drawCoinFlights();drawEffectIndicators();drawStartHint();ctx.restore();updateFireEmojiOverlay();
   }
   function loop(now){
     if(mode!=='playing'&&mode!=='dying')return;
