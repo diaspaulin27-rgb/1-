@@ -215,7 +215,7 @@
   </section>
 
   <section id="shopPanel" class="hidden">
-    <div class="shopHead"><h2>ZANON STORE</h2><button id="closeShop">×</button></div>
+    <div class="shopHead"><h2>LOJA</h2><button id="closeShop">×</button></div>
     <div id="shopBalance">● 0 moedas</div>
     <div class="shopShowcase">
       <canvas id="shopPreview" width="1120" height="420" aria-label="Prévia da skin em movimento"></canvas>
@@ -357,28 +357,43 @@
   const skins = [
     {id:'classic', name:'Clássica', icon:'●', price:0, color:'#111827'},
     {id:'fire', name:'Fogo', icon:'🔥', price:30, color:'#ff5c35'},
-    {id:'ice', name:'Gelo', icon:'❄️', price:45, color:'#b9efff'},
-    {id:'eight', name:'Bola 8', icon:'➑', price:60, color:'#111'},
+    {id:'ice', name:'Gelo', icon:'❄️', price:45, color:'#b9efff',image:'assets/balls/plasma.png'},
+    {id:'eight', name:'Bola 8', icon:'➑', price:60, color:'#111',image:'assets/balls/eight_ball.png'},
     {id:'angry', name:'Bravo', icon:'😡', price:80, color:'#ef4444'},
     {id:'matte', name:'Preta Fosca', icon:'●', price:0, color:'#020205', locked:true}
   ];
+  skins.push(
+    {id:'meteor',name:'Meteoro',icon:'☄️',price:90,color:'#ff713d',image:'assets/balls/meteor.png'},
+    {id:'unicorn',name:'Unicórnio',icon:'🦄',price:100,color:'#ff9de2',image:'assets/balls/unicorn.png'},
+    {id:'shuriken',name:'Shuriken',icon:'✦',price:110,color:'#dce7f5',image:'assets/balls/shuriken.png'},
+    {id:'earth',name:'Terra',icon:'🌎',price:120,color:'#4fc3f7',image:'assets/balls/earth.png'},
+    {id:'energy',name:'Energia',icon:'⚡',price:135,color:'#8b5cf6',image:'assets/balls/energy.png'},
+    {id:'cyberpunk',name:'Cyberpunk',icon:'▦',price:150,color:'#48f1da',image:'assets/balls/cyberpunk.png'},
+    {id:'donut',name:'Donut',icon:'🍩',price:165,color:'#ff7eb6',image:'assets/balls/donut.png'},
+    {id:'soda',name:'Refrigerante',icon:'🫧',price:180,color:'#ff9c4a',image:'assets/balls/soda.png'}
+  );
   const paddleSkins = [
     {id:'classic',name:'Clássico',icon:'▬',price:0,color:'#f6f8ff'},
-    {id:'poolCue',name:'Taco de Sinuca',icon:'🎱',price:45,color:'#b87936'},
-    {id:'lightsaber',name:'Sabre de Luz',icon:'⚡',price:80,color:'#52c8ff'},
-    {id:'magicStaff',name:'Cajado Mágico',icon:'✦',price:95,color:'#f08cff'},
-    {id:'laserPanel',name:'Painel Laser',icon:'▤',price:110,color:'#54f4ff'},
-    {id:'katana',name:'Katana',icon:'⚔',price:130,color:'#d8e7ff'},
-    {id:'runeSword',name:'Espada Rúnica',icon:'✧',price:145,color:'#68a8ff'},
-    {id:'rgbRail',name:'Trilho RGB',icon:'▤',price:160,color:'#e85dff'},
-    {id:'candySpatula',name:'Espátula Doce',icon:'🍭',price:175,color:'#ff9fd7'},
-    {id:'iceBlade',name:'Lâmina de Gelo',icon:'❄',price:190,color:'#aeeaff'},
-    {id:'straw',name:'Canudo Retrô',icon:'🌈',price:210,color:'#ff8fc8'}
+    {id:'poolCue',name:'Taco de Sinuca',icon:'🎱',price:45,color:'#b87936',image:'assets/paddles/pool_cue.png'},
+    {id:'lightsaber',name:'Sabre de Luz',icon:'⚡',price:80,color:'#52c8ff',image:'assets/paddles/lightsaber.png'},
+    {id:'magicStaff',name:'Cajado Mágico',icon:'✦',price:95,color:'#f08cff',image:'assets/paddles/magic_staff.png'},
+    {id:'laserPanel',name:'Painel Laser',icon:'▤',price:110,color:'#54f4ff',image:'assets/paddles/laser_panel.png'},
+    {id:'katana',name:'Katana',icon:'⚔',price:130,color:'#d8e7ff',image:'assets/paddles/katana.png'},
+    {id:'runeSword',name:'Espada Rúnica',icon:'✧',price:145,color:'#68a8ff',image:'assets/paddles/rune_sword.png'},
+    {id:'rgbRail',name:'Trilho RGB',icon:'▤',price:160,color:'#e85dff',image:'assets/paddles/rgb_rail.png'},
+    {id:'candySpatula',name:'Espátula Doce',icon:'🍭',price:175,color:'#ff9fd7',image:'assets/paddles/candy_spatula.png'},
+    {id:'iceBlade',name:'Lâmina de Gelo',icon:'❄',price:190,color:'#aeeaff',image:'assets/paddles/ice_blade.png'},
+    {id:'straw',name:'Canudo Retrô',icon:'🌈',price:210,color:'#ff8fc8',image:'assets/paddles/straw.png'}
   ];
+  const skinImages={};
+  function preloadSkinAssets(){
+    [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)drawShopPreview();};img.src=item.image;});
+  }
   let owned=storage.get('owned',['classic']);
   let selected=storage.get('skin','classic');
   let ownedPaddles=storage.get('ownedPaddles',['classic']);
   let selectedPaddle=storage.get('paddleSkin','classic');
+  preloadSkinAssets();
   let activeSkin=()=>skins.find(s=>s.id===selected)||skins[0];
 
   const paddle={x:0,y:0,w:145,h:24,baseW:145,vx:0};
@@ -1396,6 +1411,9 @@
       c.shadowBlur=0;c.globalAlpha=1;
       c.font=`normal ${r*2}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
       c.textAlign='center';c.textBaseline='middle';c.fillText('🔥',x,y+1);
+    }else if(skinImages[skin.id]){
+      // Todas as artes usam a bola de fogo como referência: diâmetro exato de 2*r.
+      c.drawImage(skinImages[skin.id],x-r,y-r,r*2,r*2);
     }else if(skin.id==='ice'||skin.id==='angry'){
       c.font=`${r*2}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);
     }else{
@@ -1432,13 +1450,24 @@
       ctx.beginPath();ctx.arc(hit.x,hit.y,4+18*t,Math.PI,Math.PI*2);ctx.stroke();ctx.restore();
     }
   }
+  function drawPaddleSkin(c,skin,x,y,w,h){
+    const img=skinImages[skin.id];
+    if(!img)return false;
+    c.save();c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=6;
+    c.drawImage(img,x,y,w,h);c.restore();return true;
+  }
   function drawPaddle(){
     if(modifiers.some(m=>m.type==='ghostPaddle'))return;
     ctx.shadowColor='rgba(0,0,0,.25)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;
     const stretch=paddle.w<=ball.r*2+.1?0:paddleImpact*Math.min(28,paddle.w*.24),height=paddle.h*(1-paddleImpact*.22);
-    const g=ctx.createLinearGradient(0,paddle.y,0,paddle.y+paddle.h);g.addColorStop(0,'#fff');g.addColorStop(1,'#dce5f4');ctx.fillStyle=g;
-    roundRect(ctx,paddle.x-stretch/2,paddle.y,paddle.w+stretch,height,height/2);
-    ctx.fill();ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+    const currentPaddle=paddleSkins.find(s=>s.id===selectedPaddle)||paddleSkins[0];
+    const visualX=paddle.x-stretch/2,visualW=paddle.w+stretch;
+    const rendered=drawPaddleSkin(ctx,currentPaddle,visualX,paddle.y,visualW,height);
+    if(!rendered){
+      const g=ctx.createLinearGradient(0,paddle.y,0,paddle.y+paddle.h);g.addColorStop(0,'#fff');g.addColorStop(1,'#dce5f4');ctx.fillStyle=g;
+      roundRect(ctx,visualX,paddle.y,visualW,height,height/2);ctx.fill();
+    }
+    ctx.shadowBlur=0;ctx.shadowOffsetY=0;
     const megaGlow=eventState.megaPaddleUntil>elapsed?clamp((eventState.megaPaddleUntil-elapsed-9.3)/.7,0,1):0;
     if(megaGlow>0){
       ctx.save();ctx.globalAlpha=megaGlow;ctx.strokeStyle='#ffe19a';ctx.shadowColor='#ffd45a';ctx.shadowBlur=18;ctx.lineWidth=3;
@@ -1727,6 +1756,7 @@
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
+    if(drawPaddleSkin(c,skin,x-w/2,y,w,h))return;
     c.save();c.shadowColor='rgba(0,0,0,.25)';c.shadowBlur=10;c.shadowOffsetY=5;
     const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,skin.color);g.addColorStop(1,'#253752');c.fillStyle=g;
     roundRect(c,x-w/2,y,w,h,h/2);c.fill();c.shadowBlur=0;
