@@ -92,6 +92,9 @@
     #closeShop { width:44px; height:44px; border-radius:16px; color:white; background:rgba(255,255,255,.1); font-size:21px; }
     #shopBalance { max-width:560px; margin:0 auto 18px; opacity:.72; font-weight:800; }
     .shopGrid { max-width:560px; margin:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .shopTabs { max-width:560px; margin:0 auto 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .shopTab { height:44px; border-radius:14px; background:rgba(255,255,255,.08); color:#c8d8ef; font-weight:900; letter-spacing:.05em; }
+    .shopTab.active { color:#fff; background:linear-gradient(135deg,#287ef3,#1552b8); box-shadow:0 8px 20px rgba(28,108,235,.25); }
     .item { min-height:142px; padding:16px; border-radius:24px; background:rgba(255,255,255,.07); border:2px solid transparent; color:#fff; text-align:left; }
     .item.selected { border-color:#3f8cff; background:rgba(50,126,255,.16); }
     .item:focus-visible,#shopAction:focus-visible { outline:3px solid #fff; outline-offset:3px; }
@@ -221,7 +224,11 @@
       <button class="secondary" id="shopListen" hidden>OUVIR SOM DA BOLA 8</button>
       <button class="primary" id="shopAction"></button>
     </div>
-    <p class="shopHint">Toque numa skin para experimentar o visual.</p>
+    <div class="shopTabs" role="tablist" aria-label="Categoria da loja">
+      <button class="shopTab active" id="shopBallsTab" role="tab" aria-selected="true">BOLAS</button>
+      <button class="shopTab" id="shopPaddlesTab" role="tab" aria-selected="false">BASTÕES</button>
+    </div>
+    <p class="shopHint" id="shopHint">Toque numa bola para experimentar o visual.</p>
     <div class="shopGrid" id="shopGrid"></div>
   </section>
 
@@ -355,8 +362,23 @@
     {id:'angry', name:'Bravo', icon:'😡', price:80, color:'#ef4444'},
     {id:'matte', name:'Preta Fosca', icon:'●', price:0, color:'#020205', locked:true}
   ];
+  const paddleSkins = [
+    {id:'classic',name:'Clássico',icon:'▬',price:0,color:'#f6f8ff'},
+    {id:'poolCue',name:'Taco de Sinuca',icon:'🎱',price:45,color:'#b87936'},
+    {id:'lightsaber',name:'Sabre de Luz',icon:'⚡',price:80,color:'#52c8ff'},
+    {id:'magicStaff',name:'Cajado Mágico',icon:'✦',price:95,color:'#f08cff'},
+    {id:'laserPanel',name:'Painel Laser',icon:'▤',price:110,color:'#54f4ff'},
+    {id:'katana',name:'Katana',icon:'⚔',price:130,color:'#d8e7ff'},
+    {id:'runeSword',name:'Espada Rúnica',icon:'✧',price:145,color:'#68a8ff'},
+    {id:'rgbRail',name:'Trilho RGB',icon:'▤',price:160,color:'#e85dff'},
+    {id:'candySpatula',name:'Espátula Doce',icon:'🍭',price:175,color:'#ff9fd7'},
+    {id:'iceBlade',name:'Lâmina de Gelo',icon:'❄',price:190,color:'#aeeaff'},
+    {id:'straw',name:'Canudo Retrô',icon:'🌈',price:210,color:'#ff8fc8'}
+  ];
   let owned=storage.get('owned',['classic']);
   let selected=storage.get('skin','classic');
+  let ownedPaddles=storage.get('ownedPaddles',['classic']);
+  let selectedPaddle=storage.get('paddleSkin','classic');
   let activeSkin=()=>skins.find(s=>s.id===selected)||skins[0];
 
   const paddle={x:0,y:0,w:145,h:24,baseW:145,vx:0};
@@ -1684,24 +1706,32 @@
   };
   $('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');
 
-  let shopPreviewId=selected,shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity;
+  let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity;
   function shopBallPosition(time){
     const u=(time%1.5)/1.5;
     return {x:280+Math.sin(time*.8)*165,y:153-105*4*u*(1-u),life:1};
   }
   function drawShopPreview(){
-    const c=$('#shopPreview').getContext('2d'),skin=skins.find(s=>s.id===shopPreviewId)||skins[0];
+    const c=$('#shopPreview').getContext('2d'),skin=skins.find(s=>s.id===shopPreviewId)||skins[0],paddleSkin=paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0];
     c.setTransform(2,0,0,2,0,0);
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
-    c.fillStyle='#fff';roundRect(c,x-52,178,104,12,6);c.fill();
+    drawShopPaddle(c,paddleSkin,x,184);
     if(skin.id==='fire'){
       const trail=Array.from({length:12},(_,i)=>shopBallPosition(Math.max(0,shopTime-(11-i)/60)));
       drawFireTrail(c,trail,24,shopTime);
     }
     drawSkin(c,skin,x,y,24);
+  }
+  function drawShopPaddle(c,skin,x,y){
+    const w=104,h=12;
+    c.save();c.shadowColor='rgba(0,0,0,.25)';c.shadowBlur=10;c.shadowOffsetY=5;
+    const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,skin.color);g.addColorStop(1,'#253752');c.fillStyle=g;
+    roundRect(c,x-w/2,y,w,h,h/2);c.fill();c.shadowBlur=0;
+    if(skin.id!=='classic'){c.globalAlpha=.8;c.strokeStyle='#fff';c.lineWidth=1.5;roundRect(c,x-w/2+2,y+2,w-4,h-4,(h-4)/2);c.stroke();}
+    c.restore();
   }
   function animateShop(now){
     shopRaf=0;if(!shopOpen||document.hidden)return;
@@ -1713,33 +1743,40 @@
     if(!document.hidden)shopRaf=requestAnimationFrame(animateShop);
   }
   function renderShop(){
-    $('#shopBalance').textContent='● '+coins+' moedas';const grid=$('#shopGrid');grid.innerHTML='';
-    const current=skins.find(s=>s.id===shopPreviewId)||skins[0];
-    const hasSkin=owned.includes(current.id),locked=current.id==='matte'&&!hasSkin;
-    const using=selected===current.id,affordable=coins>=current.price;
+    $('#shopBalance').textContent='💲 '+coins+' moedas';const grid=$('#shopGrid');grid.innerHTML='';
+    const isBalls=shopCategory==='balls';
+    const current=isBalls?(skins.find(s=>s.id===shopPreviewId)||skins[0]):(paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0]);
+    const ownedList=isBalls?owned:ownedPaddles;
+    const selectedId=isBalls?selected:selectedPaddle;
+    const hasSkin=ownedList.includes(current.id),locked=isBalls&&current.id==='matte'&&!hasSkin;
+    const using=selectedId===current.id,affordable=coins>=current.price;
+    $('#shopBallsTab').classList.toggle('active',isBalls);$('#shopPaddlesTab').classList.toggle('active',!isBalls);
+    $('#shopBallsTab').setAttribute('aria-selected',String(isBalls));$('#shopPaddlesTab').setAttribute('aria-selected',String(!isBalls));
+    $('#shopHint').textContent=isBalls?'Toque numa bola para experimentar o visual.':'Toque num bastão para experimentar o visual.';
     $('#shopSkinName').textContent=current.name;
-    $('#shopFeature').textContent=current.id==='fire'?'Rastro de chamas. Apenas no blackout, do 96 ao 100, fica o rastro branco.'
-      :current.id==='eight'?'Batida exclusiva, que fica mais grave conforme a partida avança.':'Visual da skin durante a partida.';
-    $('#shopListen').hidden=current.id!=='eight';
+    $('#shopFeature').textContent=isBalls?(current.id==='fire'?'Rastro de chamas. Apenas no blackout, do 96 ao 100, fica o rastro branco.':current.id==='eight'?'Batida exclusiva, que fica mais grave conforme a partida avança.':'Visual da bola durante a partida.'):'Visual do bastão durante a partida.';
+    $('#shopListen').hidden=!isBalls||current.id!=='eight';
     $('#shopListen').textContent=soundOn?'OUVIR SOM DA BOLA 8':'ATIVAR SOM E OUVIR';
-    $('#shopPreview').setAttribute('aria-label','Prévia em movimento: '+current.name);
+    $('#shopPreview').setAttribute('aria-label','Prévia da bola e do bastão: '+current.name);
     $('#shopSkinStatus').textContent=locked?'Bloqueada · alcance 50 pontos para desbloquear'
       :using?'Selecionada · em uso':hasSkin?'Adquirida · pronta para usar':current.price+' moedas · '+(affordable?'disponível para comprar':'faltam '+(current.price-coins)+' moedas');
     const action=$('#shopAction');action.disabled=locked||using||(!hasSkin&&!affordable);
     action.textContent=locked?'DESBLOQUEIE COM 50 PONTOS':using?'SELECIONADA':hasSkin?'USAR ESTA SKIN':'COMPRAR E USAR · '+current.price+' MOEDAS';
-    for(const s of skins){
-      const isOwned=owned.includes(s.id), locked=s.id==='matte'&&!isOwned;
-      const b=document.createElement('button');b.className='item'+(shopPreviewId===s.id?' selected':'');
-      b.setAttribute('aria-pressed',String(shopPreviewId===s.id));
-      const status=locked?'Bloqueada · 50 pontos':selected===s.id?'Selecionada':isOwned?'Adquirida':s.price+' moedas';
+    for(const s of (isBalls?skins:paddleSkins)){
+      const isOwned=ownedList.includes(s.id), itemLocked=isBalls&&s.id==='matte'&&!isOwned;
+      const b=document.createElement('button');b.className='item'+((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id?' selected':'');
+      b.setAttribute('aria-pressed',String((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id));
+      const status=itemLocked?'Bloqueada · 50 pontos':selectedId===s.id?'Selecionada':isOwned?'Adquirida':s.price+' moedas';
       b.innerHTML=`<span class="preview">${s.icon}</span><strong>${s.name}</strong><small>${status}</small>`;
       b.onclick=()=>{
-        shopPreviewId=s.id;renderShop();
+        if(isBalls)shopPreviewId=s.id;else shopPreviewPaddleId=s.id;renderShop();
         $('#shopPreview').scrollIntoView({behavior:'smooth',block:'nearest'});
       };grid.appendChild(b);
     }
     drawShopPreview();
   }
+  $('#shopBallsTab').onclick=()=>{shopCategory='balls';renderShop();};
+  $('#shopPaddlesTab').onclick=()=>{shopCategory='paddles';renderShop();};
   $('#shopListen').onclick=()=>{
     if(!shopOpen||shopPreviewId!=='eight'||performance.now()-lastShopListen<250)return;
     lastShopListen=performance.now();
@@ -1750,15 +1787,18 @@
     $('#shopFeature').textContent='Prévia da batida inicial. O som fica mais grave conforme a partida avança.';
   };
   $('#shopAction').onclick=()=>{
-    const skin=skins.find(s=>s.id===shopPreviewId);if(!skin)return;
-    if(!owned.includes(skin.id)){
-      if(skin.id==='matte'||coins<skin.price)return;
-      coins-=skin.price;owned.push(skin.id);storage.set('coins',coins);storage.set('owned',owned);updateHUD();
+    const isBalls=shopCategory==='balls';
+    const list=isBalls?skins:paddleSkins,ownedList=isBalls?owned:ownedPaddles;
+    const id=isBalls?shopPreviewId:shopPreviewPaddleId,skin=list.find(s=>s.id===id);if(!skin)return;
+    if(!ownedList.includes(skin.id)){
+      if((isBalls&&skin.id==='matte')||coins<skin.price)return;
+      coins-=skin.price;ownedList.push(skin.id);storage.set('coins',coins);storage.set(isBalls?'owned':'ownedPaddles',ownedList);updateHUD();
     }
-    selected=skin.id;storage.set('skin',selected);renderShop();render();tone(660,.08);
+    if(isBalls){selected=skin.id;storage.set('skin',selected);}else{selectedPaddle=skin.id;storage.set('paddleSkin',selectedPaddle);}
+    renderShop();render();tone(660,.08);
   };
   document.querySelectorAll('.openShop').forEach(b=>b.onclick=()=>{
-    shopOpen=true;shopPreviewId=selected;shopTime=0;
+    shopOpen=true;shopPreviewId=selected;shopPreviewPaddleId=selectedPaddle;shopCategory='balls';shopTime=0;
     $('#shopPanel').classList.remove('hidden');renderShop();startShopPreview();
   });
   $('#closeShop').onclick=()=>{shopOpen=false;cancelAnimationFrame(shopRaf);shopRaf=0;$('#shopPanel').classList.add('hidden');};
