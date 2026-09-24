@@ -140,7 +140,7 @@
         <button class="secondary openShop">LOJA</button>
         <button class="secondary" id="sound">SOM: ON</button>
       </div>
-      <p class="buildLabel">VERSÃO DE TESTE · 46</p>
+      <p class="buildLabel">VERSÃO DE TESTE · 47</p>
     </div>
   </section>
 
@@ -1366,11 +1366,13 @@
   function drawSkin(c,skin,x,y,r){
     c.save();
     if(skin.id==='fire'){
-      // A chama emoji é o corpo oficial da skin. O glow só evita que ela se perca no fundo.
-      c.shadowColor='rgba(255,92,28,.72)';c.shadowBlur=12;
+      // O brilho é desenhado separado: shadowBlur diretamente em emoji colorido pode fazê-lo sumir no Canvas móvel.
+      const glow=c.createRadialGradient(x,y,0,x,y,r*1.45);
+      glow.addColorStop(0,'rgba(255,174,48,.22)');glow.addColorStop(.55,'rgba(255,72,22,.10)');glow.addColorStop(1,'rgba(255,44,12,0)');
+      c.fillStyle=glow;c.beginPath();c.arc(x,y,r*1.45,0,Math.PI*2);c.fill();
+      c.shadowBlur=0;
       c.font=`normal ${r*2}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
       c.textAlign='center';c.textBaseline='middle';c.fillText('🔥',x,y+1);
-      c.shadowBlur=0;
     }else if(skin.id==='ice'||skin.id==='angry'){
       c.font=`${r*2}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);
     }else{
