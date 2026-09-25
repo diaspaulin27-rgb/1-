@@ -10,7 +10,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#061126; touch-action:none; }
     button { font:inherit; border:0; cursor:pointer; }
-    #game { position:fixed; inset:0; width:100%; height:100%; display:block; }
+    #game { position:fixed; inset:0; width:100%; height:100%; display:block; image-rendering:auto; }
     .fireEmojiOverlay { position:fixed; z-index:2; display:none; pointer-events:none; transform:translate(-50%,-50%); line-height:1; font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
     #hud { position:fixed; z-index:3; left:0; right:0; top:0; padding:max(18px, env(safe-area-inset-top)) 18px 0; display:flex; align-items:center; gap:10px; pointer-events:none; }
     .pill { height:56px; border-radius:22px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.13); box-shadow:0 8px 30px rgba(0,0,0,.12); backdrop-filter:blur(12px); display:flex; align-items:center; color:white; }
@@ -237,6 +237,8 @@
   'use strict';
   const canvas = document.querySelector('#game');
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
   const $ = s => document.querySelector(s);
   const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
   const rand = (a,b) => a + Math.random()*(b-a);
@@ -451,6 +453,8 @@
     canvas.width=W*dpr; canvas.height=H*dpr;
     canvas.style.width=W+'px'; canvas.style.height=H+'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
     paddle.y=H-Math.max(88,envSafeBottom()+62);
     paddle.x=clamp(paddle.x||W/2-paddle.w/2,8,W-paddle.w-8);
     if(mode==='menu'){ ball.x=W/2; ball.y=H*.38; }
@@ -1453,8 +1457,14 @@
   function drawPaddleSkin(c,skin,x,y,w,h){
     const img=skinImages[skin.id];
     if(!img)return false;
-    c.save();c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=6;
-    c.drawImage(img,x,y,w,h);c.restore();return true;
+    c.save();
+    c.imageSmoothingEnabled=true;
+    c.imageSmoothingQuality='high';
+    const scale=c===ctx?dpr:2;
+    const snap=v=>Math.round(v*scale)/scale;
+    const dx=snap(x),dy=snap(y),dw=Math.max(1/scale,snap(w)),dh=Math.max(1/scale,snap(h));
+    c.shadowColor='rgba(0,0,0,.22)';c.shadowBlur=6;c.shadowOffsetY=3;
+    c.drawImage(img,dx,dy,dw,dh);c.restore();return true;
   }
   function drawPaddle(){
     if(modifiers.some(m=>m.type==='ghostPaddle'))return;
@@ -1743,6 +1753,8 @@
   function drawShopPreview(){
     const c=$('#shopPreview').getContext('2d'),skin=skins.find(s=>s.id===shopPreviewId)||skins[0],paddleSkin=paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0];
     c.setTransform(2,0,0,2,0,0);
+    c.imageSmoothingEnabled=true;
+    c.imageSmoothingQuality='high';
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
