@@ -405,18 +405,19 @@
   // ===== RASTROS DAS SKINS — ribbon + pool fixo de partículas =====
   // "energy" usa o visual de nuvem/tempestade e "ice" usa a arte plasma.png.
   const TRAIL_PROFILES={
-    meteor:{limit:22,fade:2.9,width:1.08,spawn:.026},
-    eight:{limit:18,fade:3.5,width:.68,spawn:.050},
-    energy:{limit:20,fade:2.7,width:1.05,spawn:.042},
-    earth:{limit:21,fade:3.0,width:.78,spawn:.046},
-    ice:{limit:22,fade:2.8,width:.92,spawn:.040},
-    unicorn:{limit:24,fade:2.8,width:.92,spawn:.038},
-    shuriken:{limit:18,fade:3.8,width:.62,spawn:.058},
-    cyberpunk:{limit:20,fade:3.1,width:.72,spawn:.040},
-    donut:{limit:18,fade:3.0,width:.92,spawn:.045},
-    soda:{limit:19,fade:3.0,width:.78,spawn:.043}
+    // Comprimento calibrado pela bola de fogo: ~12 posições, curto e colado na bola.
+    meteor:{limit:12,fade:4.0,width:.96,spawn:.034},
+    eight:{limit:11,fade:4.4,width:.60,spawn:.060},
+    energy:{limit:12,fade:4.1,width:.92,spawn:.052},
+    earth:{limit:12,fade:4.2,width:.70,spawn:.054},
+    ice:{limit:12,fade:4.1,width:.82,spawn:.050},
+    unicorn:{limit:13,fade:4.0,width:.82,spawn:.048},
+    shuriken:{limit:10,fade:4.8,width:.56,spawn:.068},
+    cyberpunk:{limit:12,fade:4.3,width:.66,spawn:.052},
+    donut:{limit:11,fade:4.2,width:.82,spawn:.055},
+    soda:{limit:11,fade:4.2,width:.70,spawn:.054}
   };
-  const TRAIL_PARTICLE_CAP=80;
+  const TRAIL_PARTICLE_CAP=60;
   const skinTrailParticles=Array.from({length:TRAIL_PARTICLE_CAP},()=>({
     active:false,type:'',x:0,y:0,vx:0,vy:0,life:0,maxLife:1,size:1,
     color:'#fff',color2:'#fff',rot:0,vr:0,g:0,alpha:1,seed:0
@@ -501,6 +502,15 @@
       p.vx=nx*rand(5,20)+tx*jitter()*12;p.vy=-rand(18,55);
       p.maxLife=p.life=rand(.38,.72);p.size=rand(1.8,4.6)*strength;p.color=Math.random()<.45?'#ffd39a':'#fff0cf';
     }
+
+    // Mantém os detalhes no mesmo alcance visual curto da bola de fogo.
+    // O desenho específico de cada skin continua diferente; só reduzimos dispersão e duração.
+    if(p){
+      const lifeCap=skinId==='energy'?.32:skinId==='soda'?.34:skinId==='earth'?.33:.30;
+      p.maxLife=p.life=Math.min(p.life,lifeCap);
+      p.vx*=.58;p.vy*=.58;
+      p.size*=.92;
+    }
   }
 
   function updateSkinTrailParticles(dt){
@@ -517,7 +527,7 @@
         while(movingBall._trailClock>=interval&&guard++<3){
           movingBall._trailClock-=interval;
           emitSkinTrailParticle(movingBall,skin.id,movingBall===fakeBall);
-          if(['meteor','unicorn','donut'].includes(skin.id)&&Math.random()<.35)emitSkinTrailParticle(movingBall,skin.id,movingBall===fakeBall);
+          if(['meteor','unicorn','donut'].includes(skin.id)&&Math.random()<.18)emitSkinTrailParticle(movingBall,skin.id,movingBall===fakeBall);
         }
       }
     }
