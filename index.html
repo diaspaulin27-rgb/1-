@@ -425,30 +425,62 @@
   }
 
   function drawSoccerTrail(c,trail,r,time){
+    // Grama verde: mesmo alcance temporal/espacial da 🔥 (12 posições),
+    // mas com lâminas de grama em vez de uma faixa contínua.
     const points=trail.slice(-12);if(points.length<2)return;
-    c.save();c.lineCap='round';c.lineJoin='round';
+    const greens=['#2f9e44','#43b649','#65c95a','#8bd66f'];
+    c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
-      const a=points[i-1],b=points[i],strength=i/(points.length-1),life=clamp(b.life??1,0,1);
-      c.globalAlpha=life*(.10+.34*strength);c.strokeStyle='#ffffff';c.shadowColor='#d9e3ee';c.shadowBlur=5;
-      c.lineWidth=Math.max(.8,r*(.14+.34*strength));c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();
-      if(i%3===0){c.globalAlpha=life*.35;c.fillStyle='#1b2530';c.beginPath();c.arc(b.x+Math.sin(i*2.1+time)*2,b.y+Math.cos(i*1.7+time)*2,Math.max(.7,r*.07),0,Math.PI*2);c.fill();}
+      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
+      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
+      const nx=-dy/len,ny=dx/len;
+      // 2–4 lâminas por ponto: quantidade cresce perto da bola, sem alongar o rastro.
+      const blades=2+(i%3===0?1:0)+(strength>.72?1:0);
+      for(let j=0;j<blades;j++){
+        const side=(j-(blades-1)/2);
+        const spread=side*r*(.16+.09*strength);
+        const sway=Math.sin(i*2.13+j*1.71+time*4.2)*r*.035;
+        const x=p.x+nx*(spread+sway),y=p.y+ny*(spread+sway);
+        const h=r*(.16+.18*strength)*(j%2?.82:1.08);
+        c.globalAlpha=life*(.24+.58*strength);
+        c.strokeStyle=greens[(i+j)%greens.length];
+        c.lineWidth=Math.max(.75,r*.055);
+        c.beginPath();
+        c.moveTo(x,y);
+        c.quadraticCurveTo(x+nx*h*.25,y+ny*h*.25,x+nx*h*.18-dx/len*h*.72,y+ny*h*.18-dy/len*h*.72);
+        c.stroke();
+      }
+      // Pequena poeira/fragmento de grama ocasional para dar velocidade.
+      if(i%4===1){
+        c.globalAlpha=life*.36;c.fillStyle='#9cdd78';
+        c.beginPath();c.arc(p.x+nx*Math.sin(i*1.7)*r*.22,p.y+ny*Math.sin(i*1.7)*r*.22,Math.max(.55,r*.038),0,Math.PI*2);c.fill();
+      }
     }
     c.restore();c.globalAlpha=1;
   }
 
   function drawDonutTrail(c,trail,r,time){
+    // Confetes/granulados coloridos. O alcance continua exatamente em 12 posições,
+    // igual ao rastro da 🔥; só a densidade visual é diferente.
     const points=trail.slice(-12);if(points.length<2)return;
-    const colors=['#ffde4d','#55d9ff','#8fff72','#ffffff','#7f5cff','#ff6b9f'];
+    const colors=['#ff4f87','#ffd84a','#48d7ff','#7de35f','#9a6cff','#ffffff','#ff8a3d'];
     c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
-      const p=points[i],prev=points[i-1],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const dx=p.x-prev.x,dy=p.y-prev.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      for(let j=0;j<2;j++){
-        const side=j?1:-1,spread=r*(.20+.22*strength)*(1+.18*Math.sin(i*1.9+j+time*3));
-        const x=p.x+nx*spread*side,y=p.y+ny*spread*side;
-        const size=Math.max(1,r*(.055+.045*strength));
-        c.save();c.translate(x,y);c.rotate((i*1.7+j*.9+time*2.2)%Math.PI);c.globalAlpha=life*(.28+.52*strength);
-        c.strokeStyle=colors[(i*2+j)%colors.length];c.lineWidth=Math.max(1,size*.7);c.beginPath();c.moveTo(-size,0);c.lineTo(size,0);c.stroke();c.restore();
+      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
+      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+      const count=2+(i%2)+(strength>.68?1:0);
+      for(let j=0;j<count;j++){
+        const phase=i*2.07+j*1.91;
+        const lateral=Math.sin(phase)*r*(.10+.24*strength);
+        const along=Math.cos(phase*1.37)*r*.07;
+        const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
+        const size=Math.max(.9,r*(.045+.035*((i+j)%3)));
+        c.save();c.translate(x,y);c.rotate(phase+time*1.4);
+        c.globalAlpha=life*(.30+.60*strength);
+        c.strokeStyle=colors[(i*3+j)%colors.length];
+        c.lineWidth=Math.max(1,size*.72);
+        c.beginPath();c.moveTo(-size,0);c.lineTo(size,0);c.stroke();
+        c.restore();
       }
     }
     c.restore();c.globalAlpha=1;
@@ -470,34 +502,57 @@
   }
 
   function drawChalkTrail(c,trail,r,time){
+    // Fumaça/pó de giz branco e azul. Mesmo comprimento da 🔥 (12 posições),
+    // com nuvens macias em vez de uma linha luminosa.
     const points=trail.slice(-12);if(points.length<2)return;
-    c.save();c.lineCap='round';c.lineJoin='round';
+    c.save();
     for(let i=1;i<points.length;i++){
-      const a=points[i-1],b=points[i],strength=i/(points.length-1),life=clamp(b.life??1,0,1);
-      const width=Math.max(1,r*(.12+.30*strength));
-      c.globalAlpha=life*(.10+.34*strength);c.strokeStyle='#6da8df';c.shadowColor='#8cc8ff';c.shadowBlur=6;c.lineWidth=width;
-      c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();
-      c.globalAlpha=life*(.10+.26*strength);c.strokeStyle='#ffffff';c.shadowBlur=3;c.lineWidth=Math.max(.8,width*.42);
-      c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();
-      if(i%2===0){
-        c.globalAlpha=life*.42;c.fillStyle=i%4===0?'#eaf7ff':'#7eb5e2';
-        c.beginPath();c.arc(b.x+Math.sin(i*3.1+time)*r*.18,b.y+Math.cos(i*2.4+time)*r*.18,Math.max(.6,r*.055),0,Math.PI*2);c.fill();
+      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
+      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+      const puffCount=2+(i%3===0?1:0);
+      for(let j=0;j<puffCount;j++){
+        const phase=i*2.31+j*2.67;
+        const spread=Math.sin(phase)*r*(.10+.18*strength);
+        const x=p.x+nx*spread,y=p.y+ny*spread;
+        const radius=r*(.10+.14*strength)*(j===0?1:.78);
+        const blue=(i+j)%3===0;
+        const grad=c.createRadialGradient(x,y,0,x,y,radius*1.55);
+        grad.addColorStop(0,blue?'rgba(126,184,232,.58)':'rgba(255,255,255,.56)');
+        grad.addColorStop(.48,blue?'rgba(104,159,207,.28)':'rgba(235,246,255,.26)');
+        grad.addColorStop(1,'rgba(255,255,255,0)');
+        c.globalAlpha=life*(.26+.55*strength);
+        c.fillStyle=grad;
+        c.beginPath();c.arc(x,y,radius*1.55,0,Math.PI*2);c.fill();
+      }
+      if(i%3===1){
+        c.globalAlpha=life*.42;c.fillStyle=i%2?'#dcefff':'#8abce4';
+        c.beginPath();c.arc(p.x+nx*Math.sin(i+time)*r*.18,p.y+ny*Math.sin(i+time)*r*.18,Math.max(.5,r*.035),0,Math.PI*2);c.fill();
       }
     }
     c.restore();c.globalAlpha=1;
   }
 
   function drawMoonTrail(c,trail,r,time){
+    // Estrelas: mesmo alcance da 🔥, com densidade própria e brilho suave.
     const points=trail.slice(-12);if(points.length<2)return;
-    const colors=['#ffffff','#fff3b0','#dcecff'];
+    const colors=['#ffffff','#fff0a8','#d9e8ff'];
     c.save();
     for(let i=1;i<points.length;i++){
       const p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      if(i%2===0){
-        const offset=Math.sin(i*2.2+time*2.4)*r*.28;
-        drawTrailStar(c,p.x+offset,p.y-offset*.55,Math.max(1,r*(.07+.08*strength)),colors[i%colors.length],life*(.22+.65*strength),time+i*.6);
+      const count=(i%3===0||strength>.78)?2:1;
+      for(let j=0;j<count;j++){
+        const phase=i*2.17+j*3.11;
+        const ox=Math.sin(phase+time*.45)*r*(.10+.18*strength);
+        const oy=Math.cos(phase*1.19+time*.36)*r*(.08+.16*strength);
+        const size=Math.max(.9,r*(.055+.075*strength)*(j?0.72:1));
+        c.save();c.shadowColor=colors[(i+j)%colors.length];c.shadowBlur=5;
+        drawTrailStar(c,p.x+ox,p.y+oy,size,colors[(i+j)%colors.length],life*(.28+.66*strength),phase+time*.35);
+        c.restore();
       }
-      if(i%3===0){c.globalAlpha=life*.45;c.fillStyle='#ffffff';c.beginPath();c.arc(p.x-offsetSafe(i,time,r),p.y+offsetSafe(i+2,time,r)*.4,Math.max(.55,r*.04),0,Math.PI*2);c.fill();}
+      if(i%4===2){
+        c.globalAlpha=life*.5;c.fillStyle='#ffffff';
+        c.beginPath();c.arc(p.x-r*.08,p.y+r*.06,Math.max(.5,r*.035),0,Math.PI*2);c.fill();
+      }
     }
     c.restore();c.globalAlpha=1;
   }
