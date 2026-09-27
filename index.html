@@ -1506,8 +1506,9 @@
     if(!neon&&skin.id==='fire')drawFireTrail(ctx,movingBall.trail,movingBall.r,elapsed);
     else if(!neon&&TRAIL_PROFILES[skin.id])drawEmojiSkinTrail(ctx,skin,movingBall.trail,movingBall.r,elapsed);
     ctx.globalAlpha=1;
-    // O corpo 🔥 é um elemento DOM estável; drawSkin continua sendo usado na prévia da loja.
-    if(skin.id!=='fire')drawSkin(ctx,skin,movingBall.x,movingBall.y,movingBall.r);
+    // O corpo das 6 bolas-emoji fica em overlay DOM estável no gameplay.
+    // drawSkin continua sendo usado apenas na prévia da loja, evitando o sumiço
+    // intermitente de emojis rasterizados pelo Canvas no Safari/iPhone.
   }
   function drawFireTrail(c,trail,r,time){
     const points=trail.slice(-12);
@@ -1713,14 +1714,16 @@
     ctx.fillStyle='#fff';ctx.fillText('👆',x,y-8);ctx.restore();
   }
   function updateFireEmojiOverlay(){
-    const fire=document.querySelector('#fireEmojiOverlay'),fake=document.querySelector('#fakeFireEmojiOverlay');
-    const canShow=mode==='playing'&&activeSkin().id==='fire'&&!mysteryCurse.dual&&!mysteryCurse.armed;
+    const main=document.querySelector('#fireEmojiOverlay'),fake=document.querySelector('#fakeFireEmojiOverlay');
+    const skin=activeSkin();
+    const canShow=mode==='playing'&&!mysteryCurse.dual&&!mysteryCurse.armed;
     const blackout=restHits===0&&score>=96&&score<=100;
     function place(node,b,visible){
       if(!visible){node.style.display='none';return;}
+      if(node.textContent!==skin.icon)node.textContent=skin.icon;
       node.style.display='block';node.style.left=b.x+'px';node.style.top=b.y+'px';node.style.fontSize=(b.r*2)+'px';
     }
-    place(fire,ball,canShow&&!blackout);
+    place(main,ball,canShow&&!blackout);
     place(fake,fakeBall,canShow&&!blackout&&fakeBall.active&&eventState.fakeBallUntil>elapsed);
   }
   function render(){
