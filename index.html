@@ -425,7 +425,7 @@
   }
 
   function drawSoccerTrail(c,trail,r,time){
-    // Grama verde: mesmo alcance do 🔥, porém mais legível como tufos/lâminas.
+    // Grama verde: mesmo alcance do 🔥, mas com densidade bem maior.
     const points=trail.slice(-12);if(points.length<2)return;
     const greens=['#1d7f2f','#2ea63d','#63c74d','#a7e57c'];
     c.save();c.lineCap='round';c.lineJoin='round';
@@ -434,37 +434,48 @@
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
       const tx=-dx/len,ty=-dy/len,nx=-dy/len,ny=dx/len;
 
-      // Base curta e suave para garantir leitura no preview sem virar faixa longa.
-      c.globalAlpha=life*(.10+.18*strength);
-      c.strokeStyle='rgba(78,175,67,.95)';
-      c.lineWidth=Math.max(1,r*(.12+.07*strength));
+      // Base curta e suave para garantir leitura sem aumentar o comprimento.
+      c.globalAlpha=life*(.12+.22*strength);
+      c.strokeStyle='rgba(78,175,67,.98)';
+      c.lineWidth=Math.max(1.1,r*(.13+.08*strength));
       c.beginPath();
       c.moveTo(p.x,p.y);
       c.lineTo(p.x+tx*r*(.18+.18*strength),p.y+ty*r*(.18+.18*strength));
       c.stroke();
 
-      const tufts=3+(strength>.45?1:0)+(strength>.75?1:0);
+      // Aumenta bastante a quantidade de tufos, mantendo o mesmo alcance do rastro.
+      const tufts=5+(strength>.28?1:0)+(strength>.52?1:0)+(strength>.76?1:0);
       for(let j=0;j<tufts;j++){
         const side=(j-(tufts-1)/2);
-        const lateral=side*r*(.11+.06*strength)+Math.sin(i*1.7+j*2.3+time*4.5)*r*.022;
-        const baseX=p.x+nx*lateral+tx*r*.04;
-        const baseY=p.y+ny*lateral+ty*r*.04;
-        const h=r*(.13+.15*strength)*(j%2?0.9:1.08);
-        const lean=(side*0.18)+Math.sin(i*0.8+j*1.4)*0.12;
-        c.globalAlpha=life*(.26+.60*strength);
+        const lateral=side*r*(.082+.046*strength)+Math.sin(i*1.7+j*2.3+time*4.5)*r*.024;
+        const baseX=p.x+nx*lateral+tx*r*.05;
+        const baseY=p.y+ny*lateral+ty*r*.05;
+        const h=r*(.12+.145*strength)*(j%2?0.92:1.08);
+        const lean=(side*0.14)+Math.sin(i*0.8+j*1.4)*0.10;
+        c.globalAlpha=life*(.28+.62*strength);
         c.strokeStyle=greens[(i+j)%greens.length];
-        c.lineWidth=Math.max(.9,r*.052);
+        c.lineWidth=Math.max(.92,r*.05);
         c.beginPath();
         c.moveTo(baseX,baseY);
-        c.quadraticCurveTo(baseX+nx*h*(.18+lean)+tx*h*.22,baseY+ny*h*(.18+lean)+ty*h*.22,baseX+nx*h*(.30+lean)+tx*h*.80,baseY+ny*h*(.30+lean)+ty*h*.80);
+        c.quadraticCurveTo(baseX+nx*h*(.16+lean)+tx*h*.20,baseY+ny*h*(.16+lean)+ty*h*.20,baseX+nx*h*(.28+lean)+tx*h*.78,baseY+ny*h*(.28+lean)+ty*h*.78);
         c.stroke();
       }
 
-      if(i%3===1){
-        c.globalAlpha=life*(.22+.20*strength);
-        c.fillStyle=i%2?'#8fdd69':'#d9f6a7';
+      // Mais fragmentos leves de grama, sem alongar o efeito.
+      const flecks=(i%2===0?2:1)+(strength>.65?1:0);
+      for(let k=0;k<flecks;k++){
+        const jitter=(k-(flecks-1)/2)*r*.11;
+        c.globalAlpha=life*(.24+.20*strength);
+        c.fillStyle=(k+i)%2?'#8fdd69':'#d9f6a7';
         c.beginPath();
-        c.ellipse(p.x+nx*Math.sin(i*1.4+time)*r*.18,p.y+ny*Math.sin(i*1.4+time)*r*.18,Math.max(.7,r*.05),Math.max(.45,r*.028),Math.atan2(dy,dx),0,Math.PI*2);
+        c.ellipse(
+          p.x+nx*(Math.sin(i*1.4+time)*r*.18+jitter)+tx*r*.03,
+          p.y+ny*(Math.sin(i*1.4+time)*r*.18+jitter)+ty*r*.03,
+          Math.max(.72,r*.052),
+          Math.max(.45,r*.028),
+          Math.atan2(dy,dx)+k*.2,
+          0,Math.PI*2
+        );
         c.fill();
       }
     }
