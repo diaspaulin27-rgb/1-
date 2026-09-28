@@ -70,6 +70,12 @@
     .primary { width:100%; height:62px; margin-top:32px; border-radius:22px; color:#0865ec; background:#fff; font-weight:950; font-size:18px; box-shadow:0 16px 45px rgba(1,17,53,.26); }
     .rewarded { width:100%; min-height:58px; margin-top:10px; padding:10px 16px; border-radius:20px; color:#fff; background:linear-gradient(135deg,rgba(113,68,203,.78),rgba(45,20,92,.86)); border:1px solid rgba(255,255,255,.22); font-weight:950; font-size:14px; letter-spacing:.015em; box-shadow:0 12px 32px rgba(15,4,42,.22); }
     .rewarded small { display:block; margin-top:3px; font-size:10px; letter-spacing:.1em; opacity:.68; }
+    #skip25Offer { position:fixed; z-index:7; left:18px; bottom:calc(max(18px,env(safe-area-inset-bottom)) + 92px); width:108px; min-height:58px; padding:8px 10px; border-radius:18px; color:#fff; background:linear-gradient(135deg,rgba(113,68,203,.94),rgba(45,20,92,.96)); border:1px solid rgba(255,255,255,.28); box-shadow:0 10px 28px rgba(15,4,42,.28); font-weight:950; font-size:14px; line-height:1.05; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .22s ease,visibility 0s linear .22s; }
+    #skip25Offer.show { opacity:1; visibility:visible; pointer-events:auto; transition:none; }
+    #skip25Offer small { display:block; margin-top:4px; font-size:9px; letter-spacing:.08em; opacity:.72; }
+    #skip25Close { position:absolute; top:14px; right:14px; width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16); color:#fff; font-size:23px; font-weight:800; }
+    #skip25Watch { width:76px; height:76px; margin:22px auto 4px; border-radius:50%; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,#7d54e8,#4d279e); border:1px solid rgba(255,255,255,.3); box-shadow:0 12px 30px rgba(38,12,92,.35); font-size:30px; }
+
     .secondaryRow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .secondary { height:52px; border-radius:18px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); color:#fff; font-weight:800; }
     .micro { margin-top:18px; font-size:12px; color:rgba(255,255,255,.54); line-height:1.5; }
@@ -139,13 +145,13 @@
   </div>
   <div id="achievement" role="status" aria-live="polite"></div>
   <div id="eventBanner" role="status" aria-live="polite"><span id="noticeTitle"></span><span id="noticeDetail"></span></div>
+  <button id="skip25Offer" aria-label="Pular 25 fases">PULAR +25<small>ASSISTIR VÍDEO</small></button>
 
   <section class="overlay" id="start">
     <div class="card">
       <h1>1%</h1>
       <p class="tag">Cada rebatida deixa tudo 1% mais difícil. Quanto você aguenta?</p>
       <button class="primary" id="play">JOGAR DO ZERO</button>
-      <button class="rewarded" id="boostedStart">COMEÇAR NO 25 — JÁ COMEÇA COM CAOS<small>Assistir anúncio</small></button>
       <div class="secondaryRow">
         <button class="secondary openShop">LOJA</button>
         <button class="secondary" id="sound">SOM: ON</button>
@@ -196,13 +202,14 @@
   </section>
 
   <section class="overlay hidden" id="adScreen">
-    <div class="card">
-      <div class="brand">ANÚNCIO RECOMPENSADO</div>
-      <h2 style="font-size:38px;margin:0">Começar no 25</h2>
-      <div id="adCountdown">3</div>
-      <p class="tag" style="font-size:15px;margin-top:12px">JÁ COMEÇA COM CAOS · Assista ao anúncio para começar no 25.</p>
-      <button class="secondary" id="cancelAd" style="width:100%;margin-top:22px">CANCELAR</button>
-      <p class="micro">Simulação do anúncio para este protótipo.</p>
+    <div class="card" style="position:relative">
+      <button id="skip25Close" aria-label="Fechar">×</button>
+      <div class="brand">ATALHO +25</div>
+      <h2 style="font-size:36px;margin:0">Pule 25 fases</h2>
+      <p class="tag" style="font-size:15px;margin-top:12px">Assista a um vídeo e comece direto no 25.</p>
+      <button id="skip25Watch" aria-label="Assistir vídeo">▶</button>
+      <div id="adCountdown" hidden>3</div>
+      <p class="micro" id="skip25AdNote">Toque no play para assistir.</p>
     </div>
   </section>
 
@@ -253,6 +260,9 @@
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
   let score=0, best=storage.get('best',0), coins=storage.get('coins',0);
+  let skip25Unlocked=storage.get('skip25Unlocked',false)||best>=70;
+  if(skip25Unlocked)storage.set('skip25Unlocked',true);
+  let skip25EligibleThisRun=false,skip25ModalOpen=false;
   let targetX=0, pointerX=0, dragging=false, shake=0, flash=0;
   let startHintRemaining=0;
   // Arte da bola 1% será adicionada depois. A conquista já é persistida
@@ -1004,10 +1014,15 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=2;mode='playing';hideAll();musicBeatClock=0;musicStep=0;setMusicActive(true);last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();musicBeatClock=0;musicStep=0;setMusicActive(true);
+    skip25ModalOpen=false;
+    skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
+    const skipOffer=$('#skip25Offer');
+    skipOffer.classList.toggle('show',skip25EligibleThisRun);
+    last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   }
   function hideAll(){ ['#start','#gameOver','#paused','#adScreen','#reviveScreen'].forEach(s=>$(s).classList.add('hidden')); }
-  function show(sel){ hideAll(); $(sel).classList.remove('hidden'); }
+  function show(sel){ hideAll(); if(sel!=='#adScreen')$('#skip25Offer').classList.remove('show'); $(sel).classList.remove('hidden'); }
 
   function updateHUD(){
     $('#score').textContent=String(score).padStart(3,'0');
@@ -1044,6 +1059,9 @@
   function addScore(n=1,suppressFlash=false){
     const before=score;
     score=Math.min(MAX_SCORE,score+n);
+    if(!skip25Unlocked&&before<70&&score>=70){
+      skip25Unlocked=true;storage.set('skip25Unlocked',true);
+    }
     syncBallSize();
     if(before<=100&&score>100){ball.trail=[];fakeBall.trail=[];}
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
@@ -1428,6 +1446,7 @@
   function update(dt){
     if(startHintRemaining>0){
       startHintRemaining=Math.max(0,startHintRemaining-dt);
+      if(startHintRemaining<=0)$('#skip25Offer').classList.remove('show');
       // O gesto demonstrado não move a barra; relógios e bola aguardam a largada.
       return;
     }
@@ -2065,13 +2084,26 @@
     if(mode==='playing'||mode==='dying')raf=requestAnimationFrame(loop);
   }
 
+  function openSkip25Modal(){
+    if(mode!=='playing'||startHintRemaining<=0||!skip25EligibleThisRun)return;
+    $('#skip25Offer').classList.remove('show');
+    skip25ModalOpen=true;setMusicActive(false);mode='ad';show('#adScreen');
+    $('#adCountdown').hidden=true;$('#skip25Watch').hidden=false;$('#skip25Close').hidden=false;
+    $('#skip25AdNote').textContent='Toque no play para assistir.';
+  }
+  function closeSkip25Modal(){
+    if(!skip25ModalOpen)return;
+    clearInterval(adTimer);skip25ModalOpen=false;mode='playing';$('#adScreen').classList.add('hidden');
+    setMusicActive(true);last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  }
   function requestRewardedStart(){
-    ensureAudio();setMusicActive(false);clearInterval(adTimer);mode='ad';show('#adScreen');
-    let remaining=3; $('#adCountdown').textContent=remaining;
+    if(!skip25ModalOpen)return;
+    ensureAudio();clearInterval(adTimer);$('#skip25Watch').hidden=true;$('#skip25Close').hidden=true;
+    $('#adCountdown').hidden=false;let remaining=3;$('#adCountdown').textContent=remaining;
+    $('#skip25AdNote').textContent='Simulação do anúncio para este protótipo.';
     adTimer=setInterval(()=>{
-      remaining--;
-      $('#adCountdown').textContent=remaining>0?remaining:'✓';
-      if(remaining<=0){clearInterval(adTimer);tone(760,.16,'sine',.05);setTimeout(()=>startGame(25),350);}
+      remaining--;$('#adCountdown').textContent=remaining>0?remaining:'✓';
+      if(remaining<=0){clearInterval(adTimer);skip25ModalOpen=false;tone(760,.16,'sine',.05);setTimeout(()=>startGame(25),350);}
     },1000);
   }
 
@@ -2081,6 +2113,7 @@
     const delta=(clientX-pointerX)*1.2; pointerX=clientX; targetX=clamp(targetX+delta,7,W-paddle.w-7);
     if(startHintRemaining>0&&Math.abs(delta)>0){
       startHintRemaining=0;
+      $('#skip25Offer').classList.remove('show');
       paddle.x=targetX;
     }
   }
@@ -2090,8 +2123,9 @@
   canvas.addEventListener('pointercancel',()=>dragging=false);
 
   $('#play').onclick=()=>startGame(0); $('#again').onclick=()=>startGame(0);
-  $('#boostedStart').onclick=requestRewardedStart;
-  $('#cancelAd').onclick=()=>{clearInterval(adTimer);setMusicActive(false);mode='menu';show('#start');render();};
+  $('#skip25Offer').onclick=openSkip25Modal;
+  $('#skip25Watch').onclick=requestRewardedStart;
+  $('#skip25Close').onclick=closeSkip25Modal;
   function drawShareCard(result){
     const card=document.createElement('canvas');card.width=1080;card.height=1350;
     const c=card.getContext('2d'),palette=visualState(result.score);
