@@ -362,7 +362,8 @@
     {id:'donut', name:'Donut', icon:'🍩', price:165, color:'#ff7eb6'},
     {id:'earth', name:'Terra', icon:'🌎', price:120, color:'#4fc3f7'},
     {id:'eight', name:'Bola 8', icon:'🎱', price:60, color:'#111111'},
-    {id:'moon', name:'Lua', icon:'🌖', price:180, color:'#f2e7c7'}
+    {id:'moon', name:'Lua', icon:'🌖', price:180, color:'#f2e7c7'},
+    {id:'snow', name:'Neve', icon:'❄️', price:150, color:'#8fdcff'}
   ];
   const paddleSkins = [
     {id:'classic',name:'Clássico',icon:'▬',price:0,color:'#f6f8ff'},
@@ -513,7 +514,8 @@
     donut:{limit:12,fade:4},
     earth:{limit:12,fade:4},
     eight:{limit:12,fade:4},
-    moon:{limit:12,fade:4}
+    moon:{limit:12,fade:4},
+    snow:{limit:12,fade:4}
   };
 
   function clearSkinTrailParticles(){
@@ -629,6 +631,24 @@
     }
   }
 
+  function drawSnowTrail(c,trail,r,time){
+    // Mesmo formato e alcance dos rastros atuais, em azul bebê com brilho gelado.
+    const points=trail.slice(-12);
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.64;
+      c.fillStyle=i%2?'#8fdcff':'#bdeeff';c.shadowColor='#9fe5ff';c.shadowBlur=8;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      c.shadowBlur=0;c.globalAlpha=life*strength*.84;c.fillStyle='#f4fdff';
+      c.beginPath();c.arc(0,0,size*.37,0,Math.PI*2);c.fill();
+      c.restore();
+    }
+  }
+
   function drawChalkTrail(c,trail,r,time,preview=false){
     // Mesmo desenho/alcance do 🔥; branco e azul com textura suave de fumaça/giz.
     const points=trail.slice(-12);
@@ -689,6 +709,7 @@
     if(skin.id==='earth')return drawBlueFireTrail(c,trail,r,time);
     if(skin.id==='eight')return drawChalkTrail(c,trail,r,time,preview);
     if(skin.id==='moon')return drawMoonTrail(c,trail,r,time,preview);
+    if(skin.id==='snow')return drawSnowTrail(c,trail,r,time);
   }
 
   const colorStops=[
