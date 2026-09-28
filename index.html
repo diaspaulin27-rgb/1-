@@ -446,105 +446,63 @@
   }
 
   function drawSoccerTrail(c,trail,r,time){
-    // Grama verde: cauda contínua por baixo + os 350/200 detalhes aprovados.
-    const points=trail.slice(-12);if(points.length<2)return;
-    drawContinuousTrailBody(c,points,r,'#2f9e44','#63c74d',.30,.34);
-    const greens=['#1d7f2f','#2ea63d','#63c74d','#a7e57c'];
-    c.save();c.lineCap='round';c.lineJoin='round';
-    for(let i=1;i<points.length;i++){
-      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
-      const tx=-dx/len,ty=-dy/len,nx=-dy/len,ny=dx/len;
-
-      // Base curta e suave: aumenta densidade, nunca o comprimento.
-      c.globalAlpha=life*(.14+.24*strength);
-      c.strokeStyle='rgba(78,175,67,.98)';
-      c.lineWidth=Math.max(1.15,r*(.135+.085*strength));
-      c.beginPath();
-      c.moveTo(p.x,p.y);
-      c.lineTo(p.x+tx*r*(.18+.18*strength),p.y+ty*r*(.18+.18*strength));
-      c.stroke();
-
-      // 9 segmentos com 32 + 2 segmentos com 31 = 350 lâminas no rastro cheio.
-      const tufts=i<=9?32:31;
-      for(let j=0;j<tufts;j++){
-        const side=(j-(tufts-1)/2);
-        const lateral=side*r*(.015+.010*strength)+Math.sin(i*1.7+j*2.3+time*4.5)*r*.016;
-        const baseX=p.x+nx*lateral+tx*r*.05;
-        const baseY=p.y+ny*lateral+ty*r*.05;
-        const h=r*(.105+.132*strength)*(j%2?0.92:1.08);
-        const lean=(side*0.028)+Math.sin(i*0.8+j*1.4)*0.10;
-        c.globalAlpha=life*(.29+.63*strength);
+    // Mesmo desenho/alcance do 🔥; muda apenas a paleta e a textura para grama.
+    const points=trail.slice(-12);
+    const greens=['#1f8d35','#35b54a','#63cb59','#9be27c'];
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.65;
+      c.fillStyle=i%2?'#42b84e':'#247f34';c.shadowColor='#55c95d';c.shadowBlur=7;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      // Textura de grama dentro da mesma silhueta do fogo.
+      c.shadowBlur=0;c.lineCap='round';
+      for(let j=0;j<4;j++){
+        const bx=(-.52+j*.35)*size;
+        const h=size*(.62+.16*((i+j)%3));
+        c.globalAlpha=life*strength*(.34+.07*j);
         c.strokeStyle=greens[(i+j)%greens.length];
-        c.lineWidth=Math.max(.82,r*.043);
-        c.beginPath();
-        c.moveTo(baseX,baseY);
-        c.quadraticCurveTo(
-          baseX+nx*h*(.15+lean)+tx*h*.20,
-          baseY+ny*h*(.15+lean)+ty*h*.20,
-          baseX+nx*h*(.26+lean)+tx*h*.78,
-          baseY+ny*h*(.26+lean)+ty*h*.78
-        );
-        c.stroke();
+        c.lineWidth=Math.max(.7,size*.10);
+        c.beginPath();c.moveTo(bx,size*.12);c.quadraticCurveTo(bx+size*.08,-h*.35,bx+size*.16,-h);c.stroke();
       }
-
-      // 2 segmentos com 19 + 9 segmentos com 18 = 200 fragmentos no rastro cheio.
-      const flecks=i<=2?19:18;
-      for(let k=0;k<flecks;k++){
-        const jitter=(k-(flecks-1)/2)*r*.022;
-        const wave=Math.sin(i*1.4+k*.83+time)*r*.16;
-        c.globalAlpha=life*(.23+.21*strength);
-        c.fillStyle=(k+i)%2?'#8fdd69':'#d9f6a7';
-        c.beginPath();
-        c.ellipse(
-          p.x+nx*(wave+jitter)+tx*r*.03,
-          p.y+ny*(wave+jitter)+ty*r*.03,
-          Math.max(.66,r*.047),
-          Math.max(.38,r*.024),
-          Math.atan2(dy,dx)+k*.11,
-          0,Math.PI*2
-        );
-        c.fill();
-      }
+      c.globalAlpha=life*strength*.75;c.fillStyle='#b8ee8d';
+      c.beginPath();c.arc(0,0,size*.34,0,Math.PI*2);c.fill();
+      c.restore();
     }
-    c.restore();c.globalAlpha=1;
   }
 
   function drawDonutTrail(c,trail,r,time,preview=false){
-    // 🍩 Corpo rosa contínuo + confetes/granulados por cima.
-    const points=trail.slice(-12);if(points.length<2)return;
-    drawContinuousTrailBody(c,points,r,'#ff5fa8','#ff9acb',preview?.46:.38,preview?.48:.42);
-    const colors=['#ff5fa8','#ff6fb1','#ff7db9','#8fd4ff','#ffd95a','#8ee46d'];
-    c.save();c.lineCap='round';
-    for(let i=1;i<points.length;i++){
-      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      const confettiCount=preview?16:32;
-      for(let j=0;j<confettiCount;j++){
-        const phase=i*1.93+j*2.41;
-        const lateral=Math.sin(phase)*r*(.08+.17*strength);
-        const along=Math.cos(phase*1.17)*r*.09;
-        const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
-        const size=Math.max(preview?1.3:1.0,r*((preview?.048:.038)+.018*((i+j)%3)));
-        c.save();c.translate(x,y);c.rotate(phase+time*1.2);
-        c.globalAlpha=life*(preview?.62:.52);
-        c.fillStyle=colors[(i*2+j)%colors.length];
-        c.fillRect(-size*.9,-size*.35,size*1.8,size*.7);
-        c.restore();
+    // Mesmo desenho/alcance do 🔥; rosa predominante com textura de granulados coloridos.
+    const points=trail.slice(-12);
+    const sprinkles=['#ff72b5','#ff94c8','#8fd4ff','#ffd95a','#8ee46d'];
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.65;
+      c.fillStyle=i%2?'#ff78b9':'#ff4f9f';c.shadowColor='#ff79bb';c.shadowBlur=7;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      // Granulados pequenos sobre a mesma cauda.
+      c.shadowBlur=0;c.lineCap='round';
+      for(let j=0;j<5;j++){
+        const phase=i*1.7+j*1.37;
+        const sx=Math.sin(phase)*size*.48;
+        const sy=-size*(.18+.34*(j/4));
+        const len=Math.max(1,size*.23);
+        c.save();c.translate(sx,sy);c.rotate(phase+time*.55);
+        c.globalAlpha=life*strength*.82;c.strokeStyle=sprinkles[(i+j)%sprinkles.length];
+        c.lineWidth=Math.max(1,size*.10);
+        c.beginPath();c.moveTo(-len*.5,0);c.lineTo(len*.5,0);c.stroke();c.restore();
       }
-      const dotCount=preview?10:18;
-      for(let k=0;k<dotCount;k++){
-        const phase=i*2.61+k*1.57;
-        const lateral=Math.sin(phase)*r*(.06+.15*strength);
-        const along=Math.cos(phase*1.43)*r*.08;
-        const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
-        const size=Math.max(preview?1.1:.8,r*((preview?.024:.018)+.008*((i+k)%2)));
-        c.globalAlpha=life*(preview?.58:.45);
-        c.fillStyle=colors[(i+k+1)%colors.length];
-        c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
-      }
+      c.globalAlpha=life*strength*.78;c.fillStyle='#ffd1e8';
+      c.beginPath();c.arc(0,0,size*.34,0,Math.PI*2);c.fill();
+      c.restore();
     }
-    c.restore();c.globalAlpha=1;
   }
 
   function drawBlueFireTrail(c,trail,r,time){
@@ -563,75 +521,56 @@
   }
 
   function drawChalkTrail(c,trail,r,time,preview=false){
-    // 🎱 Cauda contínua branco/azul + poucas nuvens de giz: leve no celular.
-    const points=trail.slice(-12);if(points.length<2)return;
-    drawContinuousTrailBody(c,points,r,'#dcefff','#8abce4',preview?.32:.24,preview?.50:.42);
-    c.save();
-    for(let i=1;i<points.length;i++){
-      const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
-      const angle=Math.atan2(dy,dx),nx=-dy/len,ny=dx/len;
-
-      const puffCount=preview?8:6;
-      for(let j=0;j<puffCount;j++){
-        const phase=i*1.74+j*1.57;
-        const spread=Math.sin(phase)*r*(.05+.15*strength);
-        const along=Math.cos(phase*1.23)*r*.10;
-        const x=p.x+nx*spread-dx/len*along,y=p.y+ny*spread-dy/len*along;
-        const radius=r*((preview?.10:.085)+.07*strength)*(j===0?1.15:(j%2?.92:.78));
-        // Sem radialGradient por partícula: mantém a aparência de pó e reduz muito o custo.
-        c.globalAlpha=life*(preview?.28:.20);
-        c.fillStyle=(j===1||j===3)?'#9bc8eb':'#f0f7ff';
-        c.beginPath();c.ellipse(x,y,radius*1.45,radius*(.85+.10*Math.sin(phase)),angle,0,Math.PI*2);c.fill();
+    // Mesmo desenho/alcance do 🔥; branco e azul com textura suave de fumaça/giz.
+    const points=trail.slice(-12);
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.58;
+      c.fillStyle=i%2?'#dff3ff':'#84bfe8';c.shadowColor='#bfe6ff';c.shadowBlur=6;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      // Textura de giz: poucas manchas simples, sem gradients pesados.
+      c.shadowBlur=0;
+      for(let j=0;j<3;j++){
+        const phase=i*1.91+j*2.09;
+        const x=Math.sin(phase)*size*.34;
+        const y=-size*(.22+.27*j);
+        c.globalAlpha=life*strength*(.20+.07*j);
+        c.fillStyle=j%2?'#ffffff':'#a9d5f3';
+        c.beginPath();c.ellipse(x,y,size*(.18+.03*j),size*(.10+.02*j),phase*.2,0,Math.PI*2);c.fill();
       }
-
-      const dustCount=preview?4:3;
-      for(let k=0;k<dustCount;k++){
-        const phase=i*2.3+k*1.8;
-        const spread=Math.sin(phase)*r*(.04+.11*strength);
-        const along=Math.cos(phase*1.09)*r*.08;
-        c.globalAlpha=life*(preview?.24:.16);
-        c.fillStyle=k%2===0?'#edf7ff':'#a8cbea';
-        c.beginPath();
-        c.ellipse(p.x+nx*spread-dx/len*along,p.y+ny*spread-dy/len*along,Math.max(.55,r*(preview?.028:.02)),Math.max(.32,r*(preview?.016:.011)),angle,0,Math.PI*2);
-        c.fill();
-      }
+      c.globalAlpha=life*strength*.70;c.fillStyle='#f7fcff';
+      c.beginPath();c.arc(0,0,size*.34,0,Math.PI*2);c.fill();
+      c.restore();
     }
-    c.restore();c.globalAlpha=1;
   }
 
   function drawMoonTrail(c,trail,r,time,preview=false){
-    // 🌖 Cauda luminosa contínua + ⭐️ e ✨ reconhecíveis por cima.
-    const points=trail.slice(-12);if(points.length<2)return;
-    drawContinuousTrailBody(c,points,r,'#fff0a8','#d9e8ff',preview?.34:.26,preview?.42:.36);
-    const colors=['#ffffff','#fff0a8','#d9e8ff'];
-    c.save();
-    for(let i=1;i<points.length;i++){
-      const p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const starCount=preview?16:32;
-      for(let j=0;j<starCount;j++){
-        const phase=i*2.07+j*2.11;
-        const ox=Math.sin(phase+time*.42)*r*(.08+.15*strength);
-        const oy=Math.cos(phase*1.13+time*.31)*r*(.06+.13*strength);
-        const size=Math.max(preview?1.4:1,r*((preview?.05:.038)+.026*strength)*(j===0?1.12:.82));
-        const color=colors[(i+j)%colors.length];
-        c.save();c.shadowColor=color;c.shadowBlur=preview?7:5;
-        drawTrailStar(c,p.x+ox,p.y+oy,size,color,life*(preview?.66:.56),phase+time*.28);
-        c.restore();
+    // Mesmo desenho/alcance do 🔥; branco amarelado e brilhante.
+    const points=trail.slice(-12);
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.66;
+      c.fillStyle=i%2?'#fff6c9':'#ffe89a';c.shadowColor='#fff0aa';c.shadowBlur=9;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      c.shadowBlur=0;
+      // Brilhos discretos preservando a mesma silhueta principal.
+      if(i%2===0){
+        const s=Math.max(1,size*.18);
+        c.globalAlpha=life*strength*.72;c.strokeStyle='#ffffff';c.lineWidth=Math.max(.8,size*.07);c.lineCap='round';
+        c.beginPath();c.moveTo(0,-size*.72-s);c.lineTo(0,-size*.72+s);c.moveTo(-s,-size*.72);c.lineTo(s,-size*.72);c.stroke();
       }
-      const sparkleCount=preview?10:18;
-      for(let k=0;k<sparkleCount;k++){
-        const phase=i*2.63+k*1.61;
-        const ox=Math.sin(phase+time*.5)*r*(.05+.14*strength);
-        const oy=Math.cos(phase*1.09+time*.27)*r*(.05+.12*strength);
-        const size=Math.max(preview?1.2:.85,r*((preview?.035:.024)+.016*strength));
-        const color=colors[(i+k+1)%colors.length];
-        c.save();c.shadowColor=color;c.shadowBlur=preview?6:4;
-        drawTrailSparkle(c,p.x+ox,p.y+oy,size,color,life*(preview?.58:.44),phase+time*.34);
-        c.restore();
-      }
+      c.globalAlpha=life*strength*.86;c.fillStyle='#fffdf0';
+      c.beginPath();c.arc(0,0,size*.36,0,Math.PI*2);c.fill();
+      c.restore();
     }
-    c.restore();c.globalAlpha=1;
   }
   function offsetSafe(i,time,r){return Math.sin(i*1.73+time*1.9)*r*.20;}
 
@@ -2011,14 +1950,13 @@
     const {x,y}=shopBallPosition(shopTime);
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
     drawShopPaddle(c,paddleSkin,x,184);
-    const previewR=(skin.id==='fire'||skin.id==='earth')?24:26;
     const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x,y:p.y,life:.25+.75*(i/Math.max(1,arr.length-1))}));
     if(skin.id==='fire'){
       drawFireTrail(c,trail,24,shopTime);
     }else if(TRAIL_PROFILES[skin.id]){
-      drawEmojiSkinTrail(c,skin,trail,previewR,shopTime,true);
+      drawEmojiSkinTrail(c,skin,trail,24,shopTime,true);
     }
-    drawSkin(c,skin,x,y,previewR);
+    drawSkin(c,skin,x,y,24);
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
@@ -2051,12 +1989,12 @@
     $('#shopHint').textContent=isBalls?'Toque numa bola para experimentar o visual.':'Toque num bastão para experimentar o visual.';
     $('#shopSkinName').textContent=current.name;
     const ballFeatures={
-      soccer:'Bola principal ⚽️ · rastro branco de velocidade no mesmo alcance da 🔥.',
+      soccer:'⚽️ Mesmo formato do rastro da 🔥, em verde com textura de grama.',
       fire:'Rastro de chamas original. Apenas no blackout, do 96 ao 100, fica o rastro branco.',
-      donut:'🍩 com rastro de confetes coloridos.',
+      donut:'🍩 Mesmo formato do rastro da 🔥, rosa predominante com textura de granulado colorido.',
       earth:'🌎 com o mesmo formato do rastro da 🔥, em azul.',
-      eight:'🎱 com rastro curto de giz branco e azul. A batida exclusiva fica mais grave conforme a partida avança.',
-      moon:'🌖 com rastro de estrelas brancas e douradas.'
+      eight:'🎱 Mesmo formato do rastro da 🔥, branco e azul com textura de fumaça/giz.',
+      moon:'🌖 Mesmo formato do rastro da 🔥, branco amarelado e brilhante.'
     };
     $('#shopFeature').textContent=isBalls?(ballFeatures[current.id]||'Visual da bola durante a partida.'):'Visual do bastão durante a partida.';
     $('#shopListen').hidden=!isBalls||current.id!=='eight';
