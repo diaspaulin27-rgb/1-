@@ -370,18 +370,18 @@
   };
 
   const skins = [
-    {id:'soccer', name:'Principal', icon:'⚽️', price:0, color:'#ffffff'},
-    {id:'fire', name:'Fogo', icon:'🔥', price:30, color:'#ff5c35'},
-    {id:'donut', name:'Donut', icon:'🍩', price:165, color:'#ff7eb6'},
-    {id:'earth', name:'Terra', icon:'🌎', price:120, color:'#4fc3f7'},
-    {id:'eight', name:'Bola 8', icon:'🎱', price:60, color:'#111111'},
-    {id:'moon', name:'Lua', icon:'🌖', price:180, color:'#f2e7c7'},
-    {id:'snow', name:'Neve', icon:'❄️', price:150, color:'#8fdcff'},
-    {id:'galaxy', name:'Galáxia', icon:'✨', price:200, color:'#c898ff', image:'assets/balls/galaxy_orb_final.PNG', trailPalette:['#6b48d8','#dc7bea','#fff1b8']},
-    {id:'lava', name:'Lava', icon:'🌋', price:220, color:'#ff6d3c', image:'assets/balls/lava_ball_emoji.PNG', trailPalette:['#d93814','#ff7a1e','#ffe08b']},
-    {id:'plasma', name:'Plasma', icon:'🔮', price:240, color:'#8d7dff', image:'assets/balls/plasma_ball_emoji_correct.PNG', trailPalette:['#5132e8','#bc55ff','#b9edff']},
-    {id:'potion', name:'Poção', icon:'🧪', price:260, color:'#ff9a38', image:'assets/balls/potion_ball_emoji.PNG', trailPalette:['#d96a1f','#ffad42','#fff0a8']},
-    {id:'unicorn', name:'Unicórnio', icon:'🦄', price:280, color:'#ff9edc', image:'assets/balls/unicorn_ball_redesign.PNG', trailPalette:['#ff75bd','#8fdcff','#fff0a8']}
+    {id:'soccer', name:'Principal', icon:'⚽️', price:0, color:'#ffffff', impactColor:'#55c96b'},
+    {id:'fire', name:'Fogo', icon:'🔥', price:30, color:'#ff5c35', impactColor:'#ff5c35'},
+    {id:'donut', name:'Donut', icon:'🍩', price:165, color:'#ff7eb6', impactColor:'#ff7eb6'},
+    {id:'earth', name:'Terra', icon:'🌎', price:120, color:'#4fc3f7', impactColor:'#4fc3f7'},
+    {id:'eight', name:'Bola 8', icon:'🎱', price:60, color:'#111111', impactColor:'#b9e6ff'},
+    {id:'moon', name:'Lua', icon:'🌖', price:180, color:'#f2e7c7', impactColor:'#ffe39a'},
+    {id:'snow', name:'Neve', icon:'❄️', price:150, color:'#8fdcff', impactColor:'#8fdcff'},
+    {id:'galaxy', name:'Galáxia', icon:'✨', price:200, color:'#c898ff', impactColor:'#c898ff', image:'assets/balls/galaxy_orb_final.PNG', trailPalette:['#6b48d8','#dc7bea','#fff1b8']},
+    {id:'lava', name:'Lava', icon:'🌋', price:220, color:'#ff6d3c', impactColor:'#ff6d3c', image:'assets/balls/lava_ball_emoji.PNG', trailPalette:['#d93814','#ff7a1e','#ffe08b']},
+    {id:'plasma', name:'Plasma', icon:'🔮', price:240, color:'#8d7dff', impactColor:'#8d7dff', image:'assets/balls/plasma_ball_emoji_correct.PNG', trailPalette:['#5132e8','#bc55ff','#b9edff']},
+    {id:'potion', name:'Poção', icon:'🧪', price:260, color:'#ff9a38', impactColor:'#ff9a38', image:'assets/balls/potion_ball_emoji.PNG', trailPalette:['#d96a1f','#ffad42','#fff0a8']},
+    {id:'unicorn', name:'Unicórnio', icon:'🦄', price:280, color:'#ff9edc', impactColor:'#ff9edc', image:'assets/balls/unicorn_ball_redesign.PNG', trailPalette:['#ff75bd','#8fdcff','#fff0a8']}
   ];
   const paddleSkins = [
     {id:'classic',name:'Clássico',icon:'▬',price:0,color:'#f6f8ff'},
@@ -1233,7 +1233,7 @@
         if(b.vy>0&&crossedPaddleTop&&overlapsPaddle){
           b.y=paddle.y-b.r;b.hits++;
           runStats.rebounds++;paddleHitFeedback(b.x);
-          burst(b.x,paddle.y,i?'#93d8ff':'#ffffff',7);impactSound('paddle');haptic(9);
+          burst(b.x,paddle.y,activeBallImpactColor(),7);impactSound('paddle');haptic(9);
           if(b.hits>=5){b.done=true;continue;}
           const hit=clamp((b.x-paddle.x-paddle.w/2)/(paddle.w/2),-1,1);
           const angle=clamp(hit*.36+(i===0?.28:-.28),-.65,.65);
@@ -1261,6 +1261,10 @@
       const size=39;
       objects.push({type:'coin',x:rand(18,W-size-18),y:rand(H*.14,H*.58),size,vy:0,spin:rand(0,Math.PI*2)});
     }
+  }
+  function activeBallImpactColor(){
+    const skin=skins.find(s=>s.id===selectedSkin)||skins[0];
+    return skin.impactColor||skin.trailPalette?.[0]||skin.color||'#ffffff';
   }
   function burst(x,y,color,count=12){
     for(let i=0;i<count;i++) particles.push({x,y,vx:rand(-130,130),vy:rand(-160,50),life:rand(.3,.7),max:1,color,r:rand(2,5)});
