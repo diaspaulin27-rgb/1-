@@ -1948,16 +1948,17 @@
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
+    const soccerPreviewXOffset=skin.id==='soccer'?-14:0;
     const soccerPreviewYOffset=skin.id==='soccer'?10:0;
-    c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x+soccerPreviewXOffset,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
     drawShopPaddle(c,paddleSkin,x,184);
-    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x,y:p.y+soccerPreviewYOffset,life:.25+.75*(i/Math.max(1,arr.length-1))}));
+    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x+soccerPreviewXOffset,y:p.y+soccerPreviewYOffset,life:.25+.75*(i/Math.max(1,arr.length-1))}));
     if(skin.id==='fire'){
       drawFireTrail(c,trail,24,shopTime);
     }else if(TRAIL_PROFILES[skin.id]){
       drawEmojiSkinTrail(c,skin,trail,24,shopTime,true);
     }
-    drawSkin(c,skin,x,y+soccerPreviewYOffset,24);
+    drawSkin(c,skin,x+soccerPreviewXOffset,y+soccerPreviewYOffset,24);
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
