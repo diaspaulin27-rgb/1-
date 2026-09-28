@@ -249,7 +249,7 @@
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
-  let score=0, best=storage.get('best',0), coins=storage.get('coins',0);
+  let score=0, best=storage.get('best',0), coins=999999;
   let targetX=0, pointerX=0, dragging=false, shake=0, flash=0;
   let startHintRemaining=0;
   // Arte da bola 1% será adicionada depois. A conquista já é persistida
@@ -490,29 +490,42 @@
   }
 
   function drawDonutTrail(c,trail,r,time){
-    // Confetes/granulados coloridos: mantém o mesmo alcance do 🔥,
-    // mas com leitura mais forte também no preview.
+    // Confetes/granulados coloridos: mesmo alcance do 🔥,
+    // agora com densidade na faixa de ~350 confetes + ~200 granulados pequenos.
     const points=trail.slice(-12);if(points.length<2)return;
     const colors=['#ff4f87','#ffd84a','#48d7ff','#7de35f','#9a6cff','#ffffff','#ff8a3d'];
     c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
       const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      const count=3+(i%2)+(strength>.64?1:0);
+      const count=30+(i%2===0?1:0)+(strength>.55?1:0);
       for(let j=0;j<count;j++){
         const phase=i*2.07+j*1.91;
         const lateral=Math.sin(phase)*r*(.10+.22*strength);
-        const along=Math.cos(phase*1.37)*r*.08;
+        const along=Math.cos(phase*1.37)*r*.09;
         const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
-        const size=Math.max(1,r*(.048+.03*((i+j)%3)));
+        const size=Math.max(.9,r*(.032+.018*((i+j)%3)));
         c.save();c.translate(x,y);c.rotate(phase+time*1.4);
-        c.globalAlpha=life*(.38+.56*strength);
+        c.globalAlpha=life*(.40+.54*strength);
         c.strokeStyle=colors[(i*3+j)%colors.length];
-        c.lineWidth=Math.max(1,size*.78);
+        c.lineWidth=Math.max(.9,size*.9);
         c.beginPath();c.moveTo(-size,0);c.lineTo(size,0);c.stroke();
-        if((i+j)%3===0){
-          c.fillStyle=colors[(i+j+2)%colors.length];
-          c.fillRect(-size*.35,-size*.35,size*.7,size*.7);
+        c.restore();
+      }
+      const sprinkles=18+(i%2===1?1:0);
+      for(let k=0;k<sprinkles;k++){
+        const phase=i*3.01+k*1.43;
+        const lateral=Math.sin(phase)*r*(.08+.20*strength);
+        const along=Math.cos(phase*1.18)*r*.10;
+        const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
+        const size=Math.max(.7,r*(.018+.01*((i+k)%3)));
+        c.save();c.translate(x,y);c.rotate(phase+time*1.8);
+        c.globalAlpha=life*(.34+.42*strength);
+        c.fillStyle=colors[(i+k+2)%colors.length];
+        if(k%2===0){
+          c.fillRect(-size*.55,-size*.55,size*1.1,size*1.1);
+        }else{
+          c.beginPath();c.arc(0,0,size*.65,0,Math.PI*2);c.fill();
         }
         c.restore();
       }
@@ -536,8 +549,8 @@
   }
 
   function drawChalkTrail(c,trail,r,time){
-    // Fumaça/pó de giz branco e azul: mesmo comprimento do 🔥,
-    // mas com nuvens translúcidas sobrepostas em vez de bolinhas em fila.
+    // Fumaça/pó de giz branco e azul: mesmo alcance do 🔥,
+    // agora na faixa de ~350 nuvens principais + ~200 partículas pequenas.
     const points=trail.slice(-12);if(points.length<2)return;
     c.save();
     for(let i=1;i<points.length;i++){
@@ -545,42 +558,52 @@
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
       const angle=Math.atan2(dy,dx),nx=-dy/len,ny=dx/len;
 
-      // Véu central bem curto para unificar a leitura da fumaça.
       c.save();
       c.translate((a.x+p.x)/2,(a.y+p.y)/2);
       c.rotate(angle);
-      c.globalAlpha=life*(.08+.18*strength);
+      c.globalAlpha=life*(.10+.20*strength);
       c.fillStyle='rgba(225,239,252,.9)';
       c.beginPath();
-      c.ellipse(0,0,r*(.18+.16*strength),r*(.08+.06*strength),0,0,Math.PI*2);
+      c.ellipse(0,0,r*(.20+.18*strength),r*(.09+.07*strength),0,0,Math.PI*2);
       c.fill();
       c.restore();
 
-      const puffCount=2+(i%2)+(strength>.72?1:0);
+      const puffCount=31+(i%2===0?1:0);
       for(let j=0;j<puffCount;j++){
         const phase=i*2.21+j*1.87;
         const spread=Math.sin(phase)*r*(.08+.16*strength);
         const along=Math.cos(phase*1.31)*r*.12;
         const x=p.x+nx*spread-dx/len*along;
         const y=p.y+ny*spread-dy/len*along;
-        const radius=r*(.11+.13*strength)*(j===0?1:.8);
+        const radius=r*(.050+.050*strength)*(j%3===0?1.08:.82);
         const blue=(i+j)%3===0;
-        const grad=c.createRadialGradient(x,y,0,x,y,radius*1.9);
-        grad.addColorStop(0,blue?'rgba(149,203,241,.62)':'rgba(255,255,255,.60)');
-        grad.addColorStop(.45,blue?'rgba(121,176,220,.24)':'rgba(237,245,255,.24)');
+        const grad=c.createRadialGradient(x,y,0,x,y,radius*2.1);
+        grad.addColorStop(0,blue?'rgba(149,203,241,.50)':'rgba(255,255,255,.50)');
+        grad.addColorStop(.45,blue?'rgba(121,176,220,.19)':'rgba(237,245,255,.20)');
         grad.addColorStop(1,'rgba(255,255,255,0)');
-        c.globalAlpha=life*(.28+.48*strength);
+        c.globalAlpha=life*(.22+.36*strength);
         c.fillStyle=grad;
         c.beginPath();
-        c.ellipse(x,y,radius*1.55,radius*(.92+.14*Math.sin(phase)),angle,0,Math.PI*2);
+        c.ellipse(x,y,radius*1.75,radius*(.95+.14*Math.sin(phase)),angle,0,Math.PI*2);
         c.fill();
       }
 
-      if(i%4===1){
-        c.globalAlpha=life*(.20+.18*strength);
-        c.fillStyle=i%2?'#edf7ff':'#a8cbea';
+      const dustCount=18+(i%2===1?1:0);
+      for(let k=0;k<dustCount;k++){
+        const phase=i*2.9+k*1.37;
+        const spread=Math.sin(phase)*r*(.06+.18*strength);
+        const along=Math.cos(phase*1.12)*r*.10;
+        c.globalAlpha=life*(.18+.20*strength);
+        c.fillStyle=(k+i)%3===0?'#a8cbea':'#edf7ff';
         c.beginPath();
-        c.ellipse(p.x+nx*Math.sin(i+time)*r*.14,p.y+ny*Math.sin(i+time)*r*.14,Math.max(.8,r*.05),Math.max(.38,r*.024),angle,0,Math.PI*2);
+        c.ellipse(
+          p.x+nx*spread-dx/len*along,
+          p.y+ny*spread-dy/len*along,
+          Math.max(.45,r*.022),
+          Math.max(.28,r*.014),
+          angle+k*.05,
+          0,Math.PI*2
+        );
         c.fill();
       }
     }
@@ -588,25 +611,33 @@
   }
 
   function drawMoonTrail(c,trail,r,time){
-    // Estrelas: mesmo alcance do 🔥, com brilho suave mas melhor leitura no preview.
+    // Estrelas: mesmo alcance do 🔥,
+    // agora na faixa de ~350 estrelas + ~200 brilhinhos menores.
     const points=trail.slice(-12);if(points.length<2)return;
     const colors=['#ffffff','#fff0a8','#d9e8ff'];
     c.save();
     for(let i=1;i<points.length;i++){
       const p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const count=(i%2===0||strength>.72)?2:1;
+      const count=31+(i%2===0?1:0);
       for(let j=0;j<count;j++){
         const phase=i*2.17+j*3.11;
         const ox=Math.sin(phase+time*.45)*r*(.10+.17*strength);
         const oy=Math.cos(phase*1.19+time*.36)*r*(.08+.14*strength);
-        const size=Math.max(1,r*(.06+.08*strength)*(j?0.78:1.02));
-        c.save();c.shadowColor=colors[(i+j)%colors.length];c.shadowBlur=6;
-        drawTrailStar(c,p.x+ox,p.y+oy,size,colors[(i+j)%colors.length],life*(.34+.64*strength),phase+time*.35);
+        const size=Math.max(.65,r*(.022+.028*strength)*(j%3===0?1.1:.78));
+        c.save();c.shadowColor=colors[(i+j)%colors.length];c.shadowBlur=5;
+        drawTrailStar(c,p.x+ox,p.y+oy,size,colors[(i+j)%colors.length],life*(.26+.42*strength),phase+time*.35);
         c.restore();
       }
-      if(i%3===1){
-        c.globalAlpha=life*(.28+.18*strength);c.fillStyle=i%2?'#fff8ca':'#ffffff';
-        c.beginPath();c.arc(p.x-r*.06,p.y+r*.04,Math.max(.65,r*.038),0,Math.PI*2);c.fill();
+      const sparkles=18+(i%2===1?1:0);
+      for(let k=0;k<sparkles;k++){
+        const phase=i*2.83+k*1.41;
+        const ox=Math.sin(phase+time*.5)*r*(.06+.18*strength);
+        const oy=Math.cos(phase*1.07+time*.3)*r*(.06+.15*strength);
+        c.globalAlpha=life*(.20+.24*strength);
+        c.fillStyle=colors[(i+k+1)%colors.length];
+        c.beginPath();
+        c.arc(p.x+ox,p.y+oy,Math.max(.4,r*.016),0,Math.PI*2);
+        c.fill();
       }
     }
     c.restore();c.globalAlpha=1;
