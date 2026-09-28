@@ -445,9 +445,8 @@
     c.restore();c.globalAlpha=1;
   }
 
-  function drawSoccerTrail(c,trail,r,time,preview=false){
+  function drawSoccerTrail(c,trail,r,time){
     // Mesmo desenho/alcance do 🔥; muda apenas a paleta e a textura para grama.
-    // No preview, reforça somente a leitura da textura sem alterar o gameplay.
     const points=trail.slice(-12);
     const greens=['#1f8d35','#35b54a','#63cb59','#9be27c'];
     for(let i=0;i<points.length-1;i++){
@@ -461,18 +460,16 @@
       c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
       // Textura de grama dentro da mesma silhueta do fogo.
       c.shadowBlur=0;c.lineCap='round';
-      const blades=preview?7:4;
-      for(let j=0;j<blades;j++){
-        const t=blades===1?.5:j/(blades-1);
-        const bx=(-.52+t*1.04)*size;
+      for(let j=0;j<4;j++){
+        const bx=(-.52+j*.35)*size;
         const h=size*(.62+.16*((i+j)%3));
-        c.globalAlpha=life*strength*(preview?(.48+.045*j):(.34+.07*j));
+        c.globalAlpha=life*strength*(.34+.07*j);
         c.strokeStyle=greens[(i+j)%greens.length];
-        c.lineWidth=Math.max(preview?1.05:.7,size*(preview?.135:.10));
+        c.lineWidth=Math.max(.7,size*.10);
         c.beginPath();c.moveTo(bx,size*.12);c.quadraticCurveTo(bx+size*.08,-h*.35,bx+size*.16,-h);c.stroke();
       }
-      c.globalAlpha=life*strength*(preview?.88:.75);c.fillStyle=preview?'#c9f5a5':'#b8ee8d';
-      c.beginPath();c.arc(0,0,size*(preview?.37:.34),0,Math.PI*2);c.fill();
+      c.globalAlpha=life*strength*.75;c.fillStyle='#b8ee8d';
+      c.beginPath();c.arc(0,0,size*.34,0,Math.PI*2);c.fill();
       c.restore();
     }
   }
@@ -578,7 +575,7 @@
   function offsetSafe(i,time,r){return Math.sin(i*1.73+time*1.9)*r*.20;}
 
   function drawEmojiSkinTrail(c,skin,trail,r,time,preview=false){
-    if(skin.id==='soccer')return drawSoccerTrail(c,trail,r,time,preview);
+    if(skin.id==='soccer')return drawSoccerTrail(c,trail,r,time);
     if(skin.id==='donut')return drawDonutTrail(c,trail,r,time,preview);
     if(skin.id==='earth')return drawBlueFireTrail(c,trail,r,time);
     if(skin.id==='eight')return drawChalkTrail(c,trail,r,time,preview);
@@ -1951,15 +1948,16 @@
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
+    const soccerPreviewYOffset=skin.id==='soccer'?10:0;
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
     drawShopPaddle(c,paddleSkin,x,184);
-    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x,y:p.y,life:.25+.75*(i/Math.max(1,arr.length-1))}));
+    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x,y:p.y+soccerPreviewYOffset,life:.25+.75*(i/Math.max(1,arr.length-1))}));
     if(skin.id==='fire'){
       drawFireTrail(c,trail,24,shopTime);
     }else if(TRAIL_PROFILES[skin.id]){
       drawEmojiSkinTrail(c,skin,trail,24,shopTime,true);
     }
-    drawSkin(c,skin,x,y,24);
+    drawSkin(c,skin,x,y+soccerPreviewYOffset,24);
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
