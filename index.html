@@ -249,7 +249,7 @@
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
-  let score=0, best=storage.get('best',0), coins=999999;
+  let score=0, best=storage.get('best',0), coins=storage.get('coins',0);
   let targetX=0, pointerX=0, dragging=false, shake=0, flash=0;
   let startHintRemaining=0;
   // Arte da bola 1% será adicionada depois. A conquista já é persistida
@@ -423,6 +423,14 @@
     }
     c.closePath();c.fill();c.restore();
   }
+  function drawTrailSparkle(c,x,y,r,color,alpha,rot=0){
+    c.save();c.translate(x,y);c.rotate(rot);c.globalAlpha=alpha;c.strokeStyle=color;c.lineCap='round';
+    c.lineWidth=Math.max(1,r*.24);
+    c.beginPath();c.moveTo(0,-r);c.lineTo(0,r);c.moveTo(-r,0);c.lineTo(r,0);c.stroke();
+    c.lineWidth=Math.max(.8,r*.16);
+    c.beginPath();c.moveTo(-r*.55,-r*.55);c.lineTo(r*.55,r*.55);c.moveTo(r*.55,-r*.55);c.lineTo(-r*.55,r*.55);c.stroke();
+    c.restore();
+  }
 
   function drawSoccerTrail(c,trail,r,time){
     // Grama verde: mesmo alcance do 🔥, calibrada para 350 lâminas + 200 fragmentos
@@ -489,50 +497,42 @@
     c.restore();c.globalAlpha=1;
   }
 
-  function drawDonutTrail(c,trail,r,time){
-    // Confetes/granulados coloridos: mesmo alcance do 🔥,
-    // agora com densidade na faixa de ~350 confetes + ~200 granulados pequenos.
+  function drawDonutTrail(c,trail,r,time,preview=false){
+    // 🍩 Confetes/granulados: menos quantidade, mais leitura visual.
+    // Rosa predominante, com azul claro, amarelo e verde como apoio.
     const points=trail.slice(-12);if(points.length<2)return;
-    const colors=['#ff4f87','#ffd84a','#48d7ff','#7de35f','#9a6cff','#ffffff','#ff8a3d'];
+    const colors=['#ff5fa8','#ff6fb1','#ff7db9','#8fd4ff','#ffd95a','#8ee46d'];
     c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
       const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      const count=30+(i%2===0?1:0)+(strength>.55?1:0);
-      for(let j=0;j<count;j++){
-        const phase=i*2.07+j*1.91;
-        const lateral=Math.sin(phase)*r*(.10+.22*strength);
-        const along=Math.cos(phase*1.37)*r*.09;
+      const confettiCount=(preview?8:6)+(strength>.6?1:0);
+      for(let j=0;j<confettiCount;j++){
+        const phase=i*1.93+j*2.41;
+        const lateral=Math.sin(phase)*r*(.08+.17*strength);
+        const along=Math.cos(phase*1.17)*r*.09;
         const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
-        const size=Math.max(.9,r*(.032+.018*((i+j)%3)));
-        c.save();c.translate(x,y);c.rotate(phase+time*1.4);
-        c.globalAlpha=life*(.40+.54*strength);
-        c.strokeStyle=colors[(i*3+j)%colors.length];
-        c.lineWidth=Math.max(.9,size*.9);
-        c.beginPath();c.moveTo(-size,0);c.lineTo(size,0);c.stroke();
+        const size=Math.max(preview?1.3:1.0,r*((preview?.048:.038)+.018*((i+j)%3)));
+        c.save();c.translate(x,y);c.rotate(phase+time*1.2);
+        c.globalAlpha=life*(preview?.62:.52);
+        c.fillStyle=colors[(i*2+j)%colors.length];
+        c.fillRect(-size*0.9,-size*0.35,size*1.8,size*0.7);
         c.restore();
       }
-      const sprinkles=18+(i%2===1?1:0);
-      for(let k=0;k<sprinkles;k++){
-        const phase=i*3.01+k*1.43;
-        const lateral=Math.sin(phase)*r*(.08+.20*strength);
-        const along=Math.cos(phase*1.18)*r*.10;
+      const dotCount=(preview?5:4);
+      for(let k=0;k<dotCount;k++){
+        const phase=i*2.61+k*1.57;
+        const lateral=Math.sin(phase)*r*(.06+.15*strength);
+        const along=Math.cos(phase*1.43)*r*.08;
         const x=p.x+nx*lateral-dx/len*along,y=p.y+ny*lateral-dy/len*along;
-        const size=Math.max(.7,r*(.018+.01*((i+k)%3)));
-        c.save();c.translate(x,y);c.rotate(phase+time*1.8);
-        c.globalAlpha=life*(.34+.42*strength);
-        c.fillStyle=colors[(i+k+2)%colors.length];
-        if(k%2===0){
-          c.fillRect(-size*.55,-size*.55,size*1.1,size*1.1);
-        }else{
-          c.beginPath();c.arc(0,0,size*.65,0,Math.PI*2);c.fill();
-        }
-        c.restore();
+        const size=Math.max(preview?1.1:.8,r*((preview?.024:.018)+.008*((i+k)%2)));
+        c.globalAlpha=life*(preview?.58:.45);
+        c.fillStyle=colors[(i+k+1)%colors.length];
+        c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
       }
     }
     c.restore();c.globalAlpha=1;
   }
-
   function drawBlueFireTrail(c,trail,r,time){
     // Mesma geometria, tamanho e duração do rastro 🔥; apenas a paleta muda para azul.
     const points=trail.slice(-12);
@@ -548,9 +548,8 @@
     }
   }
 
-  function drawChalkTrail(c,trail,r,time){
-    // Fumaça/pó de giz branco e azul: mesmo alcance do 🔥,
-    // agora na faixa de ~350 nuvens principais + ~200 partículas pequenas.
+  function drawChalkTrail(c,trail,r,time,preview=false){
+    // 🎱 Nuvem de fumaça/pó de giz: poucas nuvens grandes e leves.
     const points=trail.slice(-12);if(points.length<2)return;
     c.save();
     for(let i=1;i<points.length;i++){
@@ -561,126 +560,86 @@
       c.save();
       c.translate((a.x+p.x)/2,(a.y+p.y)/2);
       c.rotate(angle);
-      c.globalAlpha=life*(.10+.20*strength);
-      c.fillStyle='rgba(225,239,252,.9)';
+      c.globalAlpha=life*(preview?.16:.12)*(0.7+strength*0.5);
+      c.fillStyle='rgba(232,242,252,.95)';
       c.beginPath();
-      c.ellipse(0,0,r*(.20+.18*strength),r*(.09+.07*strength),0,0,Math.PI*2);
+      c.ellipse(0,0,r*(preview?.30:.24)+r*.18*strength,r*(preview?.13:.10)+r*.08*strength,0,0,Math.PI*2);
       c.fill();
       c.restore();
 
-      const puffCount=31+(i%2===0?1:0);
+      const puffCount=preview?5:4;
       for(let j=0;j<puffCount;j++){
-        const phase=i*2.21+j*1.87;
-        const spread=Math.sin(phase)*r*(.08+.16*strength);
-        const along=Math.cos(phase*1.31)*r*.12;
+        const phase=i*1.74+j*1.57;
+        const spread=Math.sin(phase)*r*(.05+.15*strength);
+        const along=Math.cos(phase*1.23)*r*.10;
         const x=p.x+nx*spread-dx/len*along;
         const y=p.y+ny*spread-dy/len*along;
-        const radius=r*(.050+.050*strength)*(j%3===0?1.08:.82);
-        const blue=(i+j)%3===0;
-        const grad=c.createRadialGradient(x,y,0,x,y,radius*2.1);
-        grad.addColorStop(0,blue?'rgba(149,203,241,.50)':'rgba(255,255,255,.50)');
-        grad.addColorStop(.45,blue?'rgba(121,176,220,.19)':'rgba(237,245,255,.20)');
+        const radius=r*((preview?.11:.095)+.08*strength)*(j===0?1.2:(j%2?0.92:0.78));
+        const blue=(j===1||j===3);
+        const grad=c.createRadialGradient(x,y,0,x,y,radius*1.9);
+        grad.addColorStop(0,blue?'rgba(175,213,245,.52)':'rgba(255,255,255,.56)');
+        grad.addColorStop(.45,blue?'rgba(142,188,228,.22)':'rgba(240,247,255,.20)');
         grad.addColorStop(1,'rgba(255,255,255,0)');
-        c.globalAlpha=life*(.22+.36*strength);
+        c.globalAlpha=life*(preview?.62:.54);
         c.fillStyle=grad;
-        c.beginPath();
-        c.ellipse(x,y,radius*1.75,radius*(.95+.14*Math.sin(phase)),angle,0,Math.PI*2);
-        c.fill();
+        c.beginPath();c.ellipse(x,y,radius*1.45,radius*(.95+.1*Math.sin(phase)),angle,0,Math.PI*2);c.fill();
       }
 
-      const dustCount=18+(i%2===1?1:0);
+      const dustCount=preview?3:2;
       for(let k=0;k<dustCount;k++){
-        const phase=i*2.9+k*1.37;
-        const spread=Math.sin(phase)*r*(.06+.18*strength);
-        const along=Math.cos(phase*1.12)*r*.10;
-        c.globalAlpha=life*(.18+.20*strength);
-        c.fillStyle=(k+i)%3===0?'#a8cbea':'#edf7ff';
+        const phase=i*2.3+k*1.8;
+        const spread=Math.sin(phase)*r*(.04+.11*strength);
+        const along=Math.cos(phase*1.09)*r*.08;
+        c.globalAlpha=life*(preview?.26:.18);
+        c.fillStyle=k%2===0?'#edf7ff':'#a8cbea';
         c.beginPath();
-        c.ellipse(
-          p.x+nx*spread-dx/len*along,
-          p.y+ny*spread-dy/len*along,
-          Math.max(.45,r*.022),
-          Math.max(.28,r*.014),
-          angle+k*.05,
-          0,Math.PI*2
-        );
+        c.ellipse(p.x+nx*spread-dx/len*along,p.y+ny*spread-dy/len*along,Math.max(.55,r*(preview?.028:.02)),Math.max(.32,r*(preview?.016:.011)),angle,0,Math.PI*2);
         c.fill();
       }
     }
     c.restore();c.globalAlpha=1;
   }
-
-  function drawMoonTrail(c,trail,r,time){
-    // Estrelas: mesmo alcance do 🔥,
-    // agora na faixa de ~350 estrelas + ~200 brilhinhos menores.
+  function drawMoonTrail(c,trail,r,time,preview=false){
+    // 🌖 Estrelas de verdade: mistura de ⭐️ e ✨ fáceis de reconhecer.
     const points=trail.slice(-12);if(points.length<2)return;
     const colors=['#ffffff','#fff0a8','#d9e8ff'];
     c.save();
     for(let i=1;i<points.length;i++){
       const p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const count=31+(i%2===0?1:0);
-      for(let j=0;j<count;j++){
-        const phase=i*2.17+j*3.11;
-        const ox=Math.sin(phase+time*.45)*r*(.10+.17*strength);
-        const oy=Math.cos(phase*1.19+time*.36)*r*(.08+.14*strength);
-        const size=Math.max(.65,r*(.022+.028*strength)*(j%3===0?1.1:.78));
-        c.save();c.shadowColor=colors[(i+j)%colors.length];c.shadowBlur=5;
-        drawTrailStar(c,p.x+ox,p.y+oy,size,colors[(i+j)%colors.length],life*(.26+.42*strength),phase+time*.35);
+      const starCount=preview?5:4;
+      for(let j=0;j<starCount;j++){
+        const phase=i*2.07+j*2.11;
+        const ox=Math.sin(phase+time*.42)*r*(.08+.15*strength);
+        const oy=Math.cos(phase*1.13+time*.31)*r*(.06+.13*strength);
+        const size=Math.max(preview?1.4:1.0,r*((preview?.05:.038)+.026*strength)*(j===0?1.12:.82));
+        const color=colors[(i+j)%colors.length];
+        c.save();c.shadowColor=color;c.shadowBlur=preview?7:5;
+        drawTrailStar(c,p.x+ox,p.y+oy,size,color,life*(preview?.66:.56),phase+time*.28);
         c.restore();
       }
-      const sparkles=18+(i%2===1?1:0);
-      for(let k=0;k<sparkles;k++){
-        const phase=i*2.83+k*1.41;
-        const ox=Math.sin(phase+time*.5)*r*(.06+.18*strength);
-        const oy=Math.cos(phase*1.07+time*.3)*r*(.06+.15*strength);
-        c.globalAlpha=life*(.20+.24*strength);
-        c.fillStyle=colors[(i+k+1)%colors.length];
-        c.beginPath();
-        c.arc(p.x+ox,p.y+oy,Math.max(.4,r*.016),0,Math.PI*2);
-        c.fill();
+      const sparkleCount=preview?3:2;
+      for(let k=0;k<sparkleCount;k++){
+        const phase=i*2.63+k*1.61;
+        const ox=Math.sin(phase+time*.5)*r*(.05+.14*strength);
+        const oy=Math.cos(phase*1.09+time*.27)*r*(.05+.12*strength);
+        const size=Math.max(preview?1.2:.85,r*((preview?.035:.024)+.016*strength));
+        const color=colors[(i+k+1)%colors.length];
+        c.save();c.shadowColor=color;c.shadowBlur=preview?6:4;
+        drawTrailSparkle(c,p.x+ox,p.y+oy,size,color,life*(preview?.58:.44),phase+time*.34);
+        c.restore();
       }
     }
     c.restore();c.globalAlpha=1;
   }
   function offsetSafe(i,time,r){return Math.sin(i*1.73+time*1.9)*r*.20;}
 
-  function drawEmojiSkinTrail(c,skin,trail,r,time){
+  function drawEmojiSkinTrail(c,skin,trail,r,time,preview=false){
     if(skin.id==='soccer')return drawSoccerTrail(c,trail,r,time);
-    if(skin.id==='donut')return drawDonutTrail(c,trail,r,time);
+    if(skin.id==='donut')return drawDonutTrail(c,trail,r,time,preview);
     if(skin.id==='earth')return drawBlueFireTrail(c,trail,r,time);
-    if(skin.id==='eight')return drawChalkTrail(c,trail,r,time);
-    if(skin.id==='moon')return drawMoonTrail(c,trail,r,time);
+    if(skin.id==='eight')return drawChalkTrail(c,trail,r,time,preview);
+    if(skin.id==='moon')return drawMoonTrail(c,trail,r,time,preview);
   }
-
-  const colorStops=[
-    {score:0,top:'#58c6ff',bottom:'#0a70ff',name:'Azul Bebê'},
-    {score:10,top:'#1c7dff',bottom:'#0639b2',name:'Azul Royal'},
-    {score:20,top:'#4147c8',bottom:'#17175e',name:'Índigo'},
-    {score:25,top:'#463076',bottom:'#170b2f',name:'Roxo Meia-Noite'},
-    {score:30,top:'#944dff',bottom:'#360075',name:'Violeta'},
-    {score:40,top:'#ed3cbd',bottom:'#6f0758',name:'Magenta'},
-    {score:50,top:'#ff4054',bottom:'#7a0619',name:'Vermelho Carmesim'},
-    {score:60,top:'#ff8a28',bottom:'#8a3200',name:'Laranja Solar'},
-    {score:70,top:'#ffe45b',bottom:'#8d7000',name:'Amarelo Dourado'},
-    {score:80,top:'#4dde78',bottom:'#08713a',name:'Verde Esmeralda'},
-    {score:85,top:'#92933b',bottom:'#3f4214',name:'Verde Oliva'},
-    {score:90,top:'#8a5b3d',bottom:'#342016',name:'Marrom Terra'},
-    {score:93,top:'#666c75',bottom:'#252a30',name:'Cinza Chumbo'},
-    {score:95,top:'#343941',bottom:'#111418',name:'Grafite'},
-    {score:96,top:'#000000',bottom:'#000000',name:'Modo Blackout'},
-    {score:100,top:'#020308',bottom:'#000000',name:'Preto Absoluto'},
-    {score:105,top:'#071a3d',bottom:'#020711',name:'Azul Abissal'},
-    {score:110,top:'#075c78',bottom:'#012536',name:'Ciano Profundo'},
-    {score:115,top:'#078c83',bottom:'#023f3b',name:'Turquesa Elétrica'},
-    {score:120,top:'#35c85c',bottom:'#075525',name:'Verde Radioativo'},
-    {score:125,top:'#a9dd32',bottom:'#405f08',name:'Verde Ácido'},
-    {score:130,top:'#ffd33f',bottom:'#8b5b00',name:'Dourado Solar'},
-    {score:135,top:'#ff851f',bottom:'#8e2d00',name:'Laranja Incandescente'},
-    {score:140,top:'#ff304f',bottom:'#790018',name:'Vermelho Neon'},
-    {score:145,top:'#d52cff',bottom:'#4a006b',name:'Ultravioleta'},
-    {score:149,top:'#776cff',bottom:'#171345',name:'Luz Impossível'},
-    {score:150,top:'#ffffff',bottom:'#bfd8ff',name:'150 · Vitória Absoluta'}
-  ];
   function mixColor(a,b,t){
     const parse=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
     const x=parse(a),y=parse(b),m=x.map((v,i)=>Math.round(v+(y[i]-v)*t));
@@ -2015,11 +1974,11 @@
     }else if(TRAIL_PROFILES[skin.id]){
       const trail=Array.from({length:12},(_,i)=>{
         const p=shopBallPosition(Math.max(0,shopTime-(11-i)/60));
-        p.life=.25+.75*(i/11);return p;
+        p.life=.38+.62*(i/11);return p;
       });
-      drawEmojiSkinTrail(c,skin,trail,24,shopTime);
+      drawEmojiSkinTrail(c,skin,trail,26,shopTime,true);
     }
-    drawSkin(c,skin,x,y,24);
+    drawSkin(c,skin,x,y,26);
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
