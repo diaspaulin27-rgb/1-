@@ -378,6 +378,62 @@
     {id:'straw',name:'Canudo Retrô',icon:'🌈',price:210,color:'#ff8fc8',image:'assets/paddles/straw.png'}
   ];
   const skinImages={};
+  const paddleVisualMetricsCache={};
+  const emojiVisualMetricsCache={};
+  function getPaddleVisualMetrics(skin){
+    const fallback={centerX:.5,topY:0};
+    if(!skin||!skin.image)return fallback;
+    const img=skinImages[skin.id];
+    if(!img||!img.complete||!img.naturalWidth||!img.naturalHeight)return fallback;
+    const key=skin.id+':'+img.naturalWidth+'x'+img.naturalHeight;
+    if(paddleVisualMetricsCache[key])return paddleVisualMetricsCache[key];
+    try{
+      const scan=document.createElement('canvas');
+      scan.width=img.naturalWidth;scan.height=img.naturalHeight;
+      const s=scan.getContext('2d',{willReadFrequently:true});
+      s.clearRect(0,0,scan.width,scan.height);s.drawImage(img,0,0);
+      const data=s.getImageData(0,0,scan.width,scan.height).data;
+      let minX=scan.width,maxX=-1,minY=scan.height,maxY=-1;
+      for(let y=0;y<scan.height;y++)for(let x=0;x<scan.width;x++){
+        if(data[(y*scan.width+x)*4+3]>12){
+          if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        }
+      }
+      if(maxX<minX)return fallback;
+      const metrics={
+        centerX:((minX+maxX+1)/2)/scan.width,
+        topY:minY/scan.height
+      };
+      paddleVisualMetricsCache[key]=metrics;return metrics;
+    }catch(_){return fallback;}
+  }
+  function getEmojiVisualMetrics(icon,fontSize=48){
+    const key=icon+':'+fontSize;
+    if(emojiVisualMetricsCache[key])return emojiVisualMetricsCache[key];
+    const fallback={centerOffsetX:0,bottomFromLogicalY:fontSize*.46};
+    try{
+      const pad=Math.ceil(fontSize*1.6),scan=document.createElement('canvas');
+      scan.width=pad*2;scan.height=pad*2;
+      const s=scan.getContext('2d',{willReadFrequently:true});
+      const logicalX=pad,logicalY=pad;
+      s.clearRect(0,0,scan.width,scan.height);
+      s.font=`normal ${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      s.textAlign='center';s.textBaseline='middle';s.fillText(icon,logicalX,logicalY+1);
+      const data=s.getImageData(0,0,scan.width,scan.height).data;
+      let minX=scan.width,maxX=-1,minY=scan.height,maxY=-1;
+      for(let y=0;y<scan.height;y++)for(let x=0;x<scan.width;x++){
+        if(data[(y*scan.width+x)*4+3]>12){
+          if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        }
+      }
+      if(maxX<minX)return fallback;
+      const metrics={
+        centerOffsetX:((minX+maxX+1)/2)-logicalX,
+        bottomFromLogicalY:(maxY+1)-logicalY
+      };
+      emojiVisualMetricsCache[key]=metrics;return metrics;
+    }catch(_){return fallback;}
+  }
   function preloadSkinAssets(){
     [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)drawShopPreview();};img.src=item.image;});
   }
@@ -1948,10 +2004,19 @@
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
-    const soccerPreviewXOffset=skin.id==='soccer'?-14:0;
-    const soccerPreviewYOffset=skin.id==='soccer'?10:0;
+    const paddleW=104,paddleH=12,paddleY=184;
+    let soccerPreviewXOffset=0,soccerPreviewYOffset=0;
+    if(skin.id==='soccer'){
+      const paddleMetrics=getPaddleVisualMetrics(paddleSkin);
+      const ballMetrics=getEmojiVisualMetrics(skin.icon,48);
+      const paddleVisualCenterX=(x-paddleW/2)+paddleW*paddleMetrics.centerX;
+      const paddleVisualTopY=paddleY+paddleH*paddleMetrics.topY;
+      soccerPreviewXOffset=paddleVisualCenterX-x-ballMetrics.centerOffsetX;
+      const soccerImpactLogicalY=paddleVisualTopY-ballMetrics.bottomFromLogicalY;
+      soccerPreviewYOffset=soccerImpactLogicalY-153;
+    }
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x+soccerPreviewXOffset,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
-    drawShopPaddle(c,paddleSkin,x,184);
+    drawShopPaddle(c,paddleSkin,x,paddleY);
     const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x+soccerPreviewXOffset,y:p.y+soccerPreviewYOffset,life:.25+.75*(i/Math.max(1,arr.length-1))}));
     if(skin.id==='fire'){
       drawFireTrail(c,trail,24,shopTime);
