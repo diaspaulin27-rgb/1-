@@ -498,14 +498,14 @@
   }
 
   function drawDonutTrail(c,trail,r,time,preview=false){
-    // 🍩 Confetes/granulados legíveis, com rosa predominante.
+    // 🍩 Confetes/granulados legíveis, com rosa predominante e volume alto (~350 maiores / ~200 menores).
     const points=trail.slice(-12);if(points.length<2)return;
     const colors=['#ff5fa8','#ff6fb1','#ff7db9','#8fd4ff','#ffd95a','#8ee46d'];
     c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
       const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      const confettiCount=(preview?8:6)+(strength>.6?1:0);
+      const confettiCount=preview?16:32;
       for(let j=0;j<confettiCount;j++){
         const phase=i*1.93+j*2.41;
         const lateral=Math.sin(phase)*r*(.08+.17*strength);
@@ -518,7 +518,7 @@
         c.fillRect(-size*.9,-size*.35,size*1.8,size*.7);
         c.restore();
       }
-      const dotCount=preview?5:4;
+      const dotCount=preview?10:18;
       for(let k=0;k<dotCount;k++){
         const phase=i*2.61+k*1.57;
         const lateral=Math.sin(phase)*r*(.06+.15*strength);
@@ -549,7 +549,7 @@
   }
 
   function drawChalkTrail(c,trail,r,time,preview=false){
-    // 🎱 Poucas nuvens grandes de giz branco e azul, leves para o celular.
+    // 🎱 Nuvens de giz branco e azul com volume alto (~350 maiores / ~200 menores).
     const points=trail.slice(-12);if(points.length<2)return;
     c.save();
     for(let i=1;i<points.length;i++){
@@ -567,7 +567,7 @@
       c.fill();
       c.restore();
 
-      const puffCount=preview?5:4;
+      const puffCount=preview?16:32;
       for(let j=0;j<puffCount;j++){
         const phase=i*1.74+j*1.57;
         const spread=Math.sin(phase)*r*(.05+.15*strength);
@@ -584,7 +584,7 @@
         c.beginPath();c.ellipse(x,y,radius*1.45,radius*(.95+.1*Math.sin(phase)),angle,0,Math.PI*2);c.fill();
       }
 
-      const dustCount=preview?3:2;
+      const dustCount=preview?10:18;
       for(let k=0;k<dustCount;k++){
         const phase=i*2.3+k*1.8;
         const spread=Math.sin(phase)*r*(.04+.11*strength);
@@ -600,13 +600,13 @@
   }
 
   function drawMoonTrail(c,trail,r,time,preview=false){
-    // 🌖 ⭐️ + ✨ grandes o suficiente para serem reconhecidas.
+    // 🌖 ⭐️ + ✨ reconhecíveis, com volume alto (~350 maiores / ~200 menores).
     const points=trail.slice(-12);if(points.length<2)return;
     const colors=['#ffffff','#fff0a8','#d9e8ff'];
     c.save();
     for(let i=1;i<points.length;i++){
       const p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
-      const starCount=preview?5:4;
+      const starCount=preview?16:32;
       for(let j=0;j<starCount;j++){
         const phase=i*2.07+j*2.11;
         const ox=Math.sin(phase+time*.42)*r*(.08+.15*strength);
@@ -617,7 +617,7 @@
         drawTrailStar(c,p.x+ox,p.y+oy,size,color,life*(preview?.66:.56),phase+time*.28);
         c.restore();
       }
-      const sparkleCount=preview?3:2;
+      const sparkleCount=preview?10:18;
       for(let k=0;k<sparkleCount;k++){
         const phase=i*2.63+k*1.61;
         const ox=Math.sin(phase+time*.5)*r*(.05+.14*strength);
