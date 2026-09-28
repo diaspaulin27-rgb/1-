@@ -425,7 +425,8 @@
   }
 
   function drawSoccerTrail(c,trail,r,time){
-    // Grama verde: mesmo alcance do 🔥, calibrada para ~250 lâminas e ~100 fragmentos.
+    // Grama verde: mesmo alcance do 🔥, calibrada para 350 lâminas + 200 fragmentos
+    // quando o histórico estiver completo com 12 posições.
     const points=trail.slice(-12);if(points.length<2)return;
     const greens=['#1d7f2f','#2ea63d','#63c74d','#a7e57c'];
     c.save();c.lineCap='round';c.lineJoin='round';
@@ -434,7 +435,7 @@
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
       const tx=-dx/len,ty=-dy/len,nx=-dy/len,ny=dx/len;
 
-      // Base curta e suave para garantir leitura sem aumentar o comprimento.
+      // Base curta e suave: aumenta densidade, nunca o comprimento.
       c.globalAlpha=life*(.14+.24*strength);
       c.strokeStyle='rgba(78,175,67,.98)';
       c.lineWidth=Math.max(1.15,r*(.135+.085*strength));
@@ -443,37 +444,43 @@
       c.lineTo(p.x+tx*r*(.18+.18*strength),p.y+ty*r*(.18+.18*strength));
       c.stroke();
 
-      // Cerca de 250 lâminas ao longo das 11 transições do rastro.
-      const tufts=20+(strength>.24?1:0)+(strength>.48?1:0)+(strength>.72?1:0);
+      // 9 segmentos com 32 + 2 segmentos com 31 = 350 lâminas no rastro cheio.
+      const tufts=i<=9?32:31;
       for(let j=0;j<tufts;j++){
         const side=(j-(tufts-1)/2);
-        const lateral=side*r*(.024+.016*strength)+Math.sin(i*1.7+j*2.3+time*4.5)*r*.018;
+        const lateral=side*r*(.015+.010*strength)+Math.sin(i*1.7+j*2.3+time*4.5)*r*.016;
         const baseX=p.x+nx*lateral+tx*r*.05;
         const baseY=p.y+ny*lateral+ty*r*.05;
-        const h=r*(.108+.135*strength)*(j%2?0.92:1.08);
-        const lean=(side*0.045)+Math.sin(i*0.8+j*1.4)*0.10;
-        c.globalAlpha=life*(.30+.64*strength);
+        const h=r*(.105+.132*strength)*(j%2?0.92:1.08);
+        const lean=(side*0.028)+Math.sin(i*0.8+j*1.4)*0.10;
+        c.globalAlpha=life*(.29+.63*strength);
         c.strokeStyle=greens[(i+j)%greens.length];
-        c.lineWidth=Math.max(.86,r*.045);
+        c.lineWidth=Math.max(.82,r*.043);
         c.beginPath();
         c.moveTo(baseX,baseY);
-        c.quadraticCurveTo(baseX+nx*h*(.15+lean)+tx*h*.20,baseY+ny*h*(.15+lean)+ty*h*.20,baseX+nx*h*(.26+lean)+tx*h*.78,baseY+ny*h*(.26+lean)+ty*h*.78);
+        c.quadraticCurveTo(
+          baseX+nx*h*(.15+lean)+tx*h*.20,
+          baseY+ny*h*(.15+lean)+ty*h*.20,
+          baseX+nx*h*(.26+lean)+tx*h*.78,
+          baseY+ny*h*(.26+lean)+ty*h*.78
+        );
         c.stroke();
       }
 
-      // Cerca de 100 fragmentos pequenos ao longo do rastro inteiro.
-      const flecks=8+(i%2===0?1:0)+(strength>.50?1:0);
+      // 2 segmentos com 19 + 9 segmentos com 18 = 200 fragmentos no rastro cheio.
+      const flecks=i<=2?19:18;
       for(let k=0;k<flecks;k++){
-        const jitter=(k-(flecks-1)/2)*r*.045;
-        c.globalAlpha=life*(.25+.22*strength);
+        const jitter=(k-(flecks-1)/2)*r*.022;
+        const wave=Math.sin(i*1.4+k*.83+time)*r*.16;
+        c.globalAlpha=life*(.23+.21*strength);
         c.fillStyle=(k+i)%2?'#8fdd69':'#d9f6a7';
         c.beginPath();
         c.ellipse(
-          p.x+nx*(Math.sin(i*1.4+time)*r*.18+jitter)+tx*r*.03,
-          p.y+ny*(Math.sin(i*1.4+time)*r*.18+jitter)+ty*r*.03,
-          Math.max(.70,r*.05),
-          Math.max(.42,r*.026),
-          Math.atan2(dy,dx)+k*.14,
+          p.x+nx*(wave+jitter)+tx*r*.03,
+          p.y+ny*(wave+jitter)+ty*r*.03,
+          Math.max(.66,r*.047),
+          Math.max(.38,r*.024),
+          Math.atan2(dy,dx)+k*.11,
           0,Math.PI*2
         );
         c.fill();
