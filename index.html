@@ -1233,7 +1233,7 @@
         if(b.vy>0&&crossedPaddleTop&&overlapsPaddle){
           b.y=paddle.y-b.r;b.hits++;
           runStats.rebounds++;paddleHitFeedback(b.x);
-          burst(b.x,paddle.y,i?'#93d8ff':'#ffffff',7);impactSound('paddle');haptic(9);
+          burst(b.x,paddle.y,activeBallImpactColor(),7);impactSound('paddle');haptic(9);
           if(b.hits>=5){b.done=true;continue;}
           const hit=clamp((b.x-paddle.x-paddle.w/2)/(paddle.w/2),-1,1);
           const angle=clamp(hit*.36+(i===0?.28:-.28),-.65,.65);
@@ -1552,7 +1552,7 @@
         if(nextScore%10===0)shake=Math.max(shake,2.4);
         addScore(1,true);
         countRestRebound();
-        burst(ball.x,paddle.y,'#ffffff',9);impactSound('paddle');haptic(11);
+        burst(ball.x,paddle.y,activeBallImpactColor(),9);impactSound('paddle');haptic(11);
       }
       const barrierY=Math.min(H-24,paddle.y+paddle.h+22);
       if((rescueProtected()||eventState.barrierCharges>0)&&ball.vy>0&&ball.y+ball.r>=barrierY&&ball.y-ball.r<=barrierY+8){
