@@ -493,6 +493,17 @@
   const paddle={x:0,y:0,w:145,h:24,baseW:145,vx:0};
   const ball={x:0,y:0,r:15,vx:0,vy:0,trail:[]};
   const fakeBall={active:false,x:0,y:0,r:15,vx:0,vy:0,trail:[]};
+  let ballBaseRadius=15;
+  const BALL_MIN_SCALE=.70;
+  const BALL_SHRINK_END_SCORE=90;
+  function ballScaleForScore(points=score){
+    const progress=clamp(points/BALL_SHRINK_END_SCORE,0,1);
+    return 1-(1-BALL_MIN_SCALE)*progress;
+  }
+  function syncBallSize(){
+    ball.r=ballBaseRadius*ballScaleForScore(score);
+    fakeBall.r=ball.r;
+  }
 
   // ===== RASTROS DAS 6 BOLAS =====
   // Regra visual: todas usam exatamente o mesmo alcance da bola de fogo atual.
@@ -846,11 +857,12 @@
     eventState.cooldownUntil=0;eventState.hiddenLives=0;eventState.barrierCharges=0;eventState.megaPaddleUntil=0;eventState.fakeBallUntil=0;
     windX=0;windTarget=0;windClock=0;curvePhase=rand(0,Math.PI*2);
     dangerZone.x=0;dangerZone.y=0;dangerZone.w=0;dangerZone.h=0;dangerZone.ttl=0;dangerZone.hitCooldown=0;
-    ball.r=clamp(W*.035,12,17);
+    ballBaseRadius=clamp(W*.035,12,17);
+    syncBallSize();
     paddle.baseW=clamp(W*.31,112,158); paddle.w=paddle.baseW*currentPaddleFactor(); paddle.h=clamp(H*.025,19,25); paddle.vx=0;
     paddle.x=W/2-paddle.w/2; paddle.y=H-Math.max(86,H*.09);
     targetX=paddle.x; pointerX=W/2;
-    ball.r=clamp(W*.035,12,17); ball.x=W/2; ball.y=H*.42;
+    ball.x=W/2; ball.y=H*.42;
     const speed=clamp(H*.48,380,520);
     ball.vx=speed*(Math.random()<.5?-0.42:.42); ball.vy=speed*.9; ball.trail=[];
     fakeBall.active=false;fakeBall.x=0;fakeBall.y=0;fakeBall.r=ball.r;fakeBall.vx=0;fakeBall.vy=0;fakeBall.trail=[];
@@ -897,6 +909,7 @@
   function addScore(n=1,suppressFlash=false){
     const before=score;
     score=Math.min(MAX_SCORE,score+n);
+    syncBallSize();
     if(before<=100&&score>100){ball.trail=[];fakeBall.trail=[];}
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
       goldenQueue.push(nextGoldenMark);nextGoldenMark+=25;
@@ -943,7 +956,7 @@
     return f;
   }
   function currentPaddleFactor(){
-    const minimum=ball.r*2/paddle.baseW;
+    const minimum=ballBaseRadius*2/paddle.baseW;
     if(basePaddleFactor(score)<=minimum)smallTrollRetired=true;
     let f=Math.max(minimum,basePaddleFactor(gameplayScore()));
     for(const m of modifiers) if(m.type==='small')f*=.8;
@@ -1219,7 +1232,7 @@
       {id:'fast',temporary:true,run:()=>modifier('fast',4,'TROLL: BOLA 20% MAIS RÁPIDA')},
       {id:'teleport',temporary:false,run:()=>{teleportBall();toast('TROLL: TELETRANSPORTE');}},
       {id:'invert',temporary:true,run:()=>{controlsSign=-1;modifier('invert',7,'TROLL: CONTROLES INVERTIDOS');}},
-      {id:'small',temporary:true,available:()=>!smallTrollRetired&&basePaddleFactor(score)*paddle.baseW>ball.r*2,run:()=>modifier('small',5,'TROLL: BARRA 20% MENOR')},
+      {id:'small',temporary:true,available:()=>!smallTrollRetired&&basePaddleFactor(score)*paddle.baseW>ballBaseRadius*2,run:()=>modifier('small',5,'TROLL: BARRA 20% MENOR')},
       {id:'ghostPaddle',temporary:true,run:()=>modifier('ghostPaddle',3,'TROLL: BARRA FANTASMA · 3 SEGUNDOS')},
       {id:'fakeBall',temporary:true,available:()=>eventState.fakeBallUntil<=elapsed,run:()=>{
         eventState.fakeBallUntil=elapsed+9;eventState.activeEffect='fakeBall';fakeBall.active=true;fakeBall.r=ball.r;
@@ -1301,10 +1314,10 @@
     syncActiveEffect();
     if(modifiers.some(m=>m.type==='earthquake'))shake=Math.max(shake,1.6);
 
-    const desiredWidth=Math.max(ball.r*2,paddle.baseW*currentPaddleFactor());
+    const desiredWidth=Math.max(ballBaseRadius*2,paddle.baseW*currentPaddleFactor());
     paddle.w+=(desiredWidth-paddle.w)*Math.min(1,dt*9);
     if(Math.abs(desiredWidth-paddle.w)<.1)paddle.w=desiredWidth;
-    paddle.w=Math.max(ball.r*2,paddle.w);
+    paddle.w=Math.max(ballBaseRadius*2,paddle.w);
     const desired=controlsSign===1?targetX:(W-paddle.w-targetX);
     const boundedDesired=clamp(desired,7,W-paddle.w-7),oldPaddleX=paddle.x;
     if(modifiers.some(m=>m.type==='ice')){
