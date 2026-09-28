@@ -1267,7 +1267,7 @@
     eight:'#b9e6ff',moon:'#ffe39a',snow:'#8fdcff',galaxy:'#c898ff',
     lava:'#ff6d3c',plasma:'#8d7dff',potion:'#ff9a38',unicorn:'#ff9edc'
   };
-  function ballImpactColor(){return ballImpactColors[selectedSkin]||'#ffffff';}
+  function ballImpactColor(){return ballImpactColors[selected]||'#ffffff';}
   function burst(x,y,color,count=12){
     for(let i=0;i<count;i++) particles.push({x,y,vx:rand(-130,130),vy:rand(-160,50),life:rand(.3,.7),max:1,color,r:rand(2,5)});
   }
