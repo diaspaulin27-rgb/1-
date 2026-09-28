@@ -2076,9 +2076,18 @@
     for(const p of particles){ctx.globalAlpha=clamp(p.life/.55,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
     drawSkinTrailParticles();drawTeleportPulses();drawFakeBall();drawBall();drawPaddle();drawBarrier();drawCoinFlights();drawEffectIndicators();drawStartHint();ctx.restore();updateFireEmojiOverlay();
   }
+  const TARGET_FPS=60;
+  const FRAME_INTERVAL=1000/TARGET_FPS;
   function loop(now){
     if(mode!=='playing'&&mode!=='dying')return;
-    const dt=Math.min(.033,(now-last)/1000||0);last=now;
+    const elapsedMs=now-last;
+    // Teto de 60 FPS: em telas de 90/120 Hz, quadros extras são ignorados.
+    // A pequena tolerância evita cair para 30 FPS por variações normais do Safari.
+    if(elapsedMs<FRAME_INTERVAL-1){
+      raf=requestAnimationFrame(loop);
+      return;
+    }
+    const dt=Math.min(.033,elapsedMs/1000||0);last=now;
     if(mode==='dying')updateDefeat(dt);else update(dt);
     render();
     if(mode==='playing'||mode==='dying')raf=requestAnimationFrame(loop);
