@@ -1076,8 +1076,8 @@
         if(b.x>W-b.r){b.x=W-b.r;b.vx=-Math.abs(b.vx);}
         if(b.y<b.r){b.y=b.r;b.vy=Math.abs(b.vy);impactSound('ceiling');}
         const crossedPaddleTop=oldBY+b.r<=paddle.y&&b.y+b.r>=paddle.y;
-        const centerOnPaddle=b.x>=paddle.x&&b.x<=paddle.x+paddle.w;
-        if(b.vy>0&&crossedPaddleTop&&centerOnPaddle){
+        const overlapsPaddle=b.x+b.r>=paddle.x&&b.x-b.r<=paddle.x+paddle.w;
+        if(b.vy>0&&crossedPaddleTop&&overlapsPaddle){
           b.y=paddle.y-b.r;b.hits++;
           runStats.rebounds++;paddleHitFeedback(b.x);
           burst(b.x,paddle.y,i?'#93d8ff':'#ffffff',7);impactSound('paddle');haptic(9);
@@ -1369,11 +1369,11 @@
       if(ball.x+ball.r>W){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);impactSound('wall');}
       if(ball.y-ball.r<0){ball.y=ball.r;ball.vy=Math.abs(ball.vy);impactSound('ceiling');}
       checkSportCrossing(oldY);
-      // Rebatida precisa: a bola só conta se cruzar a FACE SUPERIOR da barra vindo de cima
-      // e se o CENTRO da bola estiver realmente dentro da largura da barra. Sem tolerância lateral.
+      // Rebatida precisa: a bola só conta se cruzar a FACE SUPERIOR da barra vindo de cima.
+      // O contato lateral só vale nesse exato cruzamento: se qualquer parte da bola tocar a barra, rebate.
       const crossedPaddleTop=oldY+ball.r<=paddle.y && ball.y+ball.r>=paddle.y;
-      const centerOnPaddle=ball.x>=paddle.x && ball.x<=paddle.x+paddle.w;
-      if(ball.vy>0 && crossedPaddleTop && centerOnPaddle){
+      const overlapsPaddle=ball.x+ball.r>=paddle.x && ball.x-ball.r<=paddle.x+paddle.w;
+      if(ball.vy>0 && crossedPaddleTop && overlapsPaddle){
         if(mysteryCurse.armed){startDualChallenge(targetV);return;}
         ball.y=paddle.y-ball.r;
         const hit=clamp((ball.x-(paddle.x+paddle.w/2))/(paddle.w/2),-1,1);
