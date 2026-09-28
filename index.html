@@ -431,11 +431,24 @@
     c.beginPath();c.moveTo(-r*.55,-r*.55);c.lineTo(r*.55,r*.55);c.moveTo(r*.55,-r*.55);c.lineTo(-r*.55,r*.55);c.stroke();
     c.restore();
   }
+  function drawContinuousTrailBody(c,trail,r,colorA,colorB,alpha=.42,width=.48){
+    const points=trail.slice(-12);if(points.length<2)return;
+    c.save();c.lineCap='round';c.lineJoin='round';
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const life=clamp(p.life??1,0,1);
+      c.globalAlpha=life*strength*alpha;
+      c.strokeStyle=i%2?colorA:colorB;
+      c.lineWidth=Math.max(1,r*(.12+strength*width));
+      c.beginPath();c.moveTo(p.x,p.y);c.lineTo(next.x,next.y);c.stroke();
+    }
+    c.restore();c.globalAlpha=1;
+  }
 
   function drawSoccerTrail(c,trail,r,time){
-    // Grama verde: mesmo alcance do 🔥, calibrada para 350 lâminas + 200 fragmentos
-    // quando o histórico estiver completo com 12 posições.
+    // Grama verde: cauda contínua por baixo + os 350/200 detalhes aprovados.
     const points=trail.slice(-12);if(points.length<2)return;
+    drawContinuousTrailBody(c,points,r,'#2f9e44','#63c74d',.30,.34);
     const greens=['#1d7f2f','#2ea63d','#63c74d','#a7e57c'];
     c.save();c.lineCap='round';c.lineJoin='round';
     for(let i=1;i<points.length;i++){
@@ -498,8 +511,9 @@
   }
 
   function drawDonutTrail(c,trail,r,time,preview=false){
-    // 🍩 Confetes/granulados legíveis, com rosa predominante e volume alto (~350 maiores / ~200 menores).
+    // 🍩 Corpo rosa contínuo + confetes/granulados por cima.
     const points=trail.slice(-12);if(points.length<2)return;
+    drawContinuousTrailBody(c,points,r,'#ff5fa8','#ff9acb',preview?.46:.38,preview?.48:.42);
     const colors=['#ff5fa8','#ff6fb1','#ff7db9','#8fd4ff','#ffd95a','#8ee46d'];
     c.save();c.lineCap='round';
     for(let i=1;i<points.length;i++){
@@ -549,23 +563,14 @@
   }
 
   function drawChalkTrail(c,trail,r,time,preview=false){
-    // 🎱 Nuvens de giz branco e azul com volume alto (~350 maiores / ~200 menores).
+    // 🎱 Cauda contínua branco/azul + poucas nuvens de giz: leve no celular.
     const points=trail.slice(-12);if(points.length<2)return;
+    drawContinuousTrailBody(c,points,r,'#dcefff','#8abce4',preview?.32:.24,preview?.50:.42);
     c.save();
     for(let i=1;i<points.length;i++){
       const a=points[i-1],p=points[i],strength=i/(points.length-1),life=clamp(p.life??1,0,1);
       const dx=p.x-a.x,dy=p.y-a.y,len=Math.hypot(dx,dy)||1;
       const angle=Math.atan2(dy,dx),nx=-dy/len,ny=dx/len;
-
-      c.save();
-      c.translate((a.x+p.x)/2,(a.y+p.y)/2);
-      c.rotate(angle);
-      c.globalAlpha=life*(preview?.16:.12)*(.7+strength*.5);
-      c.fillStyle='rgba(232,242,252,.95)';
-      c.beginPath();
-      c.ellipse(0,0,r*(preview?.30:.24)+r*.18*strength,r*(preview?.13:.10)+r*.08*strength,0,0,Math.PI*2);
-      c.fill();
-      c.restore();
 
       const puffCount=preview?8:6;
       for(let j=0;j<puffCount;j++){
@@ -573,15 +578,11 @@
         const spread=Math.sin(phase)*r*(.05+.15*strength);
         const along=Math.cos(phase*1.23)*r*.10;
         const x=p.x+nx*spread-dx/len*along,y=p.y+ny*spread-dy/len*along;
-        const radius=r*((preview?.11:.095)+.08*strength)*(j===0?1.2:(j%2?.92:.78));
-        const blue=(j===1||j===3);
-        const grad=c.createRadialGradient(x,y,0,x,y,radius*1.9);
-        grad.addColorStop(0,blue?'rgba(175,213,245,.52)':'rgba(255,255,255,.56)');
-        grad.addColorStop(.45,blue?'rgba(142,188,228,.22)':'rgba(240,247,255,.20)');
-        grad.addColorStop(1,'rgba(255,255,255,0)');
-        c.globalAlpha=life*(preview?.62:.54);
-        c.fillStyle=grad;
-        c.beginPath();c.ellipse(x,y,radius*1.45,radius*(.95+.1*Math.sin(phase)),angle,0,Math.PI*2);c.fill();
+        const radius=r*((preview?.10:.085)+.07*strength)*(j===0?1.15:(j%2?.92:.78));
+        // Sem radialGradient por partícula: mantém a aparência de pó e reduz muito o custo.
+        c.globalAlpha=life*(preview?.28:.20);
+        c.fillStyle=(j===1||j===3)?'#9bc8eb':'#f0f7ff';
+        c.beginPath();c.ellipse(x,y,radius*1.45,radius*(.85+.10*Math.sin(phase)),angle,0,Math.PI*2);c.fill();
       }
 
       const dustCount=preview?4:3;
@@ -589,7 +590,7 @@
         const phase=i*2.3+k*1.8;
         const spread=Math.sin(phase)*r*(.04+.11*strength);
         const along=Math.cos(phase*1.09)*r*.08;
-        c.globalAlpha=life*(preview?.26:.18);
+        c.globalAlpha=life*(preview?.24:.16);
         c.fillStyle=k%2===0?'#edf7ff':'#a8cbea';
         c.beginPath();
         c.ellipse(p.x+nx*spread-dx/len*along,p.y+ny*spread-dy/len*along,Math.max(.55,r*(preview?.028:.02)),Math.max(.32,r*(preview?.016:.011)),angle,0,Math.PI*2);
@@ -600,8 +601,9 @@
   }
 
   function drawMoonTrail(c,trail,r,time,preview=false){
-    // 🌖 ⭐️ + ✨ reconhecíveis, com volume alto (~350 maiores / ~200 menores).
+    // 🌖 Cauda luminosa contínua + ⭐️ e ✨ reconhecíveis por cima.
     const points=trail.slice(-12);if(points.length<2)return;
+    drawContinuousTrailBody(c,points,r,'#fff0a8','#d9e8ff',preview?.34:.26,preview?.42:.36);
     const colors=['#ffffff','#fff0a8','#d9e8ff'];
     c.save();
     for(let i=1;i<points.length;i++){
@@ -1980,13 +1982,27 @@
   };
   $('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');
 
-  let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity;
+  let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity,shopPreviewTrail=[],shopPreviewTrailSkin=selected;
   function shopBallPosition(time){
     const u=(time%1.5)/1.5;
     return {x:280+Math.sin(time*.8)*165,y:153-105*4*u*(1-u),life:1};
   }
+  function resetShopPreviewTrail(){
+    shopPreviewTrail=[];shopPreviewTrailSkin=shopPreviewId;
+    for(let i=11;i>=0;i--){
+      const p=shopBallPosition(Math.max(0,shopTime-i/60));
+      shopPreviewTrail.push({x:p.x,y:p.y,life:1});
+    }
+  }
+  function updateShopPreviewTrail(){
+    if(shopPreviewTrailSkin!==shopPreviewId)resetShopPreviewTrail();
+    const p=shopBallPosition(shopTime);
+    shopPreviewTrail.push({x:p.x,y:p.y,life:1});
+    if(shopPreviewTrail.length>12)shopPreviewTrail.shift();
+  }
   function drawShopPreview(){
     const c=$('#shopPreview').getContext('2d'),skin=skins.find(s=>s.id===shopPreviewId)||skins[0],paddleSkin=paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0];
+    if(shopPreviewTrailSkin!==shopPreviewId||shopPreviewTrail.length<2)resetShopPreviewTrail();
     c.setTransform(2,0,0,2,0,0);
     c.imageSmoothingEnabled=true;
     c.imageSmoothingQuality='high';
@@ -1996,14 +2012,10 @@
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
     drawShopPaddle(c,paddleSkin,x,184);
     const previewR=(skin.id==='fire'||skin.id==='earth')?24:26;
+    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x,y:p.y,life:.25+.75*(i/Math.max(1,arr.length-1))}));
     if(skin.id==='fire'){
-      const trail=Array.from({length:12},(_,i)=>shopBallPosition(Math.max(0,shopTime-(11-i)/60)));
       drawFireTrail(c,trail,24,shopTime);
     }else if(TRAIL_PROFILES[skin.id]){
-      const trail=Array.from({length:12},(_,i)=>{
-        const p=shopBallPosition(Math.max(0,shopTime-(11-i)/60));
-        p.life=.38+.62*(i/11);return p;
-      });
       drawEmojiSkinTrail(c,skin,trail,previewR,shopTime,true);
     }
     drawSkin(c,skin,x,y,previewR);
@@ -2020,10 +2032,10 @@
   function animateShop(now){
     shopRaf=0;if(!shopOpen||document.hidden)return;
     if(shopLast)shopTime+=Math.min(.05,(now-shopLast)/1000);
-    shopLast=now;drawShopPreview();shopRaf=requestAnimationFrame(animateShop);
+    shopLast=now;updateShopPreviewTrail();drawShopPreview();shopRaf=requestAnimationFrame(animateShop);
   }
   function startShopPreview(){
-    cancelAnimationFrame(shopRaf);shopLast=0;drawShopPreview();
+    cancelAnimationFrame(shopRaf);shopLast=0;resetShopPreviewTrail();drawShopPreview();
     if(!document.hidden)shopRaf=requestAnimationFrame(animateShop);
   }
   function renderShop(){
