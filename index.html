@@ -109,7 +109,10 @@
     #shopFeature { margin:8px 0 0; color:#bed1eb; font-size:13px; line-height:1.4; }
     #shopListen { width:100%; margin-top:12px; }
     .shopHint { max-width:560px; margin:0 auto 12px; font-size:13px; color:#c1d2ea; }
-    .preview { height:48px; display:grid; place-items:center; font-size:38px; }
+    .preview { height:54px; display:grid; place-items:center; font-size:38px; }
+    .preview img { display:block; width:100%; height:54px; object-fit:contain; }
+    .preview.ballAsset img { max-width:58px; margin:auto; }
+    .preview.paddleAsset img { max-width:112px; margin:auto; }
     .item strong, .item small { display:block; }
     .item small { margin-top:5px; opacity:.6; }
     @media (min-width:700px) { #hud { width:520px; left:50%; right:auto; transform:translateX(-50%); } }
@@ -363,22 +366,65 @@
     {id:'earth', name:'Terra', icon:'🌎', price:120, color:'#4fc3f7'},
     {id:'eight', name:'Bola 8', icon:'🎱', price:60, color:'#111111'},
     {id:'moon', name:'Lua', icon:'🌖', price:180, color:'#f2e7c7'},
-    {id:'snow', name:'Neve', icon:'❄️', price:150, color:'#8fdcff'}
+    {id:'snow', name:'Neve', icon:'❄️', price:150, color:'#8fdcff'},
+    {id:'galaxy', name:'Galáxia', icon:'✨', price:200, color:'#c898ff', image:'assets/balls/galaxy_orb_final.PNG', trailPalette:['#6b48d8','#dc7bea','#fff1b8']},
+    {id:'lava', name:'Lava', icon:'🌋', price:220, color:'#ff6d3c', image:'assets/balls/lava_ball_emoji.PNG', trailPalette:['#d93814','#ff7a1e','#ffe08b']},
+    {id:'plasma', name:'Plasma', icon:'🔮', price:240, color:'#8d7dff', image:'assets/balls/plasma_ball_emoji_correct.PNG', trailPalette:['#5132e8','#bc55ff','#b9edff']},
+    {id:'potion', name:'Poção', icon:'🧪', price:260, color:'#ff9a38', image:'assets/balls/potion_ball_emoji.PNG', trailPalette:['#d96a1f','#ffad42','#fff0a8']},
+    {id:'unicorn', name:'Unicórnio', icon:'🦄', price:280, color:'#ff9edc', image:'assets/balls/unicorn_ball_redesign.PNG', trailPalette:['#ff75bd','#8fdcff','#fff0a8']}
   ];
   const paddleSkins = [
     {id:'classic',name:'Clássico',icon:'▬',price:0,color:'#f6f8ff'},
-    {id:'poolCue',name:'Taco de Sinuca',icon:'🎱',price:45,color:'#b87936',image:'assets/paddles/pool_cue.png'},
-    {id:'lightsaber',name:'Sabre de Luz',icon:'⚡',price:80,color:'#52c8ff',image:'assets/paddles/lightsaber.png'},
-    {id:'magicStaff',name:'Cajado Mágico',icon:'✦',price:95,color:'#f08cff',image:'assets/paddles/magic_staff.png'},
-    {id:'laserPanel',name:'Painel Laser',icon:'▤',price:110,color:'#54f4ff',image:'assets/paddles/laser_panel.png'},
-    {id:'katana',name:'Katana',icon:'⚔',price:130,color:'#d8e7ff',image:'assets/paddles/katana.png'},
-    {id:'runeSword',name:'Espada Rúnica',icon:'✧',price:145,color:'#68a8ff',image:'assets/paddles/rune_sword.png'},
-    {id:'rgbRail',name:'Trilho RGB',icon:'▤',price:160,color:'#e85dff',image:'assets/paddles/rgb_rail.png'},
-    {id:'candySpatula',name:'Espátula Doce',icon:'🍭',price:175,color:'#ff9fd7',image:'assets/paddles/candy_spatula.png'},
-    {id:'iceBlade',name:'Lâmina de Gelo',icon:'❄',price:190,color:'#aeeaff',image:'assets/paddles/ice_blade.png'},
-    {id:'straw',name:'Canudo Retrô',icon:'🌈',price:210,color:'#ff8fc8',image:'assets/paddles/straw.png'}
+    {id:'poolCue',name:'Taco de Sinuca',icon:'🎱',price:45,color:'#b87936',image:'assets/paddles/pool_cue_emoji.PNG'},
+    {id:'lightsaber',name:'Sabre Duplo',icon:'⚡',price:80,color:'#52c8ff',image:'assets/paddles/double_saber_black_bg_final.PNG'},
+    {id:'magicStaff',name:'Cajado Mágico',icon:'✦',price:95,color:'#f08cff',image:'assets/paddles/pink_jeweled_staff.PNG'},
+    {id:'laserPanel',name:'Bastão de Diamante',icon:'💎',price:110,color:'#e7d5ff',image:'assets/paddles/bastao_diamante_duplo.PNG'},
+    {id:'katana',name:'Katana',icon:'⚔',price:130,color:'#d8e7ff',image:'assets/paddles/katana_clean_chroma.PNG'},
+    {id:'runeSword',name:'Espada Rúnica',icon:'✧',price:145,color:'#68a8ff',image:'assets/paddles/blue_runic_no_green.PNG'},
+    {id:'rgbRail',name:'Espada de Fogo',icon:'🔥',price:160,color:'#ff7b42',image:'assets/paddles/taco_fogo_bastao_final.PNG'},
+    {id:'candySpatula',name:'Espátula Doce',icon:'🍭',price:175,color:'#ff9fd7',image:'assets/paddles/candy_spatula_final.PNG'},
+    {id:'iceBlade',name:'Lâmina de Gelo',icon:'❄',price:190,color:'#aeeaff',image:'assets/paddles/ice_sword_polished.PNG'},
+    {id:'straw',name:'Canudo Doce',icon:'🌈',price:210,color:'#ff8fc8',image:'assets/paddles/candy_straw_ultra_final.PNG'}
   ];
   const skinImages={};
+  const assetCropCache={};
+  function getAssetCrop(skin){
+    if(!skin||!skin.image)return null;
+    const img=skinImages[skin.id];
+    if(!img||!img.complete||!img.naturalWidth||!img.naturalHeight)return null;
+    const key=skin.id+':'+img.naturalWidth+'x'+img.naturalHeight;
+    if(assetCropCache[key])return assetCropCache[key];
+    try{
+      const scan=document.createElement('canvas');
+      scan.width=img.naturalWidth;scan.height=img.naturalHeight;
+      const s=scan.getContext('2d',{willReadFrequently:true});
+      s.clearRect(0,0,scan.width,scan.height);s.drawImage(img,0,0);
+      const data=s.getImageData(0,0,scan.width,scan.height).data;
+      let minX=scan.width,maxX=-1,minY=scan.height,maxY=-1;
+      for(let y=0;y<scan.height;y++)for(let x=0;x<scan.width;x++){
+        if(data[(y*scan.width+x)*4+3]>2){
+          if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        }
+      }
+      if(maxX<minX)return null;
+      return assetCropCache[key]={sx:minX,sy:minY,sw:maxX-minX+1,sh:maxY-minY+1};
+    }catch(_){return null;}
+  }
+  function assetDrawSize(skin,maxW,maxH){
+    const img=skinImages[skin.id],crop=getAssetCrop(skin);
+    if(!img)return {w:maxW,h:maxH};
+    const sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
+    const scale=Math.min(maxW/Math.max(1,sw),maxH/Math.max(1,sh));
+    return {w:sw*scale,h:sh*scale};
+  }
+  function drawAsset(c,skin,x,y,maxW,maxH){
+    const img=skinImages[skin.id];if(!img)return null;
+    const crop=getAssetCrop(skin),size=assetDrawSize(skin,maxW,maxH);
+    c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+    if(crop)c.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,x-size.w/2,y-size.h/2,size.w,size.h);
+    else c.drawImage(img,x-size.w/2,y-size.h/2,size.w,size.h);
+    c.restore();return size;
+  }
   const paddleVisualMetricsCache={};
   const emojiVisualMetricsCache={};
   function getPaddleVisualMetrics(skin){
@@ -529,8 +575,12 @@
   let selected=storage.get('skin','soccer');
   if(!validBallSkinIds.has(selected))selected='soccer';
   storage.set('owned',owned);storage.set('skin',selected);
-  let ownedPaddles=storage.get('ownedPaddles',['classic']);
+  const validPaddleSkinIds=new Set(paddleSkins.map(s=>s.id));
+  let ownedPaddles=storage.get('ownedPaddles',['classic']).filter(id=>validPaddleSkinIds.has(id));
+  if(!ownedPaddles.includes('classic'))ownedPaddles.unshift('classic');
   let selectedPaddle=storage.get('paddleSkin','classic');
+  if(!validPaddleSkinIds.has(selectedPaddle))selectedPaddle='classic';
+  storage.set('ownedPaddles',ownedPaddles);storage.set('paddleSkin',selectedPaddle);
   preloadSkinAssets();
   let activeSkin=()=>skins.find(s=>s.id===selected)||skins[0];
 
@@ -558,7 +608,12 @@
     earth:{limit:12,fade:4},
     eight:{limit:12,fade:4},
     moon:{limit:12,fade:4},
-    snow:{limit:12,fade:4}
+    snow:{limit:12,fade:4},
+    galaxy:{limit:12,fade:4},
+    lava:{limit:12,fade:4},
+    plasma:{limit:12,fade:4},
+    potion:{limit:12,fade:4},
+    unicorn:{limit:12,fade:4}
   };
 
   function clearSkinTrailParticles(){
@@ -746,7 +801,23 @@
   }
   function offsetSafe(i,time,r){return Math.sin(i*1.73+time*1.9)*r*.20;}
 
+  function drawPaletteTrail(c,trail,r,time,palette){
+    const points=trail.slice(-12),outerA=palette[0],outerB=palette[1]||palette[0],core=palette[2]||'#ffffff';
+    for(let i=0;i<points.length-1;i++){
+      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
+      const size=r*(.18+strength*.52),flicker=Math.sin(time*19+i*2.4)*size*.32;
+      const life=clamp(p.life??1,0,1);
+      c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(next.y-p.y,next.x-p.x)-Math.PI/2);
+      c.globalAlpha=life*strength*.64;c.fillStyle=i%2?outerB:outerA;c.shadowColor=outerB;c.shadowBlur=8;
+      c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
+      c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
+      c.shadowBlur=0;c.globalAlpha=life*strength*.84;c.fillStyle=core;c.beginPath();c.arc(0,0,size*.37,0,Math.PI*2);c.fill();
+      c.restore();
+    }
+  }
+
   function drawEmojiSkinTrail(c,skin,trail,r,time,preview=false){
+    if(skin.trailPalette)return drawPaletteTrail(c,trail,r,time,skin.trailPalette);
     if(skin.id==='soccer')return drawSoccerTrail(c,trail,r,time);
     if(skin.id==='donut')return drawDonutTrail(c,trail,r,time,preview);
     if(skin.id==='earth')return drawBlueFireTrail(c,trail,r,time);
@@ -1759,9 +1830,8 @@
     if(!neon&&skin.id==='fire')drawFireTrail(ctx,movingBall.trail,movingBall.r,elapsed);
     else if(!neon&&TRAIL_PROFILES[skin.id])drawEmojiSkinTrail(ctx,skin,movingBall.trail,movingBall.r,elapsed);
     ctx.globalAlpha=1;
-    // O corpo das 6 bolas-emoji fica em overlay DOM estável no gameplay.
-    // drawSkin continua sendo usado apenas na prévia da loja, evitando o sumiço
-    // intermitente de emojis rasterizados pelo Canvas no Safari/iPhone.
+    if(skin.image)drawSkin(ctx,skin,movingBall.x,movingBall.y,movingBall.r);
+    // Emojis continuam no overlay DOM estável; PNGs são desenhados no canvas.
   }
   function drawFireTrail(c,trail,r,time){
     const points=trail.slice(-12);
@@ -1777,13 +1847,12 @@
     }
   }
   function drawSkin(c,skin,x,y,r){
-    c.save();
-    // Todas as 6 bolas usam o mesmo tamanho-base visual da 🔥: font-size = 2*r.
-    // A 🔥 continua exatamente com o tratamento anterior; no gameplay o corpo dela segue no overlay DOM.
-    c.shadowBlur=0;c.globalAlpha=1;
+    if(skin.image&&skinImages[skin.id]){
+      drawAsset(c,skin,x,y,r*2,r*2);return;
+    }
+    c.save();c.shadowBlur=0;c.globalAlpha=1;
     c.font=`normal ${r*2}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);
-    c.restore();
+    c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,x,y+1);c.restore();
   }
 
   function drawFakeBall(){
@@ -1811,16 +1880,19 @@
     }
   }
   function drawPaddleSkin(c,skin,x,y,w,h){
-    const img=skinImages[skin.id];
-    if(!img)return false;
-    c.save();
-    c.imageSmoothingEnabled=true;
-    c.imageSmoothingQuality='high';
-    const scale=c===ctx?dpr:2;
-    const snap=v=>Math.round(v*scale)/scale;
-    const dx=snap(x),dy=snap(y),dw=Math.max(1/scale,snap(w)),dh=Math.max(1/scale,snap(h));
+    const img=skinImages[skin.id];if(!img)return false;
+    const crop=getAssetCrop(skin);
+    const sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
+    if(!sw||!sh)return false;
+    const targetW=w,targetMaxH=Math.max(h,12);
+    const scale=Math.min(targetW/sw,targetMaxH/sh);
+    const dw=sw*scale,dh=sh*scale;
+    const cx=x+w/2,cy=y+h/2;
+    c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
     c.shadowColor='rgba(0,0,0,.22)';c.shadowBlur=6;c.shadowOffsetY=3;
-    c.drawImage(img,dx,dy,dw,dh);c.restore();return true;
+    if(crop)c.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,cx-dw/2,cy-dh/2,dw,dh);
+    else c.drawImage(img,cx-dw/2,cy-dh/2,dw,dh);
+    c.restore();return true;
   }
   function drawPaddle(){
     if(modifiers.some(m=>m.type==='ghostPaddle'))return;
@@ -1973,8 +2045,9 @@
       if(node.textContent!==skin.icon)node.textContent=skin.icon;
       node.style.display='block';node.style.left=b.x+'px';node.style.top=b.y+'px';node.style.fontSize=(b.r*2)+'px';
     }
-    place(main,ball,canShow&&!blackout);
-    place(fake,fakeBall,canShow&&!blackout&&fakeBall.active&&eventState.fakeBallUntil>elapsed);
+    const useEmojiOverlay=!skin.image;
+    place(main,ball,canShow&&!blackout&&useEmojiOverlay);
+    place(fake,fakeBall,canShow&&!blackout&&useEmojiOverlay&&fakeBall.active&&eventState.fakeBallUntil>elapsed);
   }
   function render(){
     secretPanel.style.visibility=mode==='playing'?'visible':'hidden';secretGlow.style.visibility=mode==='playing'?'visible':'hidden';
@@ -2141,6 +2214,9 @@
     }else if(skin.id==='snow'){
       const glyph=getSnowPreviewGlyph(48);
       previewCenterYOffset=paddleY-153-glyph.h/2;
+    }else if(skin.image&&skinImages[skin.id]){
+      const size=assetDrawSize(skin,48,48);
+      previewCenterYOffset=paddleY-153-size.h/2;
     }
 
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
@@ -2206,7 +2282,11 @@
       const b=document.createElement('button');b.className='item'+((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id?' selected':'');
       b.setAttribute('aria-pressed',String((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id));
       const status=itemLocked?'Bloqueada · 50 pontos':selectedId===s.id?'Selecionada':isOwned?'Adquirida':s.price+' moedas';
-      b.innerHTML=`<span class="preview">${s.icon}</span><strong>${s.name}</strong><small>${status}</small>`;
+      const previewClass=isBalls?'ballAsset':'paddleAsset';
+      const previewHtml=s.image
+        ? `<span class="preview ${previewClass}"><img src="${s.image}" alt="${s.name}"></span>`
+        : `<span class="preview">${s.icon}</span>`;
+      b.innerHTML=`${previewHtml}<strong>${s.name}</strong><small>${status}</small>`;
       b.onclick=()=>{
         if(isBalls)shopPreviewId=s.id;else shopPreviewPaddleId=s.id;renderShop();
         $('#shopPreview').scrollIntoView({behavior:'smooth',block:'nearest'});
