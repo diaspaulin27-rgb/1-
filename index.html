@@ -434,6 +434,48 @@
       emojiVisualMetricsCache[key]=metrics;return metrics;
     }catch(_){return fallback;}
   }
+  const soccerPreviewGlyphCache={};
+  function getSoccerPreviewGlyph(fontSize=48){
+    const key=String(fontSize);
+    if(soccerPreviewGlyphCache[key])return soccerPreviewGlyphCache[key];
+    try{
+      const pad=Math.ceil(fontSize*1.7),scan=document.createElement('canvas');
+      scan.width=pad*2;scan.height=pad*2;
+      const s=scan.getContext('2d',{willReadFrequently:true});
+      s.clearRect(0,0,scan.width,scan.height);
+      s.font=`normal ${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      s.textAlign='center';s.textBaseline='middle';
+      s.fillText('⚽️',pad,pad);
+      const data=s.getImageData(0,0,scan.width,scan.height).data;
+      let minX=scan.width,maxX=-1,minY=scan.height,maxY=-1;
+      for(let yy=0;yy<scan.height;yy++)for(let xx=0;xx<scan.width;xx++){
+        if(data[(yy*scan.width+xx)*4+3]>2){
+          if(xx<minX)minX=xx;if(xx>maxX)maxX=xx;if(yy<minY)minY=yy;if(yy>maxY)maxY=yy;
+        }
+      }
+      if(maxX<minX||maxY<minY)throw new Error('emoji sem pixels');
+      const w=maxX-minX+1,h=maxY-minY+1,crop=document.createElement('canvas');
+      crop.width=w;crop.height=h;
+      crop.getContext('2d').drawImage(scan,minX,minY,w,h,0,0,w,h);
+      return soccerPreviewGlyphCache[key]={canvas:crop,w,h};
+    }catch(_){
+      return soccerPreviewGlyphCache[key]={canvas:null,w:fontSize,h:fontSize};
+    }
+  }
+  function drawSoccerPreviewGlyph(c,x,centerY,fontSize=48){
+    const glyph=getSoccerPreviewGlyph(fontSize);
+    if(glyph.canvas){
+      c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+      c.drawImage(glyph.canvas,x-glyph.w/2,centerY-glyph.h/2,glyph.w,glyph.h);
+      c.restore();
+      return glyph;
+    }
+    c.save();
+    c.font=`normal ${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    c.textAlign='center';c.textBaseline='middle';c.fillText('⚽️',x,centerY);
+    c.restore();
+    return glyph;
+  }
   function preloadSkinAssets(){
     [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)drawShopPreview();};img.src=item.image;});
   }
@@ -2004,26 +2046,34 @@
     const bg=c.createLinearGradient(0,0,560,210);bg.addColorStop(0,'#4399ee');bg.addColorStop(1,'#17416f');
     c.fillStyle=bg;c.fillRect(0,0,560,210);
     const {x,y}=shopBallPosition(shopTime);
-    const paddleW=104,paddleH=12,paddleY=184;
-    let soccerPreviewXOffset=0,soccerPreviewYOffset=0;
+    const paddleY=184;
+
+    // A ⚽️ é o único emoji do preview cujo glifo do Safari fica visualmente fora do anchor.
+    // Aqui usamos a imagem REAL recortada do emoji, centralizada diretamente no mesmo x do bastão.
+    let soccerCenterYOffset=0;
     if(skin.id==='soccer'){
-      const paddleMetrics=getPaddleVisualMetrics(paddleSkin);
-      const ballMetrics=getEmojiVisualMetrics(skin.icon,48);
-      const paddleVisualCenterX=(x-paddleW/2)+paddleW*paddleMetrics.centerX;
-      const paddleVisualTopY=paddleY+paddleH*paddleMetrics.topY;
-      soccerPreviewXOffset=paddleVisualCenterX-x-ballMetrics.centerOffsetX;
-      const soccerImpactLogicalY=paddleVisualTopY-ballMetrics.bottomFromLogicalY;
-      soccerPreviewYOffset=soccerImpactLogicalY-153;
+      const glyph=getSoccerPreviewGlyph(48);
+      // No ponto mais baixo do salto (y=153), a borda inferior visível da bola toca y=184.
+      soccerCenterYOffset=paddleY-153-glyph.h/2;
     }
-    c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x+soccerPreviewXOffset,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
+
+    c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(x,188,23+(153-y)*.10,4,0,0,Math.PI*2);c.fill();
     drawShopPaddle(c,paddleSkin,x,paddleY);
-    const trail=shopPreviewTrail.map((p,i,arr)=>({x:p.x+soccerPreviewXOffset,y:p.y+soccerPreviewYOffset,life:.25+.75*(i/Math.max(1,arr.length-1))}));
+    const trail=shopPreviewTrail.map((p,i,arr)=>({
+      x:p.x,
+      y:p.y+(skin.id==='soccer'?soccerCenterYOffset:0),
+      life:.25+.75*(i/Math.max(1,arr.length-1))
+    }));
     if(skin.id==='fire'){
       drawFireTrail(c,trail,24,shopTime);
     }else if(TRAIL_PROFILES[skin.id]){
       drawEmojiSkinTrail(c,skin,trail,24,shopTime,true);
     }
-    drawSkin(c,skin,x+soccerPreviewXOffset,y+soccerPreviewYOffset,24);
+    if(skin.id==='soccer'){
+      drawSoccerPreviewGlyph(c,x,y+soccerCenterYOffset,48);
+    }else{
+      drawSkin(c,skin,x,y,24);
+    }
   }
   function drawShopPaddle(c,skin,x,y){
     const w=104,h=12;
