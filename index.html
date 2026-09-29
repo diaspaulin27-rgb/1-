@@ -115,10 +115,10 @@
     #shopFeature { margin:8px 0 0; color:#bed1eb; font-size:13px; line-height:1.4; }
     #shopListen { width:100%; margin-top:12px; }
     .shopHint { max-width:560px; margin:0 auto 12px; font-size:13px; color:#c1d2ea; }
-    .preview { height:54px; display:grid; place-items:center; font-size:38px; }
-    .preview img { display:block; width:100%; height:54px; object-fit:contain; }
-    .preview.ballAsset img { max-width:58px; margin:auto; }
-    .preview.paddleAsset img { max-width:112px; margin:auto; }
+    .preview { height:58px; display:grid; place-items:center; font-size:38px; line-height:1; overflow:hidden; }
+    .preview img { display:block; object-fit:contain; margin:auto; }
+    .preview.ballAsset img { width:48px; height:48px; }
+    .preview.paddleAsset img { width:108px; height:34px; }
     .item strong, .item small { display:block; }
     .item small { margin-top:5px; opacity:.6; }
     @media (min-width:700px) { #hud { width:520px; left:50%; right:auto; transform:translateX(-50%); } }
@@ -2325,7 +2325,7 @@
       const previewClass=isBalls?'ballAsset':'paddleAsset';
       const previewHtml=s.image
         ? `<span class="preview ${previewClass}"><img src="${s.image}" alt="${s.name}"></span>`
-        : `<span class="preview">${s.icon}</span>`;
+        : `<span class="preview ${isBalls?'ballAsset':'paddleAsset'}">${s.icon}</span>`;
       b.innerHTML=`${previewHtml}<strong>${s.name}</strong><small>${status}</small>`;
       b.onclick=()=>{
         if(isBalls)shopPreviewId=s.id;else shopPreviewPaddleId=s.id;renderShop();
