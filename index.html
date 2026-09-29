@@ -115,10 +115,8 @@
     #shopFeature { margin:8px 0 0; color:#bed1eb; font-size:13px; line-height:1.4; }
     #shopListen { width:100%; margin-top:12px; }
     .shopHint { max-width:560px; margin:0 auto 12px; font-size:13px; color:#c1d2ea; }
-    .preview { height:58px; display:grid; place-items:center; font-size:38px; line-height:1; overflow:hidden; }
-    .preview img { display:block; object-fit:contain; margin:auto; }
-    .preview.ballAsset img { width:48px; height:48px; }
-    .preview.paddleAsset img { width:108px; height:34px; }
+    .preview { height:58px; display:grid; place-items:center; line-height:1; overflow:hidden; }
+    .shopCardPreview { display:block; width:120px; height:58px; margin:auto; }
     .item strong, .item small { display:block; }
     .item small { margin-top:5px; opacity:.6; }
     @media (min-width:700px) { #hud { width:520px; left:50%; right:auto; transform:translateX(-50%); } }
@@ -577,7 +575,7 @@
     return glyph;
   }
   function preloadSkinAssets(){
-    [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)drawShopPreview();};img.src=item.image;});
+    [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)renderShop();};img.src=item.image;});
   }
   const validBallSkinIds=new Set(skins.map(s=>s.id));
   let owned=storage.get('owned',['soccer']).filter(id=>validBallSkinIds.has(id));
@@ -2297,6 +2295,72 @@
     cancelAnimationFrame(shopRaf);shopLast=0;resetShopPreviewTrail();drawShopPreview();
     if(!document.hidden)shopRaf=requestAnimationFrame(animateShop);
   }
+  const shopEmojiGlyphCache={};
+  function getShopEmojiGlyph(icon,fontSize=64){
+    const key=icon+':'+fontSize;
+    if(shopEmojiGlyphCache[key])return shopEmojiGlyphCache[key];
+    try{
+      const pad=Math.ceil(fontSize*1.8),scan=document.createElement('canvas');
+      scan.width=pad*2;scan.height=pad*2;
+      const s=scan.getContext('2d',{willReadFrequently:true});
+      s.clearRect(0,0,scan.width,scan.height);
+      s.font=`normal ${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      s.textAlign='center';s.textBaseline='middle';s.fillText(icon,pad,pad);
+      const data=s.getImageData(0,0,scan.width,scan.height).data;
+      let minX=scan.width,maxX=-1,minY=scan.height,maxY=-1;
+      for(let y=0;y<scan.height;y++)for(let x=0;x<scan.width;x++){
+        if(data[(y*scan.width+x)*4+3]>2){
+          if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        }
+      }
+      if(maxX<minX||maxY<minY)throw new Error('emoji vazio');
+      const w=maxX-minX+1,h=maxY-minY+1,crop=document.createElement('canvas');
+      crop.width=w;crop.height=h;
+      crop.getContext('2d').drawImage(scan,minX,minY,w,h,0,0,w,h);
+      return shopEmojiGlyphCache[key]={canvas:crop,w,h};
+    }catch(_){
+      return shopEmojiGlyphCache[key]={canvas:null,w:fontSize,h:fontSize};
+    }
+  }
+  function drawShopCardPreview(canvas,skin,isBalls){
+    if(!canvas||!skin)return;
+    const dpr=Math.min(devicePixelRatio||1,2),cssW=120,cssH=58;
+    canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);
+    const c=canvas.getContext('2d');
+    c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,cssW,cssH);
+    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+    const cx=cssW/2,cy=cssH/2;
+    if(isBalls){
+      const target=46;
+      if(skin.image&&skinImages[skin.id]){
+        const img=skinImages[skin.id],crop=getAssetCrop(skin);
+        const sx=crop?crop.sx:0,sy=crop?crop.sy:0,sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
+        const scale=target/Math.max(sw,sh),dw=sw*scale,dh=sh*scale;
+        c.drawImage(img,sx,sy,sw,sh,cx-dw/2,cy-dh/2,dw,dh);
+      }else{
+        const glyph=getShopEmojiGlyph(skin.icon,64);
+        if(glyph.canvas){
+          const scale=target/Math.max(glyph.w,glyph.h),dw=glyph.w*scale,dh=glyph.h*scale;
+          c.drawImage(glyph.canvas,cx-dw/2,cy-dh/2,dw,dh);
+        }else{
+          c.font='46px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+          c.textAlign='center';c.textBaseline='middle';c.fillText(skin.icon,cx,cy);
+        }
+      }
+      return;
+    }
+    const targetW=108,targetH=30;
+    if(skin.image&&skinImages[skin.id]){
+      const img=skinImages[skin.id],crop=getAssetCrop(skin);
+      const sx=crop?crop.sx:0,sy=crop?crop.sy:0,sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
+      const scale=Math.min(targetW/sw,targetH/sh),dw=sw*scale,dh=sh*scale;
+      c.drawImage(img,sx,sy,sw,sh,cx-dw/2,cy-dh/2,dw,dh);
+    }else{
+      c.save();c.fillStyle=skin.color||'#fff';
+      const h=10;c.fillRect(cx-targetW/2,cy-h/2,targetW,h);c.restore();
+    }
+  }
+
   function renderShop(){
     $('#shopBalanceCount').textContent=coins;$('#shopBalance').setAttribute('aria-label','Moedas: '+coins);const grid=$('#shopGrid');grid.innerHTML='';
     const isBalls=shopCategory==='balls';
@@ -2323,10 +2387,9 @@
       b.setAttribute('aria-pressed',String((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id));
       const status=itemLocked?'Bloqueada · 50 pontos':selectedId===s.id?'Selecionada':isOwned?'Adquirida':s.price+' moedas';
       const previewClass=isBalls?'ballAsset':'paddleAsset';
-      const previewHtml=s.image
-        ? `<span class="preview ${previewClass}"><img src="${s.image}" alt="${s.name}"></span>`
-        : `<span class="preview ${isBalls?'ballAsset':'paddleAsset'}">${s.icon}</span>`;
+      const previewHtml=`<span class="preview ${previewClass}"><canvas class="shopCardPreview" aria-label="${s.name}"></canvas></span>`;
       b.innerHTML=`${previewHtml}<strong>${s.name}</strong><small>${status}</small>`;
+      drawShopCardPreview(b.querySelector('.shopCardPreview'),s,isBalls);
       b.onclick=()=>{
         if(isBalls)shopPreviewId=s.id;else shopPreviewPaddleId=s.id;renderShop();
         $('#shopPreview').scrollIntoView({behavior:'smooth',block:'nearest'});
