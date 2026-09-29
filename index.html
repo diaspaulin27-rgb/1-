@@ -1084,59 +1084,56 @@
     }
   }
 
+  let badLuckClimbs=0;
+
   function upperBounceChaosDegrees(points=gameplayScore()){
     const curve=[[0,3],[10,3],[20,6],[30,10],[40,15],[50,20],[60,25],[70,30]];
+    if(points>=100)return clamp(30+(points-100)*.5,30,50);
     if(points<=0)return 3;
     if(points>=70)return 30;
     for(let i=1;i<curve.length;i++){
       const [p1,d1]=curve[i];
       if(points<=p1){
-        const [p0,d0]=curve[i-1];
-        const t=(points-p0)/(p1-p0||1);
-        return d0+(d1-d0)*t;
+        const [p0,d0]=curve[i-1],k=(points-p0)/(p1-p0||1);
+        return d0+(d1-d0)*k;
       }
     }
     return 30;
   }
 
   function applyUpperBounceChaos(b,surface){
-    // A metade de baixo permanece 100% previsível para não matar o jogador perto do bastão.
-    if(!b||b.y>H*.5)return;
-
+    if(!b)return;
     const points=gameplayScore();
-    // A frequência cresce junto com a dificuldade: 30% no começo e 100% no 70.
+    const chaosLimit=points>=100?H*.85:H*.5;
+    if(b.y>chaosLimit)return;
     const chance=clamp(.30+(points/70)*.70,.30,1);
     if(Math.random()>chance)return;
 
-    // Na linha do meio o efeito entra suave (40%); no teto chega a 100%.
-    const heightPower=.40+.60*clamp((H*.5-b.y)/(H*.5),0,1);
-    const maxRadians=upperBounceChaosDegrees(points)*Math.PI/180*heightPower;
-    const delta=rand(-maxRadians,maxRadians);
+    const wasDescending=b.vy>0;
+    const heightPower=.40+.60*clamp((chaosLimit-b.y)/chaosLimit,0,1);
+    const delta=rand(-1,1)*upperBounceChaosDegrees(points)*Math.PI/180*heightPower;
+    const speed=Math.hypot(b.vx,b.vy)||1,cos=Math.cos(delta),sin=Math.sin(delta);
+    let vx=b.vx*cos-b.vy*sin,vy=b.vx*sin+b.vy*cos;
 
-    const speed=Math.hypot(b.vx,b.vy)||1;
-    const cos=Math.cos(delta),sin=Math.sin(delta);
-    let vx=b.vx*cos-b.vy*sin;
-    let vy=b.vx*sin+b.vy*cos;
-
-    // Garante que a bola sempre saia da superfície em que bateu.
     if(surface==='left')vx=Math.abs(vx);
     else if(surface==='right')vx=-Math.abs(vx);
     else if(surface==='ceiling')vy=Math.abs(vy);
 
-    // Evita trajetórias quase horizontais que poderiam prender a bola no alto.
     const minVertical=speed*Math.sin(Math.PI*10/180);
     if(Math.abs(vy)<minVertical){
-      const verticalSign=surface==='ceiling'?1:(Math.sign(vy)||Math.sign(b.vy)||1);
-      vy=verticalSign*minVertical;
-      const horizontal=Math.sqrt(Math.max(0,speed*speed-vy*vy));
-      const horizontalSign=surface==='left'?1:surface==='right'?-1:(Math.sign(vx)||1);
-      vx=horizontalSign*horizontal;
+      const vs=surface==='ceiling'?1:(Math.sign(vy)||Math.sign(b.vy)||1);
+      vy=vs*minVertical;
+      const hx=Math.sqrt(Math.max(0,speed*speed-vy*vy));
+      const hs=surface==='left'?1:surface==='right'?-1:(Math.sign(vx)||1);
+      vx=hs*hx;
     }
 
-    // Mantém exatamente a mesma velocidade total; só muda o ângulo.
-    const newLen=Math.hypot(vx,vy)||1;
-    b.vx=vx/newLen*speed;
-    b.vy=vy/newLen*speed;
+    if(wasDescending&&vy<0){
+      badLuckClimbs=Math.min(badLuckClimbs+1,4);
+      const boost=1+.10*badLuckClimbs;
+      vx*=boost;vy*=boost;
+    }
+    b.vx=vx;b.vy=vy;
   }
 
   function currentSpeedFactor(){
@@ -1615,6 +1612,7 @@
           angle=minimumAngle*direction;
         }
         ball.vx=Math.sin(angle)*targetV; ball.vy=-Math.cos(angle)*targetV;
+        badLuckClimbs=0;
         runStats.rebounds++;secretRebound();paddleHitFeedback(ball.x);
         if(nextScore%10===0)shake=Math.max(shake,2.4);
         addScore(1,true);
