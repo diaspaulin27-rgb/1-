@@ -1084,6 +1084,61 @@
     }
   }
 
+  function upperBounceChaosDegrees(points=gameplayScore()){
+    const curve=[[0,3],[10,3],[20,6],[30,10],[40,15],[50,20],[60,25],[70,30]];
+    if(points<=0)return 3;
+    if(points>=70)return 30;
+    for(let i=1;i<curve.length;i++){
+      const [p1,d1]=curve[i];
+      if(points<=p1){
+        const [p0,d0]=curve[i-1];
+        const t=(points-p0)/(p1-p0||1);
+        return d0+(d1-d0)*t;
+      }
+    }
+    return 30;
+  }
+
+  function applyUpperBounceChaos(b,surface){
+    // A metade de baixo permanece 100% previsível para não matar o jogador perto do bastão.
+    if(!b||b.y>H*.5)return;
+
+    const points=gameplayScore();
+    // A frequência cresce junto com a dificuldade: 30% no começo e 100% no 70.
+    const chance=clamp(.30+(points/70)*.70,.30,1);
+    if(Math.random()>chance)return;
+
+    // Na linha do meio o efeito entra suave (40%); no teto chega a 100%.
+    const heightPower=.40+.60*clamp((H*.5-b.y)/(H*.5),0,1);
+    const maxRadians=upperBounceChaosDegrees(points)*Math.PI/180*heightPower;
+    const delta=rand(-maxRadians,maxRadians);
+
+    const speed=Math.hypot(b.vx,b.vy)||1;
+    const cos=Math.cos(delta),sin=Math.sin(delta);
+    let vx=b.vx*cos-b.vy*sin;
+    let vy=b.vx*sin+b.vy*cos;
+
+    // Garante que a bola sempre saia da superfície em que bateu.
+    if(surface==='left')vx=Math.abs(vx);
+    else if(surface==='right')vx=-Math.abs(vx);
+    else if(surface==='ceiling')vy=Math.abs(vy);
+
+    // Evita trajetórias quase horizontais que poderiam prender a bola no alto.
+    const minVertical=speed*Math.sin(Math.PI*10/180);
+    if(Math.abs(vy)<minVertical){
+      const verticalSign=surface==='ceiling'?1:(Math.sign(vy)||Math.sign(b.vy)||1);
+      vy=verticalSign*minVertical;
+      const horizontal=Math.sqrt(Math.max(0,speed*speed-vy*vy));
+      const horizontalSign=surface==='left'?1:surface==='right'?-1:(Math.sign(vx)||1);
+      vx=horizontalSign*horizontal;
+    }
+
+    // Mantém exatamente a mesma velocidade total; só muda o ângulo.
+    const newLen=Math.hypot(vx,vy)||1;
+    b.vx=vx/newLen*speed;
+    b.vy=vy/newLen*speed;
+  }
+
   function currentSpeedFactor(){
     // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
     const earlyBoost=.30*(1-clamp(gameplayScore()/60,0,1));
@@ -1523,9 +1578,21 @@
       const curve=curveStrength()*Math.sin(elapsed*3.1+curvePhase+ball.y*.008);
       ball.vx+=(windX*.34+curve)*step;
       ball.x+=ball.vx*step; ball.y+=ball.vy*step;
-      if(ball.x-ball.r<0){ball.x=ball.r;ball.vx=Math.abs(ball.vx);impactSound('wall');}
-      if(ball.x+ball.r>W){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);impactSound('wall');}
-      if(ball.y-ball.r<0){ball.y=ball.r;ball.vy=Math.abs(ball.vy);impactSound('ceiling');}
+      if(ball.x-ball.r<0){
+        ball.x=ball.r;ball.vx=Math.abs(ball.vx);
+        applyUpperBounceChaos(ball,'left');
+        impactSound('wall');
+      }
+      if(ball.x+ball.r>W){
+        ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);
+        applyUpperBounceChaos(ball,'right');
+        impactSound('wall');
+      }
+      if(ball.y-ball.r<0){
+        ball.y=ball.r;ball.vy=Math.abs(ball.vy);
+        applyUpperBounceChaos(ball,'ceiling');
+        impactSound('ceiling');
+      }
       checkSportCrossing(oldY);
       // Rebatida precisa: a bola só conta se cruzar a FACE SUPERIOR da barra vindo de cima.
       // O contato lateral só vale nesse exato cruzamento: se qualquer parte da bola tocar a barra, rebate.
