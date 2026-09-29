@@ -898,23 +898,22 @@
   const MUSIC_VOLUME=.42;
   const MUSIC_CROSSFADE_MS=3000;
   const audioStages=[
-    {min:0,max:11,music:'01_Piano_Suave.mp3',ball:'01_Quicar.mp3'},
-    {min:12,max:23,music:'02_Lofi_Calmo.mp3',ball:'02_Tenis_Caindo.mp3'},
-    {min:24,max:35,music:'03_Lofi_Chill.mp3',ball:'03_Blip.mp3'},
-    {min:36,max:47,music:'04_Synthwave.mp3',ball:'04_Bolha.mp3'},
-    {min:48,max:59,music:'05_Trap.mp3',ball:'05_Rebatida.mp3'},
-    {min:60,max:71,music:'06_Rock.mp3',ball:'06_Bola_Plastica.mp3'},
-    {min:72,max:83,music:'07_Drum_and_Bass.mp3',ball:'07_Pancada.mp3'},
-    {min:84,max:95,music:'08_Phonk.mp3',ball:'08_Impacto.mp3'},
-    {min:96,max:100,music:'09_Metal_A_Blackout.mp3',ball:'09_Impacto_Cinema.mp3'},
-    {min:101,max:112,music:'08_Phonk.mp3',ball:'08_Impacto.mp3'},
-    {min:113,max:125,music:'09_Metal_B.mp3',ball:'09_Impacto_Cinema.mp3'},
-    {min:126,max:139,music:'10_Thrash_A.mp3',ball:'10_Tekk.mp3'},
-    {min:140,max:150,music:'10_Thrash_B_Final.mp3',ball:'10_Tekk.mp3'}
+    {min:0,max:11,music:'01_Piano_Suave.mp3'},
+    {min:12,max:23,music:'02_Lofi_Calmo.mp3'},
+    {min:24,max:35,music:'03_Lofi_Chill.mp3'},
+    {min:36,max:47,music:'04_Synthwave.mp3'},
+    {min:48,max:59,music:'05_Trap.mp3'},
+    {min:60,max:71,music:'06_Rock.mp3'},
+    {min:72,max:83,music:'07_Drum_and_Bass.mp3'},
+    {min:84,max:95,music:'08_Phonk.mp3'},
+    {min:96,max:100,music:'09_Metal_A_Blackout.mp3'},
+    {min:101,max:112,music:'08_Phonk.mp3'},
+    {min:113,max:125,music:'09_Metal_B.mp3'},
+    {min:126,max:139,music:'10_Thrash_A.mp3'},
+    {min:140,max:150,music:'10_Thrash_B_Final.mp3'}
   ];
   const musicPlayers=[new Audio(),new Audio()];
   musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
-  const ballSoundPools=new Map();
 
   function audioStageFor(points=gameplayScore()){
     return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
@@ -1013,20 +1012,30 @@
     tone(420*(1-progress*.65),.085+progress*.06,'sine',.06);
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
-  function playBallFile(filename,volume=1){
-    if(!soundOn)return;
-    let pool=ballSoundPools.get(filename);
-    if(!pool){
-      pool=Array.from({length:4},()=>{
-        const a=new Audio('assets/audio/ball/'+filename);
-        a.preload='auto';a.playsInline=true;return a;
-      });
-      pool.cursor=0;ballSoundPools.set(filename,pool);
-    }
-    const a=pool[pool.cursor%pool.length];pool.cursor++;
+  function ballHitSound(kind='paddle'){
+    if(!ensureAudio())return;
     try{
-      a.pause();a.currentTime=0;a.volume=clamp(volume,0,1);
-      const p=a.play();if(p&&p.catch)p.catch(()=>{});
+      const now=audioCtx.currentTime;
+      const volume=kind==='paddle'?.038:kind==='ceiling'?.026:.022;
+      const osc=audioCtx.createOscillator(),body=audioCtx.createGain();
+      const click=audioCtx.createBufferSource(),clickFilter=audioCtx.createBiquadFilter(),clickGain=audioCtx.createGain();
+
+      // Um único "tok" curto, seco e neutro para toda a partida.
+      osc.type='sine';
+      osc.frequency.setValueAtTime(520,now);
+      osc.frequency.exponentialRampToValueAtTime(260,now+.055);
+      body.gain.setValueAtTime(volume,now);
+      body.gain.exponentialRampToValueAtTime(.0001,now+.075);
+      osc.connect(body).connect(sfxGain);
+
+      click.buffer=noiseBuffer;
+      clickFilter.type='bandpass';clickFilter.frequency.value=1900;clickFilter.Q.value=.8;
+      clickGain.gain.setValueAtTime(volume*.32,now);
+      clickGain.gain.exponentialRampToValueAtTime(.0001,now+.018);
+      click.connect(clickFilter).connect(clickGain).connect(sfxGain);
+
+      osc.start(now);osc.stop(now+.085);
+      click.start(now);click.stop(now+.022);
     }catch{}
   }
   function impactSound(kind='paddle'){
@@ -1034,9 +1043,7 @@
     if(kind==='barrier'){
       tone(980,.14,'sine',.055);tone(490,.20,'triangle',.022);return;
     }
-    const stageIndex=audioStageFor(),stage=audioStages[Math.max(0,stageIndex)];
-    const volume=kind==='paddle'?1:kind==='ceiling'?.72:.62;
-    playBallFile(stage.ball,volume);
+    ballHitSound(kind);
   }
   function victorySound(){
     setMusicActive(false);[261.6,329.6,392,523.2].forEach((f,i)=>tone(f,.42,'sine',.04,i*.11));
