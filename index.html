@@ -1016,26 +1016,37 @@
     if(!ensureAudio())return;
     try{
       const now=audioCtx.currentTime;
-      const volume=kind==='paddle'?.038:kind==='ceiling'?.026:.022;
-      const osc=audioCtx.createOscillator(),body=audioCtx.createGain();
-      const click=audioCtx.createBufferSource(),clickFilter=audioCtx.createBiquadFilter(),clickGain=audioCtx.createGain();
+      const volume=kind==='paddle'?.22:kind==='ceiling'?.14:.12;
 
-      // Um único "tok" curto, seco e neutro para toda a partida.
-      osc.type='sine';
-      osc.frequency.setValueAtTime(520,now);
-      osc.frequency.exponentialRampToValueAtTime(260,now+.055);
-      body.gain.setValueAtTime(volume,now);
-      body.gain.exponentialRampToValueAtTime(.0001,now+.075);
-      osc.connect(body).connect(sfxGain);
+      // Ataque bem curto e audível mesmo com a música tocando.
+      const attack=audioCtx.createOscillator(),attackGain=audioCtx.createGain();
+      attack.type='square';
+      attack.frequency.setValueAtTime(900,now);
+      attack.frequency.exponentialRampToValueAtTime(520,now+.018);
+      attackGain.gain.setValueAtTime(volume*.55,now);
+      attackGain.gain.exponentialRampToValueAtTime(.0001,now+.028);
+      attack.connect(attackGain).connect(sfxGain);
 
+      // Corpo do "tok": curto, seco, sem reverb e sem cauda longa.
+      const body=audioCtx.createOscillator(),bodyGain=audioCtx.createGain();
+      body.type='triangle';
+      body.frequency.setValueAtTime(430,now);
+      body.frequency.exponentialRampToValueAtTime(250,now+.06);
+      bodyGain.gain.setValueAtTime(volume,now);
+      bodyGain.gain.exponentialRampToValueAtTime(.0001,now+.085);
+      body.connect(bodyGain).connect(sfxGain);
+
+      // Pequeno clique de contato para o impacto aparecer sobre qualquer música.
+      const click=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),clickGain=audioCtx.createGain();
       click.buffer=noiseBuffer;
-      clickFilter.type='bandpass';clickFilter.frequency.value=1900;clickFilter.Q.value=.8;
-      clickGain.gain.setValueAtTime(volume*.32,now);
-      clickGain.gain.exponentialRampToValueAtTime(.0001,now+.018);
-      click.connect(clickFilter).connect(clickGain).connect(sfxGain);
+      filter.type='bandpass';filter.frequency.value=2400;filter.Q.value=1.1;
+      clickGain.gain.setValueAtTime(volume*.38,now);
+      clickGain.gain.exponentialRampToValueAtTime(.0001,now+.016);
+      click.connect(filter).connect(clickGain).connect(sfxGain);
 
-      osc.start(now);osc.stop(now+.085);
-      click.start(now);click.stop(now+.022);
+      attack.start(now);attack.stop(now+.032);
+      body.start(now);body.stop(now+.095);
+      click.start(now);click.stop(now+.020);
     }catch{}
   }
   function impactSound(kind='paddle'){
