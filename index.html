@@ -896,7 +896,7 @@
   let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
   const MUSIC_VOLUME=.42;
-  const MUSIC_CROSSFADE_MS=3000;
+  const MUSIC_CROSSFADE_MS=1500;
   const audioStages=[
     {min:0,max:11,music:'01_Piano_Suave.mp3'},
     {min:12,max:23,music:'02_Lofi_Calmo.mp3'},
@@ -957,34 +957,76 @@
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     if(!force&&nextStage===musicStage)return;
+
     const previousStage=musicStage;
     musicStage=nextStage;
     if(!musicActive||!soundOn)return;
 
-    const stage=audioStages[nextStage],incomingIndex=1-activeMusicPlayer;
-    const incoming=musicPlayers[incomingIndex],outgoing=musicPlayers[activeMusicPlayer];
+    const stage=audioStages[nextStage];
+    const outgoingIndex=activeMusicPlayer;
+    const incomingIndex=1-outgoingIndex;
+    const outgoing=musicPlayers[outgoingIndex];
+    const incoming=musicPlayers[incomingIndex];
     const wanted='assets/audio/music/'+stage.music;
 
+    clearInterval(musicFadeTimer);musicFadeTimer=0;
+
     if(incoming.dataset.src!==wanted){
-      incoming.src=wanted;incoming.dataset.src=wanted;incoming.currentTime=0;
+      incoming.pause();
+      incoming.src=wanted;
+      incoming.dataset.src=wanted;
+      incoming.currentTime=0;
+      incoming.load();
     }else if(previousStage!==nextStage){
       incoming.currentTime=0;
     }
-    incoming.loop=true;incoming.volume=0;
-    const playPromise=incoming.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
 
-    clearInterval(musicFadeTimer);
-    const started=performance.now(),outStart=outgoing.paused?0:outgoing.volume;
-    musicFadeTimer=setInterval(()=>{
-      const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
-      incoming.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
-      outgoing.volume=soundOn&&musicActive?outStart*(1-t):0;
-      if(t>=1){
-        clearInterval(musicFadeTimer);musicFadeTimer=0;
-        outgoing.pause();outgoing.volume=0;activeMusicPlayer=incomingIndex;
-      }
-    },50);
+    incoming.loop=true;
+    incoming.volume=0;
+
+    const startCrossfade=()=>{
+      if(musicStage!==nextStage||!musicActive||!soundOn)return;
+
+      const stepTime=50;
+      const steps=Math.max(1,Math.round(MUSIC_CROSSFADE_MS/stepTime));
+      const oldStart=outgoing.paused?0:Math.max(0,outgoing.volume);
+      const oldStep=oldStart/steps;
+      const newStep=MUSIC_VOLUME/steps;
+      let currentStep=0;
+
+      // A partir daqui, este é o player ativo da nova faixa.
+      activeMusicPlayer=incomingIndex;
+
+      musicFadeTimer=setInterval(()=>{
+        if(musicStage!==nextStage||!musicActive||!soundOn){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          return;
+        }
+
+        currentStep++;
+
+        // Música antiga: desce progressivamente até desaparecer.
+        outgoing.volume=Math.max(0,outgoing.volume-oldStep);
+
+        // Música nova: entra progressivamente do zero até o volume normal.
+        incoming.volume=Math.min(MUSIC_VOLUME,incoming.volume+newStep);
+
+        if(currentStep>=steps){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          outgoing.volume=0;
+          outgoing.pause();
+          outgoing.currentTime=0;
+          incoming.volume=MUSIC_VOLUME;
+        }
+      },stepTime);
+    };
+
+    const playPromise=incoming.play();
+    if(playPromise&&playPromise.then){
+      playPromise.then(startCrossfade).catch(()=>{});
+    }else{
+      startCrossfade();
+    }
   }
   function setMusicActive(active){
     musicActive=active;
