@@ -931,11 +931,27 @@
         const data=noiseBuffer.getChannelData(0);
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
       }
-      if(audioCtx.state==='suspended')audioCtx.resume();
-      masterGain.gain.setTargetAtTime(soundOn?1:0,audioCtx.currentTime,.03);
+      if(audioCtx.state==='suspended'||audioCtx.state==='interrupted'){
+        const resumePromise=audioCtx.resume();
+        if(resumePromise&&resumePromise.catch)resumePromise.catch(()=>{});
+      }
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.setValueAtTime(soundOn?1:0,audioCtx.currentTime);
       return true;
     }catch{return false;}
   }
+  function unlockSfxAudio(){
+    if(!soundOn||!ensureAudio())return;
+    try{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      g.gain.value=.000001;
+      o.connect(g).connect(sfxGain);
+      o.start(audioCtx.currentTime);
+      o.stop(audioCtx.currentTime+.01);
+    }catch{}
+  }
+  window.addEventListener('pointerdown',unlockSfxAudio,{passive:true});
+  window.addEventListener('touchstart',unlockSfxAudio,{passive:true});
   function tone(freq=440,dur=.05,type='sine',vol=.035,delay=0){
     if(!ensureAudio())return;
     try{
