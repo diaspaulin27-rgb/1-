@@ -893,65 +893,28 @@
   }
   function envSafeBottom(){ return 0; }
 
-  let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
-  let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  const MUSIC_VOLUME=.42;
-  const MUSIC_CROSSFADE_MS=1500;
-  const MUSIC_START_FADE_MS=3000;
-  const audioStages=[
-    {min:0,max:11,music:'01_Piano_Suave.mp3'},
-    {min:12,max:23,music:'02_Lofi_Calmo.mp3'},
-    {min:24,max:35,music:'03_Lofi_Chill.mp3'},
-    {min:36,max:47,music:'04_Synthwave.mp3'},
-    {min:48,max:59,music:'05_Trap.mp3'},
-    {min:60,max:71,music:'06_Rock.mp3'},
-    {min:72,max:83,music:'07_Drum_and_Bass.mp3'},
-    {min:84,max:95,music:'08_Phonk.mp3'},
-    {min:96,max:100,music:'09_Metal_A_Blackout.mp3'},
-    {min:101,max:112,music:'08_Phonk.mp3'},
-    {min:113,max:125,music:'09_Metal_B.mp3'},
-    {min:126,max:139,music:'10_Thrash_A.mp3'},
-    {min:140,max:150,music:'10_Thrash_B_Final.mp3'}
-  ];
-  const musicPlayers=[new Audio(),new Audio()];
-  musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
-
-  function audioStageFor(points=gameplayScore()){
-    return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
-  }
+  let audioCtx=null,masterGain=null,sfxGain=null,musicGain=null,musicFilter=null,noiseBuffer=null;
+  let musicPads=[],musicActive=false,musicStage=-1,musicBeatClock=0,musicStep=0;
   function ensureAudio(){
     if(!soundOn)return false;
     try{
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-        masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
-        masterGain.gain.value=1;sfxGain.gain.value=.82;
-        sfxGain.connect(masterGain);masterGain.connect(audioCtx.destination);
+        masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();musicGain=audioCtx.createGain();musicFilter=audioCtx.createBiquadFilter();
+        masterGain.gain.value=1;sfxGain.gain.value=.82;musicGain.gain.value=0;musicFilter.type='lowpass';musicFilter.frequency.value=900;
+        sfxGain.connect(masterGain);musicFilter.connect(musicGain).connect(masterGain);masterGain.connect(audioCtx.destination);
         noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.7),audioCtx.sampleRate);
-        const data=noiseBuffer.getChannelData(0);
-        for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+        const data=noiseBuffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+        const ratios=[1,1.1892,1.4983];
+        musicPads=ratios.map((ratio,i)=>{
+          const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=i===0?'sine':'triangle';osc.frequency.value=110*ratio;gain.gain.value=0;
+          osc.connect(gain).connect(musicFilter);osc.start();return {osc,gain,ratio};
+        });
       }
-      if(audioCtx.state==='suspended'||audioCtx.state==='interrupted'){
-        const resumePromise=audioCtx.resume();
-        if(resumePromise&&resumePromise.catch)resumePromise.catch(()=>{});
-      }
-      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-      masterGain.gain.setValueAtTime(soundOn?1:0,audioCtx.currentTime);
-      return true;
+      if(audioCtx.state==='suspended')audioCtx.resume();
+      masterGain.gain.setTargetAtTime(soundOn?1:0,audioCtx.currentTime,.03);return true;
     }catch{return false;}
   }
-  function unlockSfxAudio(){
-    if(!soundOn||!ensureAudio())return;
-    try{
-      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-      g.gain.value=.000001;
-      o.connect(g).connect(sfxGain);
-      o.start(audioCtx.currentTime);
-      o.stop(audioCtx.currentTime+.01);
-    }catch{}
-  }
-  window.addEventListener('pointerdown',unlockSfxAudio,{passive:true});
-  window.addEventListener('touchstart',unlockSfxAudio,{passive:true});
   function tone(freq=440,dur=.05,type='sine',vol=.035,delay=0){
     if(!ensureAudio())return;
     try{
@@ -966,229 +929,122 @@
     src.buffer=noiseBuffer;filter.type='lowpass';filter.frequency.value=cutoff;gain.gain.setValueAtTime(vol,now);gain.gain.exponentialRampToValueAtTime(.0001,now+dur);
     src.connect(filter).connect(gain).connect(sfxGain);src.start(now);src.stop(now+dur+.02);
   }
-  function stopMusicPlayers(){
-    // Corte seco real: cancela qualquer fade e silencia os dois players imediatamente.
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
-    musicPlayers.forEach(a=>{a.pause();a.volume=0;});
+  // ===== SISTEMA DE MÚSICA POR ARQUIVOS =====
+  // SFX/WebAudio acima permanece intacto. A música usa dois players HTMLAudio
+  // independentes para permitir crossfade real e estável no Safari/iPhone.
+  const MUSIC_FADE_START_MS=3000;
+  const MUSIC_CROSSFADE_MS=2000;
+  const MUSIC_VOLUME=.72;
+  const audioStages=[
+    {min:0,max:11,src:'assets/audio/music/01_Piano_Suave.mp3'},
+    {min:12,max:23,src:'assets/audio/music/02_Lofi_Calmo.mp3'},
+    {min:24,max:35,src:'assets/audio/music/03_Lofi_Chill.mp3'},
+    {min:36,max:47,src:'assets/audio/music/04_Synthwave.mp3'},
+    {min:48,max:59,src:'assets/audio/music/05_Trap.mp3'},
+    {min:60,max:71,src:'assets/audio/music/06_Rock.mp3'},
+    {min:72,max:83,src:'assets/audio/music/07_Drum_and_Bass.mp3'},
+    {min:84,max:95,src:'assets/audio/music/08_Phonk.mp3'},
+    {min:96,max:100,src:'assets/audio/music/09_Metal_A_Blackout.mp3',blackout:true},
+    {min:101,max:112,src:'assets/audio/music/08_Phonk.mp3'},
+    {min:113,max:125,src:'assets/audio/music/09_Metal_B.mp3'},
+    {min:126,max:139,src:'assets/audio/music/10_Thrash_A.mp3'},
+    {min:140,max:150,src:'assets/audio/music/10_Thrash_B_Final.mp3'}
+  ];
+  const musicPlayers=[new Audio(),new Audio()];
+  musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
+  let musicPlayerIndex=0,musicFadeRaf=0,musicToken=0;
+
+  function audioStageFor(points=gameplayScore()){
+    return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
   }
-
-  function playMusicStageHard(nextStage){
-    if(nextStage<0||!musicActive||!soundOn)return;
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
-
-    // Zera imediatamente qualquer música/fade em andamento.
-    musicPlayers.forEach(a=>{a.pause();a.volume=0;});
-
-    const stage=audioStages[nextStage];
-    const player=musicPlayers[activeMusicPlayer];
-    const wanted='assets/audio/music/'+stage.music;
-
-    if(player.dataset.src!==wanted){
-      player.src=wanted;
-      player.dataset.src=wanted;
-      player.load();
-    }
-    player.currentTime=0;
-    player.loop=true;
-    player.volume=MUSIC_VOLUME;
-    musicStage=nextStage;
-
-    const playPromise=player.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+  function stopMusicFade(){
+    if(musicFadeRaf)cancelAnimationFrame(musicFadeRaf);
+    musicFadeRaf=0;musicToken++;
   }
-
-  function updateMusicStage(force=false,hardCut=false){
-    const nextStage=audioStageFor();
-    if(nextStage<0)return;
-    if(!force&&nextStage===musicStage)return;
-
-    const previousStage=musicStage;
-
-    // Estágio 8 = score 96–100 (Blackout).
-    // Entrada E saída do Blackout são sempre corte seco.
-    const blackoutCut=nextStage===8||previousStage===8;
-
-    if((hardCut||blackoutCut)&&musicActive&&soundOn){
-      playMusicStageHard(nextStage);
-      return;
-    }
-
-    musicStage=nextStage;
-    if(!musicActive||!soundOn)return;
-
-    const stage=audioStages[nextStage];
-    const outgoingIndex=activeMusicPlayer;
-    const incomingIndex=1-outgoingIndex;
-    const outgoing=musicPlayers[outgoingIndex];
-    const incoming=musicPlayers[incomingIndex];
-    const wanted='assets/audio/music/'+stage.music;
-
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
-
-    if(incoming.dataset.src!==wanted){
-      incoming.pause();
-      incoming.src=wanted;
-      incoming.dataset.src=wanted;
-      incoming.currentTime=0;
-      incoming.load();
-    }else if(previousStage!==nextStage){
-      incoming.currentTime=0;
-    }
-
-    incoming.loop=true;
-    incoming.volume=0;
-
-    const startCrossfade=()=>{
-      if(musicStage!==nextStage||!musicActive||!soundOn)return;
-
-      const stepTime=50;
-      const steps=Math.max(1,Math.round(MUSIC_CROSSFADE_MS/stepTime));
-      const oldStart=outgoing.paused?0:Math.max(0,outgoing.volume);
-      const oldStep=oldStart/steps;
-      const newStep=MUSIC_VOLUME/steps;
-      let currentStep=0;
-
-      activeMusicPlayer=incomingIndex;
-
-      musicFadeTimer=setInterval(()=>{
-        if(musicStage!==nextStage||!musicActive||!soundOn){
-          clearInterval(musicFadeTimer);musicFadeTimer=0;
-          return;
-        }
-
-        currentStep++;
-        outgoing.volume=Math.max(0,outgoing.volume-oldStep);
-        incoming.volume=Math.min(MUSIC_VOLUME,incoming.volume+newStep);
-
-        if(currentStep>=steps){
-          clearInterval(musicFadeTimer);musicFadeTimer=0;
-          outgoing.volume=0;
-          outgoing.pause();
-          outgoing.currentTime=0;
-          incoming.volume=MUSIC_VOLUME;
-        }
-      },stepTime);
+  function fadePlayers(from,to,duration,fromStart,toEnd,onDone){
+    stopMusicFade();
+    const token=musicToken,start=performance.now(),fromVol=from?from.volume:0;
+    if(to)to.volume=clamp(fromStart,0,1);
+    const tick=now=>{
+      if(token!==musicToken)return;
+      const t=clamp((now-start)/Math.max(1,duration),0,1);
+      if(from)from.volume=clamp(fromVol*(1-t),0,1);
+      if(to)to.volume=clamp(fromStart+(toEnd-fromStart)*t,0,1);
+      if(t<1)musicFadeRaf=requestAnimationFrame(tick);
+      else{musicFadeRaf=0;if(onDone)onDone();}
     };
-
-    const playPromise=incoming.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
-    // A troca é comandada pelo score: o fade começa imediatamente ao entrar
-    // no novo estágio, sem esperar o MP3 terminar nem a Promise do Safari.
-    startCrossfade();
+    musicFadeRaf=requestAnimationFrame(tick);
   }
-
-  function setMusicActive(active,fadeInMs=0){
+  function hardCutToStage(stage){
+    if(stage<0||!soundOn||!musicActive)return;
+    stopMusicFade();
+    const current=musicPlayers[musicPlayerIndex],next=musicPlayers[1-musicPlayerIndex],cfg=audioStages[stage];
+    current.pause();current.currentTime=0;current.volume=0;
+    next.pause();next.src=cfg.src;next.currentTime=0;next.volume=MUSIC_VOLUME;
+    const p=next.play();if(p&&p.catch)p.catch(()=>{});
+    musicPlayerIndex=1-musicPlayerIndex;musicStage=stage;
+  }
+  function crossfadeToStage(stage){
+    if(stage<0||!soundOn||!musicActive)return;
+    if(stage===musicStage)return;
+    const oldStage=musicStage;
+    // BLACKOUT entra no 96 e sai no 101 sempre com corte seco.
+    const hard=(stage===8)||(oldStage===8&&stage!==8);
+    if(hard){hardCutToStage(stage);return;}
+    const current=musicPlayers[musicPlayerIndex],next=musicPlayers[1-musicPlayerIndex],cfg=audioStages[stage];
+    next.pause();next.src=cfg.src;next.currentTime=0;next.volume=0;
+    const p=next.play();if(p&&p.catch)p.catch(()=>{});
+    musicStage=stage;
+    fadePlayers(current,next,MUSIC_CROSSFADE_MS,0,MUSIC_VOLUME,()=>{
+      current.pause();current.currentTime=0;current.volume=0;
+    });
+    musicPlayerIndex=1-musicPlayerIndex;
+  }
+  function updateMusicStage(force=false){
+    const stage=audioStageFor();
+    if(stage<0)return;
+    if(force){hardCutToStage(stage);return;}
+    crossfadeToStage(stage);
+  }
+  function setMusicActive(active){
     musicActive=active;
-    if(!active||!soundOn){
-      // Morte/pausa/saída: sem fade de saída.
-      stopMusicPlayers();
+    if(!active){
+      stopMusicFade();
+      musicPlayers.forEach(a=>{a.pause();a.currentTime=0;a.volume=0;});
+      musicStage=-1;
       return;
     }
-
-    ensureAudio();
-    const nextStage=audioStageFor();
-    if(nextStage<0)return;
-
-    const stage=audioStages[nextStage];
-    const player=musicPlayers[activeMusicPlayer];
-    const wanted='assets/audio/music/'+stage.music;
-
-    musicStage=nextStage;
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
-    musicPlayers.forEach((a,i)=>{if(i!==activeMusicPlayer){a.pause();a.volume=0;}});
-
-    if(player.dataset.src!==wanted){
-      player.src=wanted;
-      player.dataset.src=wanted;
-      player.currentTime=0;
-    }else if(fadeInMs>0){
-      // Nova partida: começa a faixa do início.
-      player.currentTime=0;
-    }
-
-    player.loop=true;
-    player.volume=fadeInMs>0?0:MUSIC_VOLUME;
-
-    const beginStartFade=()=>{
-      if(!musicActive||!soundOn||fadeInMs<=0)return;
-      clearInterval(musicFadeTimer);musicFadeTimer=0;
-      const stepTime=50;
-      const steps=Math.max(1,Math.round(fadeInMs/stepTime));
-      const volumeStep=MUSIC_VOLUME/steps;
-      let currentStep=0;
-
-      musicFadeTimer=setInterval(()=>{
-        if(!musicActive||!soundOn){
-          clearInterval(musicFadeTimer);musicFadeTimer=0;
-          return;
-        }
-        currentStep++;
-        player.volume=Math.min(MUSIC_VOLUME,player.volume+volumeStep);
-        if(currentStep>=steps){
-          clearInterval(musicFadeTimer);musicFadeTimer=0;
-          player.volume=MUSIC_VOLUME;
-        }
-      },stepTime);
-    };
-
-    const playPromise=player.play();
-    if(playPromise&&playPromise.then){
-      playPromise.then(beginStartFade).catch(()=>{});
-    }else if(fadeInMs>0){
-      beginStartFade();
-    }
+    if(!soundOn)return;
+    const stage=audioStageFor();
+    if(stage<0)return;
+    stopMusicFade();
+    const a=musicPlayers[musicPlayerIndex],other=musicPlayers[1-musicPlayerIndex];
+    other.pause();other.currentTime=0;other.volume=0;
+    a.pause();a.src=audioStages[stage].src;a.currentTime=0;a.volume=0;
+    musicStage=stage;
+    const p=a.play();if(p&&p.catch)p.catch(()=>{});
+    fadePlayers(null,a,MUSIC_FADE_START_MS,0,MUSIC_VOLUME);
   }
-  function updateAdaptiveMusic(){
-    if(musicActive&&soundOn)updateMusicStage(false);
-  }
+  function playMusicBeat(){ /* música agora vem dos arquivos MP3 */ }
+  function updateAdaptiveMusic(dt){ /* mantido para não alterar o loop do jogo */ }
   function eightBallSound(progress=0){
+    // Ataque seco e corpo ressonante; usa o mesmo volume geral dos efeitos.
     tone(1420*(1-progress*.5),.018,'triangle',.045);
     tone(420*(1-progress*.65),.085+progress*.06,'sine',.06);
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
-  function ballHitSound(kind='paddle'){
-    if(!ensureAudio())return;
-    try{
-      const now=audioCtx.currentTime;
-      const volume=kind==='paddle'?.22:kind==='ceiling'?.14:.12;
-
-      // Ataque bem curto e audível mesmo com a música tocando.
-      const attack=audioCtx.createOscillator(),attackGain=audioCtx.createGain();
-      attack.type='square';
-      attack.frequency.setValueAtTime(900,now);
-      attack.frequency.exponentialRampToValueAtTime(520,now+.018);
-      attackGain.gain.setValueAtTime(volume*.55,now);
-      attackGain.gain.exponentialRampToValueAtTime(.0001,now+.028);
-      attack.connect(attackGain).connect(sfxGain);
-
-      // Corpo do "tok": curto, seco, sem reverb e sem cauda longa.
-      const body=audioCtx.createOscillator(),bodyGain=audioCtx.createGain();
-      body.type='triangle';
-      body.frequency.setValueAtTime(430,now);
-      body.frequency.exponentialRampToValueAtTime(250,now+.06);
-      bodyGain.gain.setValueAtTime(volume,now);
-      bodyGain.gain.exponentialRampToValueAtTime(.0001,now+.085);
-      body.connect(bodyGain).connect(sfxGain);
-
-      // Pequeno clique de contato para o impacto aparecer sobre qualquer música.
-      const click=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),clickGain=audioCtx.createGain();
-      click.buffer=noiseBuffer;
-      filter.type='bandpass';filter.frequency.value=2400;filter.Q.value=1.1;
-      clickGain.gain.setValueAtTime(volume*.38,now);
-      clickGain.gain.exponentialRampToValueAtTime(.0001,now+.016);
-      click.connect(filter).connect(clickGain).connect(sfxGain);
-
-      attack.start(now);attack.stop(now+.032);
-      body.start(now);body.stop(now+.095);
-      click.start(now);click.stop(now+.020);
-    }catch{}
-  }
   function impactSound(kind='paddle'){
     if(!soundOn)return;
-    if(kind==='barrier'){
-      tone(980,.14,'sine',.055);tone(490,.20,'triangle',.022);return;
+    const progress=clamp(gameplayScore()/140,0,1),base=760*Math.pow(78/760,progress);
+    if(kind==='barrier'){tone(980,.14,'sine',.055);tone(490,.20,'triangle',.022);return;}
+    const factor=kind==='wall'?.68:kind==='ceiling'?1.18:1;
+    const freq=base*factor,dur=.045+progress*.09,type=progress>.72?'triangle':'sine';
+    if(kind==='paddle'&&selected==='eight')eightBallSound(progress);
+    else{
+      tone(freq,dur,type,.024+progress*.018);
+      if(progress>.45)tone(freq*.5,dur*1.45,'sine',.007+progress*.012);
     }
-    ballHitSound(kind);
+    if(kind==='paddle'&&score>=140){tone(42,.32,'sine',.026);noiseHit(.24,.014,210);}
   }
   function victorySound(){
     setMusicActive(false);[261.6,329.6,392,523.2].forEach((f,i)=>tone(f,.42,'sine',.04,i*.11));
@@ -1225,7 +1081,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,MUSIC_START_FADE_MS);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();musicBeatClock=0;musicStep=0;setMusicActive(true);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
@@ -1278,6 +1134,7 @@
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
       goldenQueue.push(nextGoldenMark);nextGoldenMark+=25;
     }
+    updateMusicStage();
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
     if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
@@ -1606,7 +1463,7 @@
     paddle.x=clamp(center-paddle.w/2,7,W-paddle.w-7);targetX=paddle.x;
     const speed=clamp(H*.49,390,525)*currentSpeedFactor(),len=Math.hypot(ball.vx,ball.vy)||1;
     ball.vx=ball.vx/len*speed;ball.vy=ball.vy/len*speed;ball.trail=[];
-    updateMusicStage(true,true);
+    updateMusicStage(true);
     flash=Math.max(flash,.2);burst(ball.x,ball.y,'#ffef9c',18);tone(940,.22,'sine',.055);haptic(30);
     toast('CESTA! RESPIRO',{kind:'good',detail:'Fase inicial por 3 rebatidas · pontos preservados'});
   }
@@ -1615,7 +1472,7 @@
     restHits--;
     if(restHits===0){
       if(secretRun&&secretRun.basketPending){secretRun.basketPending=false;awardSecret('basket');}
-      ball.trail=[];updateMusicStage(true,true);
+      ball.trail=[];updateMusicStage(true);
       toast('DE VOLTA AO DESAFIO',{kind:'neutral',detail:'Dificuldade do ponto '+score});
       nextBox=Math.max(nextBox,elapsed+2);
     }
