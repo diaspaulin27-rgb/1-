@@ -920,38 +920,22 @@
     return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
   }
   function ensureAudio(){
+    if(!soundOn)return false;
     try{
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
         masterGain.gain.value=1;sfxGain.gain.value=.82;
         sfxGain.connect(masterGain);masterGain.connect(audioCtx.destination);
-        noiseBuffer=audioCtx.createBuffer(1,audioCtx.sampleRate*1.5,audioCtx.sampleRate);
+        noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.7),audioCtx.sampleRate);
         const data=noiseBuffer.getChannelData(0);
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
       }
-      if(audioCtx.state==='suspended'||audioCtx.state==='interrupted'){
-        const p=audioCtx.resume();
-        if(p&&p.catch)p.catch(()=>{});
-      }
-      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-      masterGain.gain.setValueAtTime(soundOn?1:0,audioCtx.currentTime);
+      if(audioCtx.state==='suspended')audioCtx.resume();
+      masterGain.gain.setTargetAtTime(soundOn?1:0,audioCtx.currentTime,.03);
       return true;
     }catch{return false;}
   }
-  function unlockSfxAudio(){
-    if(!soundOn||!ensureAudio())return;
-    try{
-      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-      g.gain.value=.000001;
-      o.connect(g).connect(sfxGain);
-      o.start(audioCtx.currentTime);
-      o.stop(audioCtx.currentTime+.01);
-    }catch{}
-  }
-  window.addEventListener('pointerdown',unlockSfxAudio,{passive:true});
-  window.addEventListener('touchstart',unlockSfxAudio,{passive:true});
-
   function tone(freq=440,dur=.05,type='sine',vol=.035,delay=0){
     if(!ensureAudio())return;
     try{
