@@ -971,20 +971,31 @@
       incoming.currentTime=0;
     }
     incoming.loop=true;incoming.volume=0;
-    const playPromise=incoming.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
 
-    clearInterval(musicFadeTimer);
-    const started=performance.now(),outStart=outgoing.paused?0:outgoing.volume;
-    musicFadeTimer=setInterval(()=>{
-      const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
-      incoming.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
-      outgoing.volume=soundOn&&musicActive?outStart*(1-t):0;
-      if(t>=1){
-        clearInterval(musicFadeTimer);musicFadeTimer=0;
-        outgoing.pause();outgoing.volume=0;activeMusicPlayer=incomingIndex;
-      }
-    },50);
+    // O crossfade só começa quando a nova faixa realmente começou a tocar.
+    // Isso evita que o carregamento do MP3 no Safari/iPhone consuma parte dos 3s
+    // e transforme a troca em um corte seco.
+    clearInterval(musicFadeTimer);musicFadeTimer=0;
+    const outStart=outgoing.paused?0:outgoing.volume;
+    const beginCrossfade=()=>{
+      if(musicStage!==nextStage||!musicActive||!soundOn)return;
+      const started=performance.now();
+      musicFadeTimer=setInterval(()=>{
+        const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
+        incoming.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
+        outgoing.volume=soundOn&&musicActive?outStart*(1-t):0;
+        if(t>=1){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          outgoing.pause();outgoing.volume=0;activeMusicPlayer=incomingIndex;
+        }
+      },50);
+    };
+    const playPromise=incoming.play();
+    if(playPromise&&playPromise.then){
+      playPromise.then(beginCrossfade).catch(()=>{});
+    }else{
+      beginCrossfade();
+    }
   }
   function setMusicActive(active){
     musicActive=active;
