@@ -897,6 +897,7 @@
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
   const MUSIC_VOLUME=.42;
   const MUSIC_CROSSFADE_MS=1500;
+  const MUSIC_START_FADE_MS=3000;
   const audioStages=[
     {min:0,max:11,music:'01_Piano_Suave.mp3'},
     {min:12,max:23,music:'02_Lofi_Calmo.mp3'},
@@ -950,15 +951,52 @@
     src.connect(filter).connect(gain).connect(sfxGain);src.start(now);src.stop(now+dur+.02);
   }
   function stopMusicPlayers(){
+    // Corte seco real: cancela qualquer fade e silencia os dois players imediatamente.
     clearInterval(musicFadeTimer);musicFadeTimer=0;
     musicPlayers.forEach(a=>{a.pause();a.volume=0;});
   }
-  function updateMusicStage(force=false){
+
+  function playMusicStageHard(nextStage){
+    if(nextStage<0||!musicActive||!soundOn)return;
+    clearInterval(musicFadeTimer);musicFadeTimer=0;
+
+    // Zera imediatamente qualquer música/fade em andamento.
+    musicPlayers.forEach(a=>{a.pause();a.volume=0;});
+
+    const stage=audioStages[nextStage];
+    const player=musicPlayers[activeMusicPlayer];
+    const wanted='assets/audio/music/'+stage.music;
+
+    if(player.dataset.src!==wanted){
+      player.src=wanted;
+      player.dataset.src=wanted;
+      player.load();
+    }
+    player.currentTime=0;
+    player.loop=true;
+    player.volume=MUSIC_VOLUME;
+    musicStage=nextStage;
+
+    const playPromise=player.play();
+    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+  }
+
+  function updateMusicStage(force=false,hardCut=false){
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     if(!force&&nextStage===musicStage)return;
 
     const previousStage=musicStage;
+
+    // Estágio 8 = score 96–100 (Blackout).
+    // Entrada E saída do Blackout são sempre corte seco.
+    const blackoutCut=nextStage===8||previousStage===8;
+
+    if((hardCut||blackoutCut)&&musicActive&&soundOn){
+      playMusicStageHard(nextStage);
+      return;
+    }
+
     musicStage=nextStage;
     if(!musicActive||!soundOn)return;
 
@@ -994,7 +1032,6 @@
       const newStep=MUSIC_VOLUME/steps;
       let currentStep=0;
 
-      // A partir daqui, este é o player ativo da nova faixa.
       activeMusicPlayer=incomingIndex;
 
       musicFadeTimer=setInterval(()=>{
@@ -1004,11 +1041,7 @@
         }
 
         currentStep++;
-
-        // Música antiga: desce progressivamente até desaparecer.
         outgoing.volume=Math.max(0,outgoing.volume-oldStep);
-
-        // Música nova: entra progressivamente do zero até o volume normal.
         incoming.volume=Math.min(MUSIC_VOLUME,incoming.volume+newStep);
 
         if(currentStep>=steps){
@@ -1022,29 +1055,72 @@
     };
 
     const playPromise=incoming.play();
-    if(playPromise&&playPromise.then){
-      playPromise.then(startCrossfade).catch(()=>{});
-    }else{
-      startCrossfade();
-    }
+    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+    // A troca é comandada pelo score: o fade começa imediatamente ao entrar
+    // no novo estágio, sem esperar o MP3 terminar nem a Promise do Safari.
+    startCrossfade();
   }
-  function setMusicActive(active){
+
+  function setMusicActive(active,fadeInMs=0){
     musicActive=active;
-    if(!active||!soundOn){stopMusicPlayers();return;}
+    if(!active||!soundOn){
+      // Morte/pausa/saída: sem fade de saída.
+      stopMusicPlayers();
+      return;
+    }
+
     ensureAudio();
     const nextStage=audioStageFor();
     if(nextStage<0)return;
-    const stage=audioStages[nextStage],player=musicPlayers[activeMusicPlayer];
+
+    const stage=audioStages[nextStage];
+    const player=musicPlayers[activeMusicPlayer];
     const wanted='assets/audio/music/'+stage.music;
+
     musicStage=nextStage;
     clearInterval(musicFadeTimer);musicFadeTimer=0;
     musicPlayers.forEach((a,i)=>{if(i!==activeMusicPlayer){a.pause();a.volume=0;}});
+
     if(player.dataset.src!==wanted){
-      player.src=wanted;player.dataset.src=wanted;player.currentTime=0;
+      player.src=wanted;
+      player.dataset.src=wanted;
+      player.currentTime=0;
+    }else if(fadeInMs>0){
+      // Nova partida: começa a faixa do início.
+      player.currentTime=0;
     }
-    player.loop=true;player.volume=MUSIC_VOLUME;
+
+    player.loop=true;
+    player.volume=fadeInMs>0?0:MUSIC_VOLUME;
+
+    const beginStartFade=()=>{
+      if(!musicActive||!soundOn||fadeInMs<=0)return;
+      clearInterval(musicFadeTimer);musicFadeTimer=0;
+      const stepTime=50;
+      const steps=Math.max(1,Math.round(fadeInMs/stepTime));
+      const volumeStep=MUSIC_VOLUME/steps;
+      let currentStep=0;
+
+      musicFadeTimer=setInterval(()=>{
+        if(!musicActive||!soundOn){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          return;
+        }
+        currentStep++;
+        player.volume=Math.min(MUSIC_VOLUME,player.volume+volumeStep);
+        if(currentStep>=steps){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          player.volume=MUSIC_VOLUME;
+        }
+      },stepTime);
+    };
+
     const playPromise=player.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+    if(playPromise&&playPromise.then){
+      playPromise.then(beginStartFade).catch(()=>{});
+    }else if(fadeInMs>0){
+      beginStartFade();
+    }
   }
   function updateAdaptiveMusic(){
     if(musicActive&&soundOn)updateMusicStage(false);
@@ -1133,7 +1209,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,MUSIC_START_FADE_MS);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
@@ -1186,7 +1262,6 @@
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
       goldenQueue.push(nextGoldenMark);nextGoldenMark+=25;
     }
-    if(Math.floor(before/10)!==Math.floor(score/10))updateMusicStage(true);
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
     if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
@@ -1515,7 +1590,7 @@
     paddle.x=clamp(center-paddle.w/2,7,W-paddle.w-7);targetX=paddle.x;
     const speed=clamp(H*.49,390,525)*currentSpeedFactor(),len=Math.hypot(ball.vx,ball.vy)||1;
     ball.vx=ball.vx/len*speed;ball.vy=ball.vy/len*speed;ball.trail=[];
-    updateMusicStage(true);
+    updateMusicStage(true,true);
     flash=Math.max(flash,.2);burst(ball.x,ball.y,'#ffef9c',18);tone(940,.22,'sine',.055);haptic(30);
     toast('CESTA! RESPIRO',{kind:'good',detail:'Fase inicial por 3 rebatidas · pontos preservados'});
   }
@@ -1524,7 +1599,7 @@
     restHits--;
     if(restHits===0){
       if(secretRun&&secretRun.basketPending){secretRun.basketPending=false;awardSecret('basket');}
-      ball.trail=[];updateMusicStage(true);
+      ball.trail=[];updateMusicStage(true,true);
       toast('DE VOLTA AO DESAFIO',{kind:'neutral',detail:'Dificuldade do ponto '+score});
       nextBox=Math.max(nextBox,elapsed+2);
     }
