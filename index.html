@@ -1507,7 +1507,7 @@
     if(elapsed>=c.endAt){finishSportChallenge(false);return;}
 
     // Física somente nas duas bordas do aro. A rede continua 100% visual.
-    const visualW=60;
+    const visualW=95;
     const rimHalf=visualW*.40;
     const postR=Math.max(2.5,ballBaseRadius*.20);
     const leftX=c.x-rimHalf,rightX=c.x+rimHalf;
@@ -2200,7 +2200,7 @@
     ctx.save();ctx.textAlign='center';ctx.textBaseline='bottom';
 
     if(basketballHoopReady&&basketballHoopImage.naturalWidth&&basketballHoopImage.naturalHeight){
-      const drawW=60;
+      const drawW=95;
       const drawH=drawW*(basketballHoopImage.naturalHeight/basketballHoopImage.naturalWidth);
       const rimRatio=.48;
       ctx.imageSmoothingEnabled=true;
