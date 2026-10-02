@@ -600,6 +600,11 @@
   let activeSkin=()=>skins.find(s=>s.id===selected)||skins[0];
 
   const paddle={x:0,y:0,w:145,h:24,baseW:145,vx:0};
+  // Padronização visual: a skin não pode parecer vantagem/desvantagem.
+  // Mantemos a colisão original e unificamos apenas o desenho.
+  const PADDLE_PREVIEW_THICKNESS_RATIO=12/104;
+  const PADDLE_MIN_VISUAL_H=14;
+  const PADDLE_MAX_VISUAL_H=17;
   const ball={x:0,y:0,r:15,vx:0,vy:0,trail:[]};
   const fakeBall={active:false,x:0,y:0,r:15,vx:0,vy:0,trail:[]};
   let ballBaseRadius=15;
@@ -2113,10 +2118,16 @@
     const stretch=paddle.w<=ball.r*2+.1?0:paddleImpact*Math.min(28,paddle.w*.24),height=paddle.h*(1-paddleImpact*.22);
     const currentPaddle=paddleSkins.find(s=>s.id===selectedPaddle)||paddleSkins[0];
     const visualX=paddle.x-stretch/2,visualW=paddle.w+stretch;
-    const rendered=drawPaddleSkin(ctx,currentPaddle,visualX,paddle.y,visualW,height);
+
+    // Usa a mesma linguagem visual do preview da loja:
+    // todas as skins cabem na mesma espessura perceptiva.
+    const visualThickness=clamp(Math.round(visualW*PADDLE_PREVIEW_THICKNESS_RATIO),PADDLE_MIN_VISUAL_H,PADDLE_MAX_VISUAL_H);
+    const visualY=paddle.y+(height-visualThickness)/2;
+
+    const rendered=drawPaddleSkin(ctx,currentPaddle,visualX,visualY,visualW,visualThickness);
     if(!rendered){
-      const g=ctx.createLinearGradient(0,paddle.y,0,paddle.y+paddle.h);g.addColorStop(0,'#fff');g.addColorStop(1,'#dce5f4');ctx.fillStyle=g;
-      roundRect(ctx,visualX,paddle.y,visualW,height,height/2);ctx.fill();
+      const g=ctx.createLinearGradient(0,visualY,0,visualY+visualThickness);g.addColorStop(0,'#fff');g.addColorStop(1,'#dce5f4');ctx.fillStyle=g;
+      roundRect(ctx,visualX,visualY,visualW,visualThickness,visualThickness/2);ctx.fill();
     }
     ctx.shadowBlur=0;ctx.shadowOffsetY=0;
     const megaGlow=eventState.megaPaddleUntil>elapsed?clamp((eventState.megaPaddleUntil-elapsed-9.3)/.7,0,1):0;
