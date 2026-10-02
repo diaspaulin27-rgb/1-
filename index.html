@@ -1505,8 +1505,39 @@
   function checkSportCrossing(oldY){
     const c=eventState.activeChallenge;if(!c)return;
     if(elapsed>=c.endAt){finishSportChallenge(false);return;}
-    // Errar o aro não encerra a chance: ele permanece até os 17 segundos.
-    if(oldY>c.y&&ball.y<=c.y&&ball.vy<0&&Math.abs(ball.x-c.x)<=c.w*.40)finishSportChallenge(true);
+
+    // Física somente nas duas bordas do aro. A rede continua 100% visual.
+    const visualW=60;
+    const rimHalf=visualW*.40;
+    const postR=Math.max(2.5,ballBaseRadius*.20);
+    const leftX=c.x-rimHalf,rightX=c.x+rimHalf;
+
+    function collideRimPoint(px){
+      const dx=ball.x-px,dy=ball.y-c.y;
+      const minD=ball.r+postR;
+      const d2=dx*dx+dy*dy;
+      if(d2>=minD*minD)return false;
+      const d=Math.sqrt(d2)||.001,nx=dx/d,ny=dy/d;
+      // Só rebate se a bola estiver entrando no ponto de colisão.
+      const toward=ball.vx*nx+ball.vy*ny;
+      if(toward>=0)return false;
+      const push=minD-d+.25;
+      ball.x+=nx*push;ball.y+=ny*push;
+      const restitution=.88;
+      ball.vx-=(1+restitution)*toward*nx;
+      ball.vy-=(1+restitution)*toward*ny;
+      ball.trail=[];
+      impactSound('wall');
+      return true;
+    }
+
+    collideRimPoint(leftX);
+    collideRimPoint(rightX);
+
+    // Prêmio somente quando a bola atravessa o aro de CIMA para BAIXO.
+    const crossedDown=oldY<c.y&&ball.y>=c.y&&ball.vy>0;
+    const insideRim=ball.x-ball.r>leftX&&ball.x+ball.r<rightX;
+    if(crossedDown&&insideRim)finishSportChallenge(true);
   }
 
   function eventProbabilities(){
