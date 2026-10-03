@@ -1184,26 +1184,18 @@
   let badLuckClimbs=0;
 
   function upperBounceChaosDegrees(points=gameplayScore()){
-    const curve=[[0,3],[10,3],[20,6],[30,10],[40,15],[50,20],[60,25],[70,30]];
-    if(points>=100)return clamp(30+(points-100)*.5,30,50);
-    if(points<=0)return 3;
-    if(points>=70)return 30;
-    for(let i=1;i<curve.length;i++){
-      const [p1,d1]=curve[i];
-      if(points<=p1){
-        const [p0,d0]=curve[i-1],k=(points-p0)/(p1-p0||1);
-        return d0+(d1-d0)*k;
-      }
-    }
-    return 30;
+    // O desvio máximo cresce de forma contínua até 30° no nível 150.
+    return 3+27*Math.pow(clamp(points/150,0,1),1.5);
   }
 
   function applyUpperBounceChaos(b,surface){
     if(!b)return;
     const points=gameplayScore();
-    const chaosLimit=points>=100?H*.85:H*.5;
+    // A área sujeita ao caos também se expande gradualmente, sem salto no 100.
+    const areaProgress=Math.pow(clamp((points-70)/80,0,1),1.2);
+    const chaosLimit=H*(.50+.35*areaProgress);
     if(b.y>chaosLimit)return;
-    const chance=clamp(.30+(points/70)*.70,.30,1);
+    const chance=.30+.70*Math.pow(clamp(points/150,0,1),1.35);
     if(Math.random()>chance)return;
 
     const wasDescending=b.vy>0;
@@ -1234,12 +1226,12 @@
   }
 
   function currentSpeedFactor(){
-    // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
-    const earlyBoost=.30*(1-clamp(gameplayScore()/60,0,1));
-    let f=1+gameplayScore()*.01+earlyBoost;
-    if(gameplayScore()>60) f+=(gameplayScore()-60)*.004;
-    if(gameplayScore()>90) f+=(gameplayScore()-90)*.007;
-    if(gameplayScore()>120) f+=(gameplayScore()-120)*.012;
+    // Progressão contínua: não existem degraus em 60, 70, 90 ou 120.
+    // A dificuldade cresce a cada ponto e converge suavemente para o máximo no 150.
+    const points=gameplayScore();
+    const earlyBoost=.30*(1-clamp(points/60,0,1));
+    const lateRamp=.85*Math.pow(clamp(points/150,0,1),3);
+    let f=1+points*.01+earlyBoost+lateRamp;
     for(const m of modifiers){
       if(m.type==='slow')f*=.8;
       else if(m.type==='cameraSlow')f*=.5;
@@ -1249,11 +1241,8 @@
     return clamp(f,.7,3.35)*rescueSpeed;
   }
   function basePaddleFactor(points){
-    let f=1-points*.005;
-    if(points>60)f-=(points-60)*.0025;
-    if(points>90)f-=(points-90)*.003;
-    if(points>120)f-=(points-120)*.004;
-    return f;
+    // Encolhimento contínuo: 0,5% por ponto, sem degraus em 60/90/120.
+    return 1-points*.005;
   }
   function currentPaddleFactor(){
     const minimum=ballBaseRadius*2/paddle.baseW;
@@ -1269,8 +1258,16 @@
   function paddleResponse(){
     return 24;
   }
-  function windStrength(){ return rescueProtected()||gameplayScore()<91?0:clamp((gameplayScore()-90)*7,0,420); }
-  function curveStrength(){ return rescueProtected()||gameplayScore()<126?0:clamp((gameplayScore()-125)*5.5,0,145); }
+  function windStrength(){
+    if(rescueProtected())return 0;
+    const p=clamp((gameplayScore()-70)/80,0,1);
+    return 420*(p*p*(3-2*p));
+  }
+  function curveStrength(){
+    if(rescueProtected())return 0;
+    const p=clamp((gameplayScore()-100)/50,0,1);
+    return 145*(p*p*(3-2*p));
+  }
   function refreshDangerZone(){
     if(score<111)return;
     dangerZone.w=clamp(W*.23,92,178); dangerZone.h=24;
@@ -1546,13 +1543,11 @@
 
   function eventProbabilities(){
     const points=clamp(score,0,MAX_SCORE);
-    let troll,sport=.10;
-    if(points<=25)troll=.30+.10*(points/25);
-    else if(points<=50)troll=.40+.15*((points-25)/25);
-    else if(points<71){
-      const progress=(points-50)/21;
-      troll=.55+.05*progress;sport=.10+.10*progress;
-    }else{troll=.60;sport=.20;}
+    // Caixas também escalam continuamente: os eventos mais pesados chegam
+    // aos poucos, sem transformar o nível 70 em uma chave liga/desliga.
+    const t=clamp(points/150,0,1);
+    const troll=.30+.30*Math.pow(t,.80);
+    const sport=.10+.10*Math.pow(t,.90);
     return {good:1-sport-troll,sport,troll};
   }
 
@@ -1688,7 +1683,8 @@
       if(windClock<=0){windClock=rand(.55,1.1);windTarget=rand(-windStrength(),windStrength());}
       windX+=(windTarget-windX)*Math.min(1,dt*1.6);
     }else windX*=Math.max(0,1-dt*4);
-    if(!rescueProtected()&&gameplayScore()>=111&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
+    const dangerProgress=clamp((gameplayScore()-90)/60,0,1);
+    if(!rescueProtected()&&dangerProgress>0&&Math.random()<dangerProgress*.025*dt&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
 
     if(elapsed>=nextCoin){ spawn('coin'); nextCoin=elapsed+rand(6,10); }
     updateBoxSpawns();
