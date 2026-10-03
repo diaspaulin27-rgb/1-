@@ -1657,7 +1657,7 @@
     syncActiveEffect();
     if(modifiers.some(m=>m.type==='earthquake'))shake=Math.max(shake,1.6);
 
-    const desiredWidth=eventState.megaPaddleUntil>elapsed?Math.max(ballBaseRadius*2,W-14):Math.max(ballBaseRadius*2,paddle.baseW*currentPaddleFactor());
+    const desiredWidth=Math.max(ballBaseRadius*2,paddle.baseW*currentPaddleFactor());
     paddle.w+=(desiredWidth-paddle.w)*Math.min(1,dt*9);
     if(Math.abs(desiredWidth-paddle.w)<.1)paddle.w=desiredWidth;
     paddle.w=Math.max(ballBaseRadius*2,paddle.w);
