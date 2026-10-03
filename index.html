@@ -1526,7 +1526,7 @@
       if(toward>=0)return false;
       const push=minD-d+.25;
       ball.x+=nx*push;ball.y+=ny*push;
-      const restitution=.88;
+      const restitution=.74;
       ball.vx-=(1+restitution)*toward*nx;
       ball.vy-=(1+restitution)*toward*ny;
       ball.trail=[];
@@ -1539,7 +1539,8 @@
 
     // Prêmio somente quando a bola atravessa o aro de CIMA para BAIXO.
     const crossedDown=oldY<c.y&&ball.y>=c.y&&ball.vy>0;
-    const insideRim=ball.x-ball.r>leftX&&ball.x+ball.r<rightX;
+    const scoreTolerance=4; // +8 px de abertura útil total, invisível ao jogador
+    const insideRim=ball.x-ball.r>leftX-scoreTolerance&&ball.x+ball.r<rightX+scoreTolerance;
     if(crossedDown&&insideRim)finishSportChallenge(true);
   }
 
