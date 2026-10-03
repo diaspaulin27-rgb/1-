@@ -2102,9 +2102,11 @@
     const crop=getAssetCrop(skin);
     const sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
     if(!sw||!sh)return false;
-    const targetW=w,targetMaxH=Math.max(h,12);
-    const scale=Math.min(targetW/sw,targetMaxH/sh);
-    const dw=sw*scale,dh=sh*scale;
+
+    // Todas as skins ocupam exatamente a mesma caixa visual.
+    // O recorte transparente é removido antes, então comprimento e espessura
+    // percebidos ficam iguais independentemente do PNG original.
+    const dw=w,dh=Math.max(h,12);
     const cx=x+w/2,cy=y+h/2;
     c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
     c.shadowColor='rgba(0,0,0,.22)';c.shadowBlur=6;c.shadowOffsetY=3;
