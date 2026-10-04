@@ -68,6 +68,7 @@
     h1 { margin:0; font-size:clamp(70px,25vw,116px); font-weight:950; letter-spacing:-.09em; line-height:.82; text-shadow:0 16px 45px rgba(0,0,0,.2); }
     .tag { margin:22px auto 0; max-width:340px; font-size:18px; line-height:1.4; font-weight:650; color:rgba(255,255,255,.82); }
     .primary { width:100%; height:62px; margin-top:32px; border-radius:22px; color:#0865ec; background:#fff; font-weight:950; font-size:18px; box-shadow:0 16px 45px rgba(1,17,53,.26); }
+    .shopStart { width:100%; height:62px; margin-top:10px; border-radius:22px; color:#fff; background:linear-gradient(135deg,#ffad32,#f07818); border:1px solid rgba(255,255,255,.22); font-weight:950; font-size:18px; box-shadow:0 16px 45px rgba(120,54,5,.28); }
     .rewarded { width:100%; min-height:58px; margin-top:10px; padding:10px 16px; border-radius:20px; color:#fff; background:linear-gradient(135deg,rgba(113,68,203,.78),rgba(45,20,92,.86)); border:1px solid rgba(255,255,255,.22); font-weight:950; font-size:14px; letter-spacing:.015em; box-shadow:0 12px 32px rgba(15,4,42,.22); }
     .rewarded small { display:block; margin-top:3px; font-size:10px; letter-spacing:.1em; opacity:.68; }
     #skip25Offer { position:fixed; z-index:7; left:18px; bottom:calc(max(18px,env(safe-area-inset-bottom)) + 92px); width:108px; min-height:58px; padding:8px 10px; border-radius:18px; color:#fff; background:linear-gradient(135deg,rgba(113,68,203,.94),rgba(45,20,92,.96)); border:1px solid rgba(255,255,255,.28); box-shadow:0 10px 28px rgba(15,4,42,.28); font-weight:950; font-size:14px; line-height:1.05; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .22s ease,visibility 0s linear .22s; }
@@ -150,10 +151,7 @@
       <h1>1%</h1>
       <p class="tag">Cada rebatida deixa tudo 1% mais difícil. Quanto você aguenta?</p>
       <button class="primary" id="play">JOGAR DO ZERO</button>
-      <div class="secondaryRow">
-        <button class="secondary openShop">LOJA</button>
-        <button class="secondary" id="sound">SOM: ON</button>
-      </div>
+      <button class="shopStart openShop">🛒 LOJA</button>
     </div>
   </section>
 
@@ -166,7 +164,6 @@
         <div class="stat"><strong id="bestScore">0</strong><span>RECORDE</span></div>
       </div>
       <div id="recordResult"></div>
-      <div id="runConditions"></div>
       <div id="rank">Você chegou ao Azul Bebê</div>
       <div id="runStats" aria-label="Estatísticas desta partida"><span id="runPrimary"></span><span id="runSecondary"></span></div>
       <button class="primary" id="again">VINGANÇA · JOGAR DE NOVO</button>
@@ -195,6 +192,7 @@
       <div class="brand">PAUSADO</div>
       <h2 style="font-size:46px;margin:0">Respire.</h2>
       <button class="primary" id="resume">CONTINUAR</button>
+      <button class="secondary" id="sound" style="width:100%;margin-top:10px">SOM: ON</button>
       <button class="secondary" id="quit" style="width:100%;margin-top:10px">SAIR</button>
     </div>
   </section>
@@ -1184,18 +1182,26 @@
   let badLuckClimbs=0;
 
   function upperBounceChaosDegrees(points=gameplayScore()){
-    // O desvio máximo cresce de forma contínua até 30° no nível 150.
-    return 3+27*Math.pow(clamp(points/150,0,1),1.5);
+    const curve=[[0,3],[10,3],[20,6],[30,10],[40,15],[50,20],[60,25],[70,30]];
+    if(points>=100)return clamp(30+(points-100)*.5,30,50);
+    if(points<=0)return 3;
+    if(points>=70)return 30;
+    for(let i=1;i<curve.length;i++){
+      const [p1,d1]=curve[i];
+      if(points<=p1){
+        const [p0,d0]=curve[i-1],k=(points-p0)/(p1-p0||1);
+        return d0+(d1-d0)*k;
+      }
+    }
+    return 30;
   }
 
   function applyUpperBounceChaos(b,surface){
     if(!b)return;
     const points=gameplayScore();
-    // A área sujeita ao caos também se expande gradualmente, sem salto no 100.
-    const areaProgress=Math.pow(clamp((points-70)/80,0,1),1.2);
-    const chaosLimit=H*(.50+.35*areaProgress);
+    const chaosLimit=points>=100?H*.85:H*.5;
     if(b.y>chaosLimit)return;
-    const chance=.30+.70*Math.pow(clamp(points/150,0,1),1.35);
+    const chance=clamp(.30+(points/70)*.70,.30,1);
     if(Math.random()>chance)return;
 
     const wasDescending=b.vy>0;
@@ -1226,12 +1232,12 @@
   }
 
   function currentSpeedFactor(){
-    // Progressão contínua: não existem degraus em 60, 70, 90 ou 120.
-    // A dificuldade cresce a cada ponto e converge suavemente para o máximo no 150.
-    const points=gameplayScore();
-    const earlyBoost=.30*(1-clamp(points/60,0,1));
-    const lateRamp=.85*Math.pow(clamp(points/150,0,1),3);
-    let f=1+points*.01+earlyBoost+lateRamp;
+    // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
+    const earlyBoost=.30*(1-clamp(gameplayScore()/60,0,1));
+    let f=1+gameplayScore()*.01+earlyBoost;
+    if(gameplayScore()>60) f+=(gameplayScore()-60)*.004;
+    if(gameplayScore()>90) f+=(gameplayScore()-90)*.007;
+    if(gameplayScore()>120) f+=(gameplayScore()-120)*.012;
     for(const m of modifiers){
       if(m.type==='slow')f*=.8;
       else if(m.type==='cameraSlow')f*=.5;
@@ -1241,8 +1247,11 @@
     return clamp(f,.7,3.35)*rescueSpeed;
   }
   function basePaddleFactor(points){
-    // Encolhimento contínuo: 0,5% por ponto, sem degraus em 60/90/120.
-    return 1-points*.005;
+    let f=1-points*.005;
+    if(points>60)f-=(points-60)*.0025;
+    if(points>90)f-=(points-90)*.003;
+    if(points>120)f-=(points-120)*.004;
+    return f;
   }
   function currentPaddleFactor(){
     const minimum=ballBaseRadius*2/paddle.baseW;
@@ -1258,16 +1267,8 @@
   function paddleResponse(){
     return 24;
   }
-  function windStrength(){
-    if(rescueProtected())return 0;
-    const p=clamp((gameplayScore()-70)/80,0,1);
-    return 420*(p*p*(3-2*p));
-  }
-  function curveStrength(){
-    if(rescueProtected())return 0;
-    const p=clamp((gameplayScore()-100)/50,0,1);
-    return 145*(p*p*(3-2*p));
-  }
+  function windStrength(){ return rescueProtected()||gameplayScore()<91?0:clamp((gameplayScore()-90)*7,0,420); }
+  function curveStrength(){ return rescueProtected()||gameplayScore()<126?0:clamp((gameplayScore()-125)*5.5,0,145); }
   function refreshDangerZone(){
     if(score<111)return;
     dangerZone.w=clamp(W*.23,92,178); dangerZone.h=24;
@@ -1523,7 +1524,7 @@
       if(toward>=0)return false;
       const push=minD-d+.25;
       ball.x+=nx*push;ball.y+=ny*push;
-      const restitution=.74;
+      const restitution=.88;
       ball.vx-=(1+restitution)*toward*nx;
       ball.vy-=(1+restitution)*toward*ny;
       ball.trail=[];
@@ -1536,18 +1537,19 @@
 
     // Prêmio somente quando a bola atravessa o aro de CIMA para BAIXO.
     const crossedDown=oldY<c.y&&ball.y>=c.y&&ball.vy>0;
-    const scoreTolerance=4; // +8 px de abertura útil total, invisível ao jogador
-    const insideRim=ball.x-ball.r>leftX-scoreTolerance&&ball.x+ball.r<rightX+scoreTolerance;
+    const insideRim=ball.x-ball.r>leftX&&ball.x+ball.r<rightX;
     if(crossedDown&&insideRim)finishSportChallenge(true);
   }
 
   function eventProbabilities(){
     const points=clamp(score,0,MAX_SCORE);
-    // Caixas também escalam continuamente: os eventos mais pesados chegam
-    // aos poucos, sem transformar o nível 70 em uma chave liga/desliga.
-    const t=clamp(points/150,0,1);
-    const troll=.30+.30*Math.pow(t,.80);
-    const sport=.10+.10*Math.pow(t,.90);
+    let troll,sport=.10;
+    if(points<=25)troll=.30+.10*(points/25);
+    else if(points<=50)troll=.40+.15*((points-25)/25);
+    else if(points<71){
+      const progress=(points-50)/21;
+      troll=.55+.05*progress;sport=.10+.10*progress;
+    }else{troll=.60;sport=.20;}
     return {good:1-sport-troll,sport,troll};
   }
 
@@ -1683,8 +1685,7 @@
       if(windClock<=0){windClock=rand(.55,1.1);windTarget=rand(-windStrength(),windStrength());}
       windX+=(windTarget-windX)*Math.min(1,dt*1.6);
     }else windX*=Math.max(0,1-dt*4);
-    const dangerProgress=clamp((gameplayScore()-90)/60,0,1);
-    if(!rescueProtected()&&dangerProgress>0&&Math.random()<dangerProgress*.025*dt&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
+    if(!rescueProtected()&&gameplayScore()>=111&&(dangerZone.ttl<=0||dangerZone.w===0)) refreshDangerZone();
 
     if(elapsed>=nextCoin){ spawn('coin'); nextCoin=elapsed+rand(6,10); }
     updateBoxSpawns();
@@ -1845,7 +1846,6 @@
     $('#finalScore').textContent=score; $('#bestScore').textContent=best;
     $('#gameOverTitle').textContent=title;
     $('#recordResult').textContent=recordSummary();
-    $('#runConditions').textContent=(runStartScore===25?'INÍCIO NO 25':'INÍCIO DO ZERO')+' · '+runStats.adRescues+(runStats.adRescues===1?' RESGATE POR VÍDEO · ':' RESGATES POR VÍDEO · ')+runStats.extraLivesUsed+(runStats.extraLivesUsed===1?' VIDA EXTRA USADA':' VIDAS EXTRAS USADAS');
     $('#rank').textContent='Você chegou ao '+visualState().name;
     $('#runPrimary').textContent=runStats.rebounds+' REBATIDAS · '+runStats.boxes+' CAIXAS';
     $('#runSecondary').textContent=runStats.trolls+' TROLLS · '+runStats.reliefs+' ALÍVIOS · '+runStats.coins+' MOEDAS';
@@ -2355,12 +2355,7 @@
     c.fillStyle='#d1def0';c.font='800 28px system-ui, sans-serif';c.fillText('SCORE',540,320);
     c.fillStyle='#fff';c.font='950 270px system-ui, sans-serif';c.fillText(String(result.score),540,490);
     c.fillStyle='#ffe4a2';c.font='800 38px system-ui, sans-serif';c.fillText('RECORDE PESSOAL  '+result.record,540,680);
-    c.fillStyle='rgba(5,14,30,.66)';roundRect(c,120,758,840,215,24);c.fill();
-    c.fillStyle='#fff';c.font='800 30px system-ui, sans-serif';
-    c.fillText(result.startScore===25?'INÍCIO NO 25':'INÍCIO DO ZERO',540,808);
-    c.font='600 28px system-ui, sans-serif';c.fillStyle='#d1def0';
-    c.fillText(result.adRescues+' '+(result.adRescues===1?'resgate por vídeo':'resgates por vídeo'),540,866);
-    c.fillText(result.extraLivesUsed+' '+(result.extraLivesUsed===1?'vida extra usada':'vidas extras usadas'),540,922);
+    // As informações de início, resgates por vídeo e vidas extras não aparecem mais no cartão.
     c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';c.fillText('Consegue passar?',540,1082);
     c.fillStyle='#c9d6ea';c.font='800 24px system-ui, sans-serif';c.fillText('Z A N O N',540,1220);
     return card;
