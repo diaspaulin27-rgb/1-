@@ -156,7 +156,7 @@
   <section class="overlay" id="languageScreen">
     <div class="card">
       <div class="brand">1% · ZANON</div>
-      <h2 id="languageTitle">Idioma</h2>
+      <h2 id="languageTitle">Language</h2>
       <div class="languageButtons">
         <button class="languageButton" id="languageEnglish">Inglês</button>
         <button class="languageButton" id="languagePortuguese">Português</button>
@@ -259,16 +259,39 @@
 <script>
 (() => {
   'use strict';
+  window.addEventListener('error',event=>{
+    console.error('[1%] Runtime error:',event.error||event.message);
+  });
+  window.addEventListener('unhandledrejection',event=>{
+    console.error('[1%] Unhandled promise rejection:',event.reason);
+  });
+
   const canvas = document.querySelector('#game');
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
-  const $ = s => document.querySelector(s);
+  const STORAGE_PREFIX = 'zanon1_';
+  const domCache = Object.create(null);
+  const $ = s => {
+    if (domCache[s] && domCache[s].isConnected) return domCache[s];
+    const el = document.querySelector(s);
+    if (el) domCache[s] = el;
+    return el;
+  };
   const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
   const rand = (a,b) => a + Math.random()*(b-a);
   const storage = {
-    get(k,f){ try { const v=localStorage.getItem('zanon1_'+k); return v===null?f:JSON.parse(v); } catch { return f; } },
-    set(k,v){ try { localStorage.setItem('zanon1_'+k,JSON.stringify(v)); } catch {} }
+    get(k,f){
+      try {
+        const v=localStorage.getItem(STORAGE_PREFIX+k);
+        return v===null?f:JSON.parse(v);
+      } catch {
+        return f;
+      }
+    },
+    set(k,v){
+      try { localStorage.setItem(STORAGE_PREFIX+k,JSON.stringify(v)); } catch {}
+    }
   };
 
   // ===== IDIOMAS =====
@@ -369,6 +392,7 @@
     'Você tem sete segundos para decidir.':'You have seven seconds to decide.',
     'Compartilhe o cartão ou salve a imagem.':'Share the card or save the image.'
   };
+  Object.freeze(translations);
 
   function tr(value){
     if(language!=='en'||value===undefined||value===null)return value;
@@ -424,7 +448,11 @@
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
-  let score=0, best=storage.get('best',0), coins=storage.get('coins',0);
+  let score=0;
+  const storedBest=Number(storage.get('best',0));
+  const storedCoins=Number(storage.get('coins',0));
+  let best=Number.isFinite(storedBest)?Math.max(0,Math.floor(storedBest)):0;
+  let coins=Number.isFinite(storedCoins)?Math.max(0,Math.floor(storedCoins)):0;
   let skip25Unlocked=storage.get('skip25Unlocked',false)||best>=70;
   if(skip25Unlocked)storage.set('skip25Unlocked',true);
   let skip25EligibleThisRun=false,skip25ModalOpen=false;
@@ -432,7 +460,8 @@
   let startHintRemaining=0;
   // Arte da bola 1% será adicionada depois. A conquista já é persistida
   // em zanon1_secretUnlocks.onePercentBall; não equipar uma skin sem arte.
-  const secretUnlocks=storage.get('secretUnlocks',{});
+  const savedSecretUnlocks=storage.get('secretUnlocks',{});
+  const secretUnlocks=savedSecretUnlocks&&typeof savedSecretUnlocks==='object'&&!Array.isArray(savedSecretUnlocks)?savedSecretUnlocks:{};
   const secretMissions=[
     {id:'dual',name:'NÃO APRENDE NUNCA',coins:25,detail:'Sobreviveu a dois castigos de duas bolas'},
     {id:'blackout',name:'NO ESCURO EU RESOLVO',coins:25,detail:'Atravessou o blackout sem ser salvo'},
@@ -752,13 +781,15 @@
     [...skins,...paddleSkins].forEach(item=>{if(!item.image)return;const img=new Image();img.onload=()=>{skinImages[item.id]=img;if(shopOpen)renderShop();};img.src=item.image;});
   }
   const validBallSkinIds=new Set(skins.map(s=>s.id));
-  let owned=storage.get('owned',['soccer']).filter(id=>validBallSkinIds.has(id));
+  const savedOwned=storage.get('owned',['soccer']);
+  let owned=(Array.isArray(savedOwned)?savedOwned:[]).filter(id=>validBallSkinIds.has(id));
   if(!owned.includes('soccer'))owned.unshift('soccer');
   let selected=storage.get('skin','soccer');
   if(!validBallSkinIds.has(selected))selected='soccer';
   storage.set('owned',owned);storage.set('skin',selected);
   const validPaddleSkinIds=new Set(paddleSkins.map(s=>s.id));
-  let ownedPaddles=storage.get('ownedPaddles',['classic']).filter(id=>validPaddleSkinIds.has(id));
+  const savedOwnedPaddles=storage.get('ownedPaddles',['classic']);
+  let ownedPaddles=(Array.isArray(savedOwnedPaddles)?savedOwnedPaddles:[]).filter(id=>validPaddleSkinIds.has(id));
   if(!ownedPaddles.includes('classic'))ownedPaddles.unshift('classic');
   let selectedPaddle=storage.get('paddleSkin','classic');
   if(!validPaddleSkinIds.has(selectedPaddle))selectedPaddle='classic';
