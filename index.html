@@ -14,7 +14,7 @@
     .fireEmojiOverlay { position:fixed; z-index:2; display:none; pointer-events:none; transform:translate(-50%,-50%); line-height:1; font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
     #hud { position:fixed; z-index:3; left:0; right:0; top:0; padding:max(18px, env(safe-area-inset-top)) 18px 0; display:flex; align-items:center; gap:10px; pointer-events:none; }
     .pill { height:56px; border-radius:22px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.13); box-shadow:0 8px 30px rgba(0,0,0,.12); backdrop-filter:blur(12px); display:flex; align-items:center; color:white; }
-    #scorePill { flex:none; width:150px; min-width:150px; height:66px; padding:9px 14px; gap:5px; flex-direction:column; align-items:flex-start; justify-content:center; background:linear-gradient(135deg,rgba(10,24,49,.8),rgba(15,32,60,.66)); border-color:rgba(255,255,255,.24); box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 20px rgba(0,0,0,.16); }
+    #scorePill { flex:1; min-width:0; height:66px; padding:9px 14px; gap:5px; flex-direction:column; align-items:flex-start; justify-content:center; background:linear-gradient(135deg,rgba(10,24,49,.8),rgba(15,32,60,.66)); border-color:rgba(255,255,255,.24); box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 20px rgba(0,0,0,.16); }
     .scoreLine { display:flex; align-items:baseline; gap:8px; white-space:nowrap; }
     .scoreLabel { font-size:10px; font-weight:800; letter-spacing:.12em; color:#cbd9ee; }
     #score { font-size:28px; line-height:1; font-weight:950; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
@@ -22,11 +22,11 @@
     #hudBest { color:#ffe19a; font-weight:850; font-variant-numeric:tabular-nums; }
     #coinsPill.pop { animation:coinPop .35s ease-out; }
     @keyframes coinPop { 50% { transform:scale(1.16); background:rgba(255,215,72,.45); } }
-    #coinsPill { height:48px; margin-left:auto; padding:0 10px; gap:7px; border-radius:17px; font-weight:850; background:rgba(30,25,16,.8); border-color:rgba(255,214,116,.3); color:#fff1cc; }
+    #coinsPill { height:48px; padding:0 10px; gap:7px; border-radius:17px; font-weight:850; background:rgba(30,25,16,.8); border-color:rgba(255,214,116,.3); color:#fff1cc; }
     .coinSymbol { width:26px; height:26px; flex:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.25)); }
     #coinCount { font-size:15px; font-variant-numeric:tabular-nums; max-width:8ch; overflow:hidden; text-overflow:ellipsis; }
     #pause { width:44px; height:48px; flex:none; border-radius:17px; justify-content:center; pointer-events:auto; color:white; font-size:22px; background:rgba(10,24,49,.72); }
-    @media(max-width:360px) { #hud { padding-left:10px; padding-right:10px; gap:6px; } #scorePill { width:140px; min-width:140px; padding:9px 10px; } #score { font-size:25px; } #coinsPill { padding:0 8px; gap:5px; } #coinCount { font-size:13px; max-width:6ch; } .scoreLine { gap:6px; } }
+    @media(max-width:360px) { #hud { padding-left:10px; padding-right:10px; gap:6px; } #scorePill { padding:9px 10px; } #score { font-size:25px; } #coinsPill { padding:0 8px; gap:5px; } #coinCount { font-size:13px; max-width:6ch; } .scoreLine { gap:6px; } }
     #achievement { position:fixed; z-index:4; top:calc(max(18px,env(safe-area-inset-top)) + 76px); left:50%; transform:translateX(-50%); max-width:calc(100% - 24px); padding:6px 12px; border-radius:12px; background:rgba(15,25,45,.94); border:1px solid #e6c780; color:#ffe5a2; font-size:11px; font-weight:850; text-align:center; opacity:0; pointer-events:none; transition:opacity .2s; }
     #achievement.show { opacity:1; }
     #recordResult { margin:10px 0 0; color:#ffe5a2; font-size:14px; font-weight:800; }
@@ -68,6 +68,12 @@
     h1 { margin:0; font-size:clamp(70px,25vw,116px); font-weight:950; letter-spacing:-.09em; line-height:.82; text-shadow:0 16px 45px rgba(0,0,0,.2); }
     .tag { margin:22px auto 0; max-width:340px; font-size:18px; line-height:1.4; font-weight:650; color:rgba(255,255,255,.82); }
     .primary { width:100%; height:62px; margin-top:32px; border-radius:22px; color:#0865ec; background:#fff; font-weight:950; font-size:18px; box-shadow:0 16px 45px rgba(1,17,53,.26); }
+    #languageScreen { z-index:40; }
+    #languageScreen .brand { margin-bottom:12px; }
+    #languageScreen h2 { margin:0; font-size:32px; letter-spacing:-.04em; }
+    .languageButtons { display:grid; gap:10px; margin-top:24px; }
+    .languageButton { width:100%; height:60px; border-radius:20px; background:#fff; color:#0865ec; font-weight:950; font-size:18px; box-shadow:0 12px 30px rgba(1,17,53,.2); }
+
     .shopStart { width:100%; height:62px; margin-top:10px; border-radius:22px; color:#e88718; background:#fff; border:1px solid rgba(255,255,255,.95); font-weight:950; font-size:18px; letter-spacing:.01em; text-shadow:none; box-shadow:0 10px 26px rgba(0,0,0,.12); }
     .shopStart .cartIcon { font-size:20px; margin-right:7px; vertical-align:-2px; color:#e88718; filter:none; }
     .rewarded { width:100%; min-height:58px; margin-top:10px; padding:10px 16px; border-radius:20px; color:#fff; background:linear-gradient(135deg,rgba(113,68,203,.78),rgba(45,20,92,.86)); border:1px solid rgba(255,255,255,.22); font-weight:950; font-size:14px; letter-spacing:.015em; box-shadow:0 12px 32px rgba(15,4,42,.22); }
@@ -146,6 +152,17 @@
   <div id="achievement" role="status" aria-live="polite"></div>
   <div id="eventBanner" role="status" aria-live="polite"><span id="noticeTitle"></span><span id="noticeDetail"></span></div>
   <button id="skip25Offer" aria-label="Pular 25 fases">PULAR +25<small>ASSISTIR VÍDEO</small></button>
+
+  <section class="overlay" id="languageScreen">
+    <div class="card">
+      <div class="brand">1% · ZANON</div>
+      <h2 id="languageTitle">Idioma</h2>
+      <div class="languageButtons">
+        <button class="languageButton" id="languageEnglish">Inglês</button>
+        <button class="languageButton" id="languagePortuguese">Português</button>
+      </div>
+    </div>
+  </section>
 
   <section class="overlay" id="start">
     <div class="card">
@@ -253,6 +270,157 @@
     get(k,f){ try { const v=localStorage.getItem('zanon1_'+k); return v===null?f:JSON.parse(v); } catch { return f; } },
     set(k,v){ try { localStorage.setItem('zanon1_'+k,JSON.stringify(v)); } catch {} }
   };
+
+  // ===== IDIOMAS =====
+  // O idioma é escolhido somente no primeiro acesso e fica salvo no aparelho.
+  let language=storage.get('language',null);
+
+  const translations={
+    'Idioma':'Language','Inglês':'English','Português':'Portuguese',
+    'JOGAR DO ZERO':'PLAY FROM ZERO','LOJA':'SHOP',
+    'Cada rebatida deixa tudo 1% mais difícil. Quanto você aguenta?':'Each bounce makes everything 1% harder. How long can you last?',
+    'SCORE':'SCORE','RECORDE':'RECORD','Moedas: 0':'Coins: 0','Pausar':'Pause',
+    'PULAR +25':'SKIP +25','ASSISTIR VÍDEO':'WATCH VIDEO','Pular 25 fases':'Skip 25 levels',
+    'GAME OVER':'GAME OVER','Foi quase.':'So close.','PONTOS':'POINTS',
+    'FALTARAM':'YOU NEEDED','FALTOU':'YOU NEEDED','NOVO RECORDE':'NEW RECORD',
+    'SEU PRIMEIRO RECORDE':'YOUR FIRST RECORD',
+    'SEU RECORDE JÁ É 150. TENTE IGUALAR!':'YOUR RECORD IS 150. TRY TO MATCH IT!',
+    'VOCÊ IGUALOU SEU RECORDE MÁXIMO!':'YOU MATCHED YOUR MAXIMUM RECORD!',
+    'Você chegou ao ':'You reached ',
+    'REBATIDAS':'BOUNCES','CAIXAS':'BOXES','TROLLS':'TROLLS','ALÍVIOS':'RELIEFS','MOEDAS':'COINS',
+    'SEGREDOS':'SECRETS','VINGANÇA · JOGAR DE NOVO':'REVENGE · PLAY AGAIN',
+    'COMPARTILHAR':'SHARE','INÍCIO':'HOME','Desafie alguém.':'Challenge someone.',
+    'Cartão com o resultado da partida':'Card with your game result',
+    'Preparando sua imagem…':'Preparing your image…','SALVAR IMAGEM':'SAVE IMAGE','VOLTAR':'BACK',
+    'Compartilhe o cartão ou salve a imagem.':'Share the card or save the image.','Consegue passar?':'Can you beat it?',
+    'Salve a imagem para enviar. Se ela abrir em outra tela, mantenha o dedo sobre ela para salvar.':'Save the image to send it. If it opens on another screen, press and hold it to save.',
+    'Não foi possível gerar a imagem. Feche e tente novamente.':'Could not generate the image. Close it and try again.',
+    'Não foi possível compartilhar. Você pode salvar a imagem e enviar depois.':'Could not share. You can save the image and send it later.',
+    'PAUSADO':'PAUSED','Respire.':'Breathe.','CONTINUAR':'RESUME','SOM: ON':'SOUND: ON',
+    'SAIR':'QUIT','SOM: OFF':'SOUND: OFF',
+    'ATALHO +25':'SHORTCUT +25','Pule 25 fases':'Skip 25 levels',
+    'Assista a um vídeo e comece direto no 25.':'Watch a video and start directly at 25.',
+    'Assistir vídeo':'Watch video','Toque no play para assistir.':'Tap play to watch.',
+    'AINDA NÃO ACABOU':'NOT OVER YET','Continuar?':'Continue?',
+    'Você tem sete segundos para decidir.':'You have seven seconds to decide.',
+    '▶ ASSISTIR E CONTINUAR':'▶ WATCH & CONTINUE','JOGAR DO ZERO':'PLAY FROM ZERO',
+    'ANÚNCIO RECOMPENSADO':'REWARDED AD','Preparando resgate':'Preparing rescue',
+    'Simulação do anúncio para este protótipo.':'Ad simulation for this prototype.',
+    'RESGATE ATIVADO':'RESCUE ACTIVATED','Prepare-se':'Get ready',
+    '5 segundos de proteção. Todos os efeitos anteriores foram encerrados.':'5 seconds of protection. All previous effects have ended.',
+    'Categoria da loja':'Shop category','Prévia da skin em movimento':'Moving skin preview',
+    'BOLAS':'BALLS','BASTÕES':'PADDLES','Toque numa bola para experimentar o visual.':'Tap a ball to preview it.',
+    'Toque num bastão para experimentar o visual.':'Tap a paddle to preview it.',
+    'Visual da bola durante a partida.':'Ball appearance during gameplay.',
+    'Visual do bastão durante a partida.':'Paddle appearance during gameplay.',
+    'OUVIR SOM DA BOLA 8':'LISTEN TO 8-BALL SOUND','ATIVAR SOM E OUVIR':'ENABLE SOUND & LISTEN',
+    'Bloqueada · alcance 50 pontos para desbloquear':'Locked · reach 50 points to unlock',
+    'Bloqueada · 50 pontos':'Locked · 50 points','Selecionada · em uso':'Selected · in use',
+    'Selecionada':'Selected','Adquirida · pronta para usar':'Owned · ready to use',
+    'Adquirida':'Owned','disponível para comprar':'available to buy','faltam':'you need',
+    'moedas':'coins','DESBLOQUEIE COM 50 PONTOS':'UNLOCK AT 50 POINTS',
+    'SELECIONADA':'SELECTED','USAR ESTA SKIN':'USE THIS SKIN','COMPRAR E USAR':'BUY & USE',
+    'Prévia da batida inicial. O som fica mais grave conforme a partida avança.':'Preview of the first hit. The sound gets deeper as the game progresses.',
+    'Não foi possível iniciar o áudio neste navegador.':'Could not start audio in this browser.',
+    'NÃO APRENDE NUNCA':'NEVER LEARNS','Sobreviveu a dois castigos de duas bolas':'Survived two double-ball punishments',
+    'Atravessou o blackout sem ser salvo':'Made it through blackout without a rescue',
+    'Azul Bebê':'Baby Blue','Azul Royal':'Royal Blue','Índigo':'Indigo','Roxo Meia-Noite':'Midnight Purple',
+    'Violeta':'Violet','Magenta':'Magenta','Vermelho Carmesim':'Crimson Red','Laranja Solar':'Solar Orange',
+    'Amarelo Dourado':'Golden Yellow','Verde Esmeralda':'Emerald Green','Verde Oliva':'Olive Green',
+    'Marrom Terra':'Earth Brown','Cinza Chumbo':'Gunmetal Gray','Grafite':'Graphite',
+    'Modo Blackout':'Blackout Mode','Preto Absoluto':'Absolute Black','Azul Abissal':'Abyss Blue',
+    'Ciano Profundo':'Deep Cyan','Turquesa Elétrica':'Electric Turquoise','Verde Radioativo':'Radioactive Green',
+    'Verde Ácido':'Acid Green','Dourado Solar':'Solar Gold','Laranja Incandescente':'Incandescent Orange',
+    'Vermelho Neon':'Neon Red','Ultravioleta':'Ultraviolet','Luz Impossível':'Impossible Light',
+    '150 · Vitória Absoluta':'150 · Absolute Victory',
+    'Fogo':'Fire','Donut':'Donut','Terra':'Earth','Bola 8':'8-Ball','Lua':'Moon','Neve':'Snow',
+    'Galáxia':'Galaxy','Lava':'Lava','Plasma':'Plasma','Poção':'Potion','Unicórnio':'Unicorn',
+    'Clássico':'Classic','Taco de Sinuca':'Pool Cue','Bastão de Diamante':'Diamond Rod',
+    'Cajado Mágico':'Magic Staff','Canudo Doce':'Candy Straw','Espátula Doce':'Candy Spatula',
+    'Espada Rúnica':'Rune Sword','Espada de Fogo':'Fire Sword','Katana':'Katana',
+    'Lâmina de Gelo':'Ice Blade','Sabre Duplo':'Double Saber','Chão de gelo':'Ice Floor',
+    'Terremoto':'Earthquake','Barra fantasma':'Ghost paddle','Barra menor':'Smaller paddle',
+    'Bola acelerada':'Fast ball','Bola falsa':'Fake ball','Bola lenta':'Slow ball',
+    'Câmera lenta':'Slow camera','Controles invertidos':'Inverted controls','Segunda chance':'Second chance',
+    'Moeda magnética':'Magnetic coin','Mega barra':'Mega paddle','Efeito':'Effect',
+    'BLACKOUT · SIGA O RASTRO':'BLACKOUT · FOLLOW THE TRAIL','100% · PRETO ABSOLUTO':'100% · ABSOLUTE BLACK',
+    '150 · VOCÊ ZEROU O IMPOSSÍVEL':'150 · YOU BEAT THE IMPOSSIBLE',
+    'DOURADA · ALÍVIO GARANTIDO':'GOLDEN · GUARANTEED RELIEF','MEDO DAS CAIXAS, É?':'AFRAID OF BOXES, HUH?',
+    'DUAS BOLAS · UM BASTÃO':'TWO BALLS · ONE PADDLE','Rebata cada bola 5 vezes':'Bounce each ball 5 times',
+    'DESAFIO SUPERADO':'CHALLENGE COMPLETE','ESCUDO SALVOU!':'SHIELD SAVED YOU!',
+    'ESCUDO · SALVA 1 QUEDA':'SHIELD · SAVES 1 FALL','ZONA FALSA':'FAKE ZONE',
+    'ACERTE A CESTA':'MAKE THE BASKET','17 segundos · ganhe 3 rebatidas de descanso':'17 seconds · earn 3 relief bounces',
+    'CESTA · TEMPO ESGOTADO':'BASKET · TIME UP','Sem prêmio desta vez':'No reward this time',
+    'CESTA! RESPIRO':'BASKET! BREATHER','Fase inicial por 3 rebatidas · pontos preservados':'Starting difficulty for 3 bounces · score preserved',
+    'DE VOLTA AO DESAFIO':'BACK TO THE CHALLENGE','CAIXA CARREGANDO...':'BOX RECHARGING...',
+    'BÔNUS RARO: SEGUNDA CHANCE':'RARE BONUS: SECOND CHANCE','BÔNUS RARO':'RARE BONUS',
+    'BÔNUS: MOEDA MAGNÉTICA · 10 SEGUNDOS':'BONUS: MAGNETIC COIN · 10 SECONDS',
+    'BÔNUS: +':'BONUS: +','ALÍVIO: MEGA BARRA · 10 SEGUNDOS':'RELIEF: MEGA PADDLE · 10 SECONDS',
+    'ALÍVIO: BOLA 20% MAIS LENTA':'RELIEF: BALL 20% SLOWER','ALÍVIO: CÂMERA LENTA':'RELIEF: SLOW CAMERA',
+    'TROLL: BARRA 20% MENOR':'TROLL: PADDLE 20% SMALLER','TROLL: BARRA FANTASMA · 3 SEGUNDOS':'TROLL: GHOST PADDLE · 3 SECONDS',
+    'TROLL: BOLA 20% MAIS RÁPIDA':'TROLL: BALL 20% FASTER','TROLL: BOLA FALSA · 9 SEGUNDOS':'TROLL: FAKE BALL · 9 SECONDS',
+    'TROLL: CHÃO DE GELO · 8 SEGUNDOS':'TROLL: ICE FLOOR · 8 SECONDS','TROLL: CONTROLES INVERTIDOS':'TROLL: INVERTED CONTROLS',
+    'TROLL: TELETRANSPORTE':'TROLL: TELEPORT','TROLL: TERREMOTO':'TROLL: EARTHQUAKE',
+    'PROTEÇÃO · ':'PROTECTION · ','RESPIRO · ':'BREATHER · ','CESTA · ':'BASKET · ',
+    'SEGREDO! ':'SECRET! ','ATÉ A PRÓXIMA':'UNTIL THE NEXT ONE','Até aparecer a próxima caixa':'Until the next box',
+    'Até pegar outra caixa':'Until another box','Tempo esgotado.':'Time is up.','PEGUE':'GET IT','VAI!':'GO!',
+    'AINDA NÃO ACABOU':'NOT OVER YET','NO ESCURO EU RESOLVO':'I HANDLE THE DARK',
+    'FRIO SOB PRESSÃO':'COOL UNDER PRESSURE','ALÉM DO ABISMO':'BEYOND THE ABYSS',
+    'Você tem sete segundos para decidir.':'You have seven seconds to decide.',
+    'Compartilhe o cartão ou salve a imagem.':'Share the card or save the image.'
+  };
+
+  function tr(value){
+    if(language!=='en'||value===undefined||value===null)return value;
+    const s=String(value);
+    if(translations[s])return translations[s];
+
+    let m=s.match(/^\+(\d+) PONTOS · CAIXA$/);
+    if(m)return '+'+m[1]+' POINTS · BOX';
+    m=s.match(/^(\d+) REBATIDAS · (\d+) CAIXAS$/);
+    if(m)return m[1]+' BOUNCES · '+m[2]+' BOXES';
+    m=s.match(/^(\d+) TROLLS · (\d+) ALÍVIOS · (\d+) MOEDAS$/);
+    if(m)return m[1]+' TROLLS · '+m[2]+' RELIEFS · '+m[3]+' COINS';
+    m=s.match(/^(\d+) PONTOS$/);
+    if(m)return m[1]+' POINTS';
+    m=s.match(/^FALTOU (.+)$/); if(m)return 'YOU NEEDED '+m[1]+' POINT';
+    m=s.match(/^FALTARAM (.+)$/); if(m)return 'YOU NEEDED '+m[1]+' POINTS';
+    m=s.match(/^NOVO RECORDE · \+(\d+) PONTOS$/); if(m)return 'NEW RECORD · +'+m[1]+' POINTS';
+    m=s.match(/^Você chegou ao (.+)$/); if(m)return 'You reached '+tr(m[1]);
+    m=s.match(/^Dificuldade do ponto (.+)$/); if(m)return 'Difficulty at point '+m[1];
+    m=s.match(/^PROTEÇÃO · (.+)$/); if(m)return 'PROTECTION · '+m[1];
+    m=s.match(/^RESPIRO · (\d+) REBATIDA(S?)$/); if(m)return 'BREATHER · '+m[1]+' BOUNCE'+(m[2]?'S':'');
+    m=s.match(/^CESTA · (.+)$/); if(m)return 'BASKET · '+m[1];
+    m=s.match(/^Você chegou ao (.+)$/); if(m)return 'You reached '+tr(m[1]);
+    m=s.match(/^COMPRAR E USAR · (.+) MOEDAS$/); if(m)return 'BUY & USE · '+m[1]+' COINS';
+    m=s.match(/^(.+) moedas · disponível para comprar$/); if(m)return tr(m[1])+' coins · available to buy';
+    m=s.match(/^(.+) moedas · faltam (.+) moedas$/); if(m)return tr(m[1])+' coins · you need '+m[2]+' more coins';
+    return s;
+  }
+
+  function applyLanguage(){
+    document.documentElement.lang=language==='en'?'en':'pt-BR';
+    const root=document.body;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    let node;
+    while(node=walker.nextNode()){
+      const p=node.parentElement;
+      if(!p||p.closest('script,style'))continue;
+      if(node.nodeValue.trim())nodes.push(node);
+    }
+    nodes.forEach(n=>{const v=n.nodeValue,trim=v.trim(),translated=tr(trim);if(translated!==trim)n.nodeValue=v.replace(trim,translated);});
+    document.querySelectorAll('[aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.getAttribute('aria-label'))));
+    document.querySelectorAll('[title]').forEach(el=>el.setAttribute('title',tr(el.getAttribute('title'))));
+    if($('#languageTitle'))$('#languageTitle').textContent=language==='en'?'Language':'Idioma';
+  }
+
+  function chooseLanguage(value){
+    language=value;storage.set('language',language);applyLanguage();
+    $('#languageScreen').classList.add('hidden');
+    $('#start').classList.remove('hidden');
+    resize();render();
+  }
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
@@ -1134,7 +1302,7 @@
     const parts=[];
     if(newRecord)parts.push('NOVO RECORDE');
     if(milestones.length)parts.push(milestones.join(' · ')+' PONTOS');
-    $('#achievement').textContent=parts.join(' · ');$('#achievement').className='show';achievementUntil=elapsed+2.6;
+    $('#achievement').textContent=tr(parts.join(' · '));$('#achievement').className='show';achievementUntil=elapsed+2.6;
     tone(newRecord?980:780,.12,'sine',.025);haptic(18);
   }
   function recordSummary(){
@@ -1436,8 +1604,8 @@
       else kind='neutral';
     }
     const banner=$('#eventBanner'),icons={troll:'⚠',good:'✦',sport:'◎',neutral:'•'};
-    $('#noticeTitle').textContent=icons[kind]+' '+(noticeSource||text);
-    $('#noticeDetail').textContent=noticeSource?text:detail;
+    $('#noticeTitle').textContent=icons[kind]+' '+tr(noticeSource||text);
+    $('#noticeDetail').textContent=tr(noticeSource?text:detail);
     banner.style.top=top===null?'':top+'px';banner.className='show '+kind;
     noticePriority=priority;noticeUntil=performance.now()+duration;clearTimeout(eventBannerTimer);
     eventBannerTimer=setTimeout(()=>{banner.className='';noticeUntil=0;noticePriority=0;},duration);
@@ -1845,12 +2013,12 @@
     secretPanel.className='';secretGlow.className='';
     updateHUD();
     $('#finalScore').textContent=score; $('#bestScore').textContent=best;
-    $('#gameOverTitle').textContent=title;
-    $('#recordResult').textContent=recordSummary();
-    $('#rank').textContent='Você chegou ao '+visualState().name;
-    $('#runPrimary').textContent=runStats.rebounds+' REBATIDAS · '+runStats.boxes+' CAIXAS';
-    $('#runSecondary').textContent=runStats.trolls+' TROLLS · '+runStats.reliefs+' ALÍVIOS · '+runStats.coins+' MOEDAS';
-    if(secretRun&&secretRun.rewards.length)$('#runSecondary').textContent+=' · SEGREDOS: '+secretRun.rewards.map(r=>r.name+' — '+r.prize).join(' / ');
+    $('#gameOverTitle').textContent=tr(title);
+    $('#recordResult').textContent=tr(recordSummary());
+    $('#rank').textContent=tr('Você chegou ao '+visualState().name);
+    $('#runPrimary').textContent=tr(runStats.rebounds+' REBATIDAS · '+runStats.boxes+' CAIXAS');
+    $('#runSecondary').textContent=tr(runStats.trolls+' TROLLS · '+runStats.reliefs+' ALÍVIOS · '+runStats.coins+' MOEDAS');
+    if(secretRun&&secretRun.rewards.length)$('#runSecondary').textContent+=' · '+tr('SEGREDOS')+': '+secretRun.rewards.map(r=>tr(r.name)+' — '+tr(r.prize)).join(' / ');
     setTimeout(()=>show('#gameOver'),220);
   }
 
@@ -1874,8 +2042,8 @@
     eventState.hiddenLives--;eventState.megaPaddleUntil=0;eventState.barrierCharges=0;
     setupRescue();
     clearInterval(reviveTimer);clearInterval(adTimer);mode='countdown';
-    $('#reviveBrand').textContent='BÔNUS RARO';$('#reviveTitle').textContent='Segunda chance';
-    $('#reviveStatus').textContent='Sua chance extra: 3 segundos de proteção ao voltar.';$('#watchReviveAd').style.display='none';$('#giveUp').style.display='none';
+    $('#reviveBrand').textContent=tr('BÔNUS RARO');$('#reviveTitle').textContent=tr('Segunda chance');
+    $('#reviveStatus').textContent=language==='en'?'Your extra chance: 3 seconds of protection when you return.':'Sua chance extra: 3 segundos de proteção ao voltar.';$('#watchReviveAd').style.display='none';$('#giveUp').style.display='none';
     let remaining=3;$('#reviveCountdown').textContent=remaining;show('#reviveScreen');render();
     reviveTimer=setInterval(()=>{
       remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
@@ -1886,10 +2054,10 @@
   function offerRevive(){
     mode='revive'; clearInterval(reviveTimer); clearInterval(adTimer);
     let remaining=7;
-    $('#reviveBrand').textContent='AINDA NÃO ACABOU';
-    $('#reviveTitle').textContent='Continuar?';
+    $('#reviveBrand').textContent=tr('AINDA NÃO ACABOU');
+    $('#reviveTitle').textContent=tr('Continuar?');
     $('#reviveCountdown').textContent=remaining;
-    $('#reviveStatus').textContent='Você tem sete segundos para decidir.';
+    $('#reviveStatus').textContent=tr('Você tem sete segundos para decidir.');
     $('#watchReviveAd').style.display='block'; $('#watchReviveAd').disabled=false;
     $('#giveUp').style.display='block';
     show('#reviveScreen');
@@ -1904,9 +2072,9 @@
     if(mode!=='revive')return;
     clearInterval(reviveTimer); clearInterval(adTimer);
     $('#watchReviveAd').disabled=true; $('#watchReviveAd').style.display='none'; $('#giveUp').style.display='none';
-    $('#reviveBrand').textContent='ANÚNCIO RECOMPENSADO';
-    $('#reviveTitle').textContent='Preparando resgate';
-    $('#reviveStatus').textContent='Simulação do anúncio para este protótipo.';
+    $('#reviveBrand').textContent=tr('ANÚNCIO RECOMPENSADO');
+    $('#reviveTitle').textContent=tr('Preparando resgate');
+    $('#reviveStatus').textContent=tr('Simulação do anúncio para este protótipo.');
     let remaining=3; $('#reviveCountdown').textContent=remaining;
     adTimer=setInterval(()=>{
       remaining--;
@@ -1921,8 +2089,8 @@
     eventState.barrierCharges=0;eventState.hiddenLives=0;
     eventState.activeEffect=null;eventState.cooldownUntil=0;barrierPulse=0;
     setupRescue(5);render();
-    mode='countdown';$('#reviveBrand').textContent='RESGATE ATIVADO';$('#reviveTitle').textContent='Prepare-se';
-    $('#reviveStatus').textContent='5 segundos de proteção. Todos os efeitos anteriores foram encerrados.';$('#watchReviveAd').style.display='none';
+    mode='countdown';$('#reviveBrand').textContent=tr('RESGATE ATIVADO');$('#reviveTitle').textContent=tr('Prepare-se');
+    $('#reviveStatus').textContent=tr('5 segundos de proteção. Todos os efeitos anteriores foram encerrados.');$('#watchReviveAd').style.display='none';
     let remaining=3;$('#reviveCountdown').textContent=remaining;
     reviveTimer=setInterval(()=>{
       remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
@@ -2305,7 +2473,7 @@
     $('#skip25Offer').classList.remove('show');
     skip25ModalOpen=true;setMusicActive(false);mode='ad';show('#adScreen');
     $('#adCountdown').hidden=true;$('#skip25Watch').hidden=false;$('#skip25Close').hidden=false;
-    $('#skip25AdNote').textContent='Toque no play para assistir.';
+    $('#skip25AdNote').textContent=tr('Toque no play para assistir.');
   }
   function closeSkip25Modal(){
     if(!skip25ModalOpen)return;
@@ -2316,7 +2484,7 @@
     if(!skip25ModalOpen)return;
     ensureAudio();clearInterval(adTimer);$('#skip25Watch').hidden=true;$('#skip25Close').hidden=true;
     $('#adCountdown').hidden=false;let remaining=3;$('#adCountdown').textContent=remaining;
-    $('#skip25AdNote').textContent='Simulação do anúncio para este protótipo.';
+    $('#skip25AdNote').textContent=tr('Simulação do anúncio para este protótipo.');
     adTimer=setInterval(()=>{
       remaining--;$('#adCountdown').textContent=remaining>0?remaining:'✓';
       if(remaining<=0){clearInterval(adTimer);skip25ModalOpen=false;tone(760,.16,'sine',.05);setTimeout(()=>startGame(25),350);}
@@ -2353,11 +2521,11 @@
     roundRect(c,48,48,984,1254,40);c.stroke();
     c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
     c.font='950 138px system-ui, sans-serif';c.fillText('1%',540,160);
-    c.fillStyle='#d1def0';c.font='800 28px system-ui, sans-serif';c.fillText('SCORE',540,320);
+    c.fillStyle='#d1def0';c.font='800 28px system-ui, sans-serif';c.fillText(tr('SCORE'),540,320);
     c.fillStyle='#fff';c.font='950 270px system-ui, sans-serif';c.fillText(String(result.score),540,490);
-    c.fillStyle='#ffe4a2';c.font='800 38px system-ui, sans-serif';c.fillText('RECORDE PESSOAL  '+result.record,540,680);
+    c.fillStyle='#ffe4a2';c.font='800 38px system-ui, sans-serif';c.fillText((language==='en'?'PERSONAL RECORD  ':'RECORDE PESSOAL  ')+result.record,540,680);
     // As informações de início, resgates por vídeo e vidas extras não aparecem mais no cartão.
-    c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';c.fillText('Consegue passar?',540,1082);
+    c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';c.fillText(tr('Consegue passar?'),540,1082);
     c.fillStyle='#c9d6ea';c.font='800 24px system-ui, sans-serif';c.fillText('Z A N O N',540,1220);
     return card;
   }
@@ -2373,7 +2541,7 @@
     if(shareURL)URL.revokeObjectURL(shareURL);shareURL=null;shareFile=null;
     $('#shareDialog').classList.remove('hidden');$('#closeShare').focus();
     $('#shareImage').hidden=true;$('#saveCard').hidden=true;$('#saveCard').style.display='none';$('#sendCard').disabled=true;
-    $('#shareStatus').textContent='Preparando sua imagem…';
+    $('#shareStatus').textContent=tr('Preparando sua imagem…');
     try{
       const canvas=drawShareCard(result);
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG indisponível')),'image/png'));
@@ -2384,8 +2552,8 @@
       shareFile=typeof File==='function'?new File([blob],filename,{type:'image/png'}):null;
       const supported=!!(shareFile&&navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]}));
       $('#sendCard').disabled=!supported;
-      $('#shareStatus').textContent=supported?'Compartilhe o cartão ou salve a imagem.':'Salve a imagem para enviar. Se ela abrir em outra tela, mantenha o dedo sobre ela para salvar.';
-    }catch(error){if(generation===shareGeneration)$('#shareStatus').textContent='Não foi possível gerar a imagem. Feche e tente novamente.';}
+      $('#shareStatus').textContent=tr(supported?'Compartilhe o cartão ou salve a imagem.':'Salve a imagem para enviar. Se ela abrir em outra tela, mantenha o dedo sobre ela para salvar.');
+    }catch(error){if(generation===shareGeneration)$('#shareStatus').textContent=tr('Não foi possível gerar a imagem. Feche e tente novamente.');}
   }
   $('#shareResult').onclick=openShareCard;
   $('#closeShare').onclick=closeShareCard;
@@ -2393,7 +2561,7 @@
     if(!shareFile)return;
     const generation=shareGeneration;$('#sendCard').disabled=true;
     try{await navigator.share({files:[shareFile],title:'1% · Consegue passar?'});}
-    catch(error){if(generation===shareGeneration&&error.name!=='AbortError')$('#shareStatus').textContent='Não foi possível compartilhar. Você pode salvar a imagem e enviar depois.';}
+    catch(error){if(generation===shareGeneration&&error.name!=='AbortError')$('#shareStatus').textContent=tr('Não foi possível compartilhar. Você pode salvar a imagem e enviar depois.');}
     finally{if(generation===shareGeneration)$('#sendCard').disabled=false;}
   };
   addEventListener('keydown',event=>{
@@ -2416,10 +2584,10 @@
   $('#resume').onclick=()=>{mode=pausedFrom;hideAll();setMusicActive(mode==='playing');last=performance.now();raf=requestAnimationFrame(loop);};
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   $('#sound').onclick=()=>{
-    soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');
+    soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
     if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
   };
-  $('#sound').textContent='SOM: '+(soundOn?'ON':'OFF');
+  $('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
 
   let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity,shopPreviewTrail=[],shopPreviewTrailSkin=selected;
   function shopBallPosition(time){
@@ -2569,7 +2737,7 @@
   }
 
   function renderShop(){
-    $('#shopBalanceCount').textContent=coins;$('#shopBalance').setAttribute('aria-label','Moedas: '+coins);const grid=$('#shopGrid');grid.innerHTML='';
+    $('#shopBalanceCount').textContent=coins;$('#shopBalance').setAttribute('aria-label',language==='en'?'Coins: '+coins:'Moedas: '+coins);const grid=$('#shopGrid');grid.innerHTML='';
     const isBalls=shopCategory==='balls';
     const current=isBalls?(skins.find(s=>s.id===shopPreviewId)||skins[0]):(paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0]);
     const ownedList=isBalls?owned:ownedPaddles;
@@ -2578,24 +2746,24 @@
     const using=selectedId===current.id,affordable=coins>=current.price;
     $('#shopBallsTab').classList.toggle('active',isBalls);$('#shopPaddlesTab').classList.toggle('active',!isBalls);
     $('#shopBallsTab').setAttribute('aria-selected',String(isBalls));$('#shopPaddlesTab').setAttribute('aria-selected',String(!isBalls));
-    $('#shopHint').textContent=isBalls?'Toque numa bola para experimentar o visual.':'Toque num bastão para experimentar o visual.';
-    $('#shopSkinName').textContent=current.name;
-    $('#shopFeature').textContent=isBalls?'Visual da bola durante a partida.':'Visual do bastão durante a partida.';
+    $('#shopHint').textContent=tr(isBalls?'Toque numa bola para experimentar o visual.':'Toque num bastão para experimentar o visual.');
+    $('#shopSkinName').textContent=tr(current.name);
+    $('#shopFeature').textContent=tr(isBalls?'Visual da bola durante a partida.':'Visual do bastão durante a partida.');
     $('#shopListen').hidden=!isBalls||current.id!=='eight';
-    $('#shopListen').textContent=soundOn?'OUVIR SOM DA BOLA 8':'ATIVAR SOM E OUVIR';
-    $('#shopPreview').setAttribute('aria-label','Prévia da bola e do bastão: '+current.name);
-    $('#shopSkinStatus').textContent=locked?'Bloqueada · alcance 50 pontos para desbloquear'
-      :using?'Selecionada · em uso':hasSkin?'Adquirida · pronta para usar':current.price+' moedas · '+(affordable?'disponível para comprar':'faltam '+(current.price-coins)+' moedas');
+    $('#shopListen').textContent=tr(soundOn?'OUVIR SOM DA BOLA 8':'ATIVAR SOM E OUVIR');
+    $('#shopPreview').setAttribute('aria-label',tr('Prévia da bola e do bastão: ')+' '+tr(current.name));
+    $('#shopSkinStatus').textContent=locked?tr('Bloqueada · alcance 50 pontos para desbloquear')
+      :using?tr('Selecionada · em uso'):hasSkin?tr('Adquirida · pronta para usar'):current.price+' '+tr('moedas')+' · '+(affordable?tr('disponível para comprar'):tr('faltam')+' '+(current.price-coins)+' '+tr('moedas'));
     const action=$('#shopAction');action.disabled=locked||using||(!hasSkin&&!affordable);
-    action.textContent=locked?'DESBLOQUEIE COM 50 PONTOS':using?'SELECIONADA':hasSkin?'USAR ESTA SKIN':'COMPRAR E USAR · '+current.price+' MOEDAS';
+    action.textContent=locked?tr('DESBLOQUEIE COM 50 PONTOS'):using?tr('SELECIONADA'):hasSkin?tr('USAR ESTA SKIN'):tr('COMPRAR E USAR · '+current.price+' MOEDAS');
     for(const s of (isBalls?skins:paddleSkins)){
       const isOwned=ownedList.includes(s.id), itemLocked=false;
       const b=document.createElement('button');b.className='item'+((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id?' selected':'');
       b.setAttribute('aria-pressed',String((isBalls?shopPreviewId:shopPreviewPaddleId)===s.id));
-      const status=itemLocked?'Bloqueada · 50 pontos':selectedId===s.id?'Selecionada':isOwned?'Adquirida':s.price+' moedas';
+      const status=itemLocked?tr('Bloqueada · 50 pontos'):selectedId===s.id?tr('Selecionada'):isOwned?tr('Adquirida'):s.price+' '+tr('moedas');
       const previewClass=isBalls?'ballAsset':'paddleAsset';
-      const previewHtml=`<span class="preview ${previewClass}"><canvas class="shopCardPreview" aria-label="${s.name}"></canvas></span>`;
-      b.innerHTML=`${previewHtml}<strong>${s.name}</strong><small>${status}</small>`;
+      const previewHtml=`<span class="preview ${previewClass}"><canvas class="shopCardPreview" aria-label="${tr(s.name)}"></canvas></span>`;
+      b.innerHTML=`${previewHtml}<strong>${tr(s.name)}</strong><small>${status}</small>`;
       drawShopCardPreview(b.querySelector('.shopCardPreview'),s,isBalls);
       b.onclick=()=>{
         if(isBalls)shopPreviewId=s.id;else shopPreviewPaddleId=s.id;renderShop();
@@ -2609,11 +2777,11 @@
   $('#shopListen').onclick=()=>{
     if(!shopOpen||shopPreviewId!=='eight'||performance.now()-lastShopListen<250)return;
     lastShopListen=performance.now();
-    if(!soundOn){soundOn=true;storage.set('sound',true);$('#sound').textContent='SOM: ON';}
-    $('#shopListen').textContent='OUVIR SOM DA BOLA 8';
-    if(!ensureAudio()){$('#shopFeature').textContent='Não foi possível iniciar o áudio neste navegador.';return;}
+    if(!soundOn){soundOn=true;storage.set('sound',true);$('#sound').textContent=language==='en'?'SOUND: ON':'SOM: ON';}
+    $('#shopListen').textContent=tr('OUVIR SOM DA BOLA 8');
+    if(!ensureAudio()){$('#shopFeature').textContent=tr('Não foi possível iniciar o áudio neste navegador.');return;}
     eightBallSound(0);
-    $('#shopFeature').textContent='Prévia da batida inicial. O som fica mais grave conforme a partida avança.';
+    $('#shopFeature').textContent=tr('Prévia da batida inicial. O som fica mais grave conforme a partida avança.');
   };
   $('#shopAction').onclick=()=>{
     const isBalls=shopCategory==='balls';
@@ -2635,6 +2803,16 @@
     if(!shopOpen)return;
     if(document.hidden){cancelAnimationFrame(shopRaf);shopRaf=0;}else startShopPreview();
   });
+
+  $('#languageEnglish').onclick=()=>chooseLanguage('en');
+  $('#languagePortuguese').onclick=()=>chooseLanguage('pt');
+  if(language==='en'||language==='pt'){
+    applyLanguage();
+    $('#languageScreen').classList.add('hidden');
+  }else{
+    $('#languageScreen').classList.remove('hidden');
+    $('#start').classList.add('hidden');
+  }
   addEventListener('resize',()=>{resize();render();},{passive:true});
   addEventListener('visibilitychange',()=>{if(document.hidden&&(mode==='playing'||mode==='dying'))$('#pause').click();});
   resize();reset();render();
