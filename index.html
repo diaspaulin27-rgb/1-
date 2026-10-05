@@ -296,7 +296,8 @@
 
   // ===== IDIOMAS =====
   // O idioma é escolhido somente no primeiro acesso e fica salvo no aparelho.
-  let language=storage.get('language',null);
+  let language=null;
+storage.remove('language');
 
   const translations={
     'Idioma':'Language','Inglês':'English','Português':'Portuguese',
