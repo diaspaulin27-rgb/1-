@@ -296,8 +296,7 @@
 
   // ===== IDIOMAS =====
   // O idioma é escolhido somente no primeiro acesso e fica salvo no aparelho.
-  localStorage.removeItem(STORAGE_PREFIX+'language');
-  let language=null;
+  let language=storage.get('language',null);
 
   const translations={
     'Idioma':'Language','Inglês':'English','Português':'Portuguese',
@@ -2552,12 +2551,28 @@
     c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=2;
     roundRect(c,48,48,984,1254,40);c.stroke();
     c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
-    c.font='950 138px system-ui, sans-serif';c.fillText('1%',540,160);
+    c.font='950 72px system-ui, sans-serif';c.fillText('1% - The Impossible Ball',540,145);
     c.fillStyle='#d1def0';c.font='800 28px system-ui, sans-serif';c.fillText(tr('SCORE'),540,320);
     c.fillStyle='#fff';c.font='950 270px system-ui, sans-serif';c.fillText(String(result.score),540,490);
     c.fillStyle='#ffe4a2';c.font='800 38px system-ui, sans-serif';c.fillText((language==='en'?'PERSONAL RECORD  ':'RECORDE PESSOAL  ')+result.record,540,680);
-    // As informações de início, resgates por vídeo e vidas extras não aparecem mais no cartão.
-    c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';c.fillText(tr('Consegue passar?'),540,1082);
+
+    // Área de desafio: transforma o espaço livre em uma chamada visual para quem recebe o cartão.
+    c.fillStyle='rgba(255,255,255,.08)';
+    roundRect(c,120,760,840,240,28);c.fill();
+    c.strokeStyle='rgba(255,255,255,.14)';c.lineWidth=2;
+    roundRect(c,120,760,840,240,28);c.stroke();
+
+    c.fillStyle='#ffe4a2';c.font='900 24px system-ui, sans-serif';
+    c.fillText(language==='en'?'THE CHALLENGE':'O DESAFIO',540,805);
+    c.fillStyle='#fff';c.font='900 48px system-ui, sans-serif';
+    c.fillText(language==='en'?'MY RECORD:  '+result.record:'MEU RECORDE:  '+result.record,540,865);
+    c.fillStyle='#d1def0';c.font='700 30px system-ui, sans-serif';
+    c.fillText(language==='en'?'Can you beat it?':'Você consegue superar?',540,925);
+    c.fillStyle='#c9d6ea';c.font='650 23px system-ui, sans-serif';
+    c.fillText(language==='en'?'Each bounce makes everything 1% harder.':'Cada rebatida deixa tudo 1% mais difícil.',540,970);
+
+    c.fillStyle='#fff';c.font='900 50px system-ui, sans-serif';
+    c.fillText(language==='en'?'ACCEPT THE CHALLENGE?':'ACEITA O DESAFIO?',540,1082);
     c.fillStyle='#c9d6ea';c.font='800 24px system-ui, sans-serif';c.fillText('Z A N O N',540,1220);
     return card;
   }
