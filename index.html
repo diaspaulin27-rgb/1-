@@ -2547,26 +2547,26 @@
     const background=c.createLinearGradient(0,0,1080,1350);
     background.addColorStop(0,palette.top);background.addColorStop(1,palette.bottom);
     c.fillStyle=background;c.fillRect(0,0,1080,1350);
-    c.fillStyle='rgba(3,9,24,.48)';c.fillRect(0,0,1080,1350);
-    c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=2;
+    c.fillStyle='rgba(3,10,28,.34)';c.fillRect(0,0,1080,1350);
+    c.strokeStyle='rgba(255,211,72,.55)';c.lineWidth=3;
     roundRect(c,48,48,984,1254,40);c.stroke();
     c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
     c.font='950 72px system-ui, sans-serif';c.fillText('1% - The Impossible Ball',540,150);
 
-    c.fillStyle='#d1def0';c.font='800 30px system-ui, sans-serif';
+    c.fillStyle='#ffd84d';c.font='800 30px system-ui, sans-serif';
     c.fillText(language==='en'?'MY RECORD':'MEU RECORDE',540,365);
-    c.fillStyle='#ffe4a2';c.font='950 220px system-ui, sans-serif';
+    c.fillStyle='#fff4b0';c.font='950 220px system-ui, sans-serif';
     c.fillText(String(result.record),540,535);
 
     c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';
     c.fillText(language==='en'?'Can you beat it?':'Consegue superar?',540,760);
-    c.fillStyle='#d1def0';c.font='650 28px system-ui, sans-serif';
+    c.fillStyle='#e7edf8';c.font='650 28px system-ui, sans-serif';
     c.fillText(language==='en'?'Each bounce makes everything 1% harder.':'Cada rebatida deixa tudo 1% mais difícil.',540,825);
 
-    c.fillStyle='#ffe4a2';c.font='950 48px system-ui, sans-serif';
+    c.fillStyle='#ffd84d';c.font='950 48px system-ui, sans-serif';
     c.fillText(language==='en'?'ACCEPT THE CHALLENGE?':'ACEITA O DESAFIO?',540,1025);
 
-    c.fillStyle='#c9d6ea';c.font='800 24px system-ui, sans-serif';
+    c.fillStyle='#ffd84d';c.font='800 24px system-ui, sans-serif';
     c.fillText('Z A N O N',540,1160);
     return card;
   }
