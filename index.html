@@ -1106,17 +1106,24 @@
   const MUSIC_VOLUME=.42;
   const MUSIC_CROSSFADE_MS=3000;
   const audioStages=[
-    {min:0,max:14,music:'01_Piano_Suave.mp3'},
-    {min:15,max:29,music:'02_Lofi_Calmo.mp3'},
-    {min:30,max:44,music:'03_Lofi_Chill.mp3'},
-    {min:45,max:59,music:'04_Synthwave.mp3'},
-    {min:60,max:74,music:'05_Trap.mp3'},
-    {min:75,max:89,music:'06_Rock.mp3'},
-    {min:90,max:95,music:'07_Drum_and_Bass.mp3'},
-    {min:96,max:100,music:'08_Phonk.mp3'},
-    {min:101,max:124,music:'09_Metal_A_Blackout.mp3'},
-    {min:125,max:150,music:'10_Thrash_B_Final.mp3'}
+    {min:0,max:95,music:'gameplay.mp3'},
+    {min:96,max:100,music:'phase96-100.mp3'},
+    {min:101,max:150,music:'after100.mp3'}
   ];
+  const sfxPools={
+    coin:Array.from({length:4},()=>{const a=new Audio('assets/audio/sfx/coin.mp3');a.preload='auto';a.playsInline=true;return a;}),
+    box:Array.from({length:2},()=>{const a=new Audio('assets/audio/sfx/box.mp3');a.preload='auto';a.playsInline=true;return a;})
+  };
+  const sfxCursor={coin:0,box:0};
+  function playSfx(name,volume=1){
+    if(!soundOn||!sfxPools[name])return;
+    const pool=sfxPools[name],index=sfxCursor[name]%pool.length;sfxCursor[name]++;
+    const audio=pool[index];
+    try{audio.pause();audio.currentTime=0;audio.volume=clamp(volume,0,1);const promise=audio.play();if(promise&&promise.catch)promise.catch(()=>{});}catch{}
+  }
+  function stopSfx(){
+    Object.values(sfxPools).flat().forEach(audio=>{try{audio.pause();audio.currentTime=0;}catch{}});
+  }
   const musicPlayers=[new Audio(),new Audio()];
   musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
 
@@ -1518,7 +1525,7 @@
     runStats.boxes++;runStats.reliefs++;
     eventState.lastCategory='good';eventState.lastEvent=reward.id;
     eventState.cooldownUntil=elapsed+8;nextBox=elapsed+15;
-    reward.run();flash=Math.max(flash,.3);tone(1040,.22,'triangle',.055);haptic(40);
+    reward.run();flash=Math.max(flash,.3);playSfx('box',.9);tone(1040,.22,'triangle',.055);haptic(40);
   }
   function ignoreMysteryBox(){
     if(mysteryCurse.armed||mysteryCurse.dual)return;
@@ -1822,7 +1829,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.9);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
   }
 
   function update(dt){
@@ -1988,7 +1995,7 @@
           coinFlights.push({x:o.x+o.size/2,y:o.y+o.size/2,toX:rect.left+rect.width/2,toY:rect.top+rect.height/2,age:0});
           coins++;runStats.coins++;storage.set('coins',coins);updateHUD();
           const pill=$('#coinsPill');pill.classList.remove('pop');void pill.offsetWidth;pill.classList.add('pop');
-          tone(880,.11,'sine',.05);haptic(18);
+          playSfx('coin',.78);haptic(18);
         }
         else if(o.golden){openGoldenBox();}
         else{mysteryCurse.ignored=0;openBox();}
@@ -2626,7 +2633,7 @@
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   $('#sound').onclick=()=>{
     soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
-    if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
+    if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);stopSfx();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
   };
   $('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
 
