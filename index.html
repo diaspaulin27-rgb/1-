@@ -1110,19 +1110,62 @@
     {min:96,max:100,music:'phase96-100.mp3'},
     {min:101,max:150,music:'after100.mp3'}
   ];
-  const sfxPools={
-    coin:Array.from({length:4},()=>{const a=new Audio('assets/audio/sfx/coin.mp3');a.preload='auto';a.playsInline=true;return a;}),
-    box:Array.from({length:2},()=>{const a=new Audio('assets/audio/sfx/box.mp3');a.preload='auto';a.playsInline=true;return a;})
-  };
-  const sfxCursor={coin:0,box:0};
-  function playSfx(name,volume=1){
-    if(!soundOn||!sfxPools[name])return;
-    const pool=sfxPools[name],index=sfxCursor[name]%pool.length;sfxCursor[name]++;
-    const audio=pool[index];
-    try{audio.pause();audio.currentTime=0;audio.volume=clamp(volume,0,1);const promise=audio.play();if(promise&&promise.catch)promise.catch(()=>{});}catch{}
+  const sfxBuffers={coin:null,box:null};
+  const sfxLoading={coin:null,box:null};
+  const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3'};
+
+  async function loadSfxBuffer(name){
+    if(!ensureAudio()||!sfxSources[name])return null;
+    if(sfxBuffers[name])return sfxBuffers[name];
+    if(sfxLoading[name])return sfxLoading[name];
+
+    sfxLoading[name]=fetch(sfxSources[name],{cache:'no-store'})
+      .then(response=>{
+        if(!response.ok)throw new Error('SFX HTTP '+response.status);
+        return response.arrayBuffer();
+      })
+      .then(data=>audioCtx.decodeAudioData(data))
+      .then(buffer=>{
+        sfxBuffers[name]=buffer;
+        return buffer;
+      })
+      .catch(()=>null)
+      .finally(()=>{sfxLoading[name]=null;});
+
+    return sfxLoading[name];
   }
+
+  function preloadSfx(){
+    if(!soundOn)return;
+    loadSfxBuffer('coin');
+    loadSfxBuffer('box');
+  }
+
+  function playSfx(name,volume=1){
+    if(!soundOn||!sfxSources[name]||!ensureAudio())return;
+
+    const playBuffer=buffer=>{
+      if(!buffer||!soundOn)return;
+      try{
+        const source=audioCtx.createBufferSource();
+        const gain=audioCtx.createGain();
+        source.buffer=buffer;
+        gain.gain.value=clamp(volume,0,1);
+        source.connect(gain).connect(sfxGain);
+        source.start();
+      }catch{}
+    };
+
+    if(sfxBuffers[name]){
+      playBuffer(sfxBuffers[name]);
+    }else{
+      loadSfxBuffer(name).then(playBuffer);
+    }
+  }
+
   function stopSfx(){
-    Object.values(sfxPools).flat().forEach(audio=>{try{audio.pause();audio.currentTime=0;}catch{}});
+    // Os SFX agora são BufferSources curtos e independentes.
+    // Não há elementos <audio> persistentes para pausar.
   }
   const musicPlayers=[new Audio(),new Audio()];
   musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
@@ -1314,7 +1357,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
