@@ -1106,11 +1106,11 @@
   // MODO AMBIENTE PURO - sem melodia
   const MUSIC_VOLUME=.06; // bem baixinho, só clima
   const MUSIC_CROSSFADE_MS=3000;
-  const AMBIENT_ONLY=true; // true = só ambiente, false = música antiga
+  const AMBIENT_ONLY=false; // false = MÚSICA + AMBIENTE (recomendado) | true = só ambiente
   const audioStages=[
-    {min:0,max:95,music:'ambient.mp3'},
-    {min:96,max:100,music:'ambient.mp3'},
-    {min:101,max:150,music:'ambient.mp3'}
+    {min:0,max:95,music:'gameplay.mp3'},
+    {min:96,max:100,music:'phase96-100.mp3'},
+    {min:101,max:150,music:'after100.mp3'}
   ];
   const sfxBuffers={coin:null,box:null};
   const sfxLoading={coin:null,box:null};
@@ -1121,40 +1121,39 @@
     if(!ensureAudio()||ambientNodes) return;
     try{
       const now=audioCtx.currentTime;
-      // Drone grave - base do ambiente
+      // Drone agora mais audível em celular (110Hz + 220Hz)
       const osc=audioCtx.createOscillator();
       osc.type='triangle';
-      osc.frequency.value=54; // Lá grave
+      osc.frequency.value=110; // mais audível que 54Hz
       const oscGain=audioCtx.createGain();
       oscGain.gain.value=0;
-      oscGain.gain.linearRampToValueAtTime(0.08, now+4);
+      oscGain.gain.linearRampToValueAtTime(0.09, now+3);
 
       const osc2=audioCtx.createOscillator();
       osc2.type='sine';
-      osc2.frequency.value=108;
+      osc2.frequency.value=220;
       osc2.detune.value=7;
       const osc2Gain=audioCtx.createGain();
       osc2Gain.gain.value=0;
-      osc2Gain.gain.linearRampToValueAtTime(0.06, now+4);
+      osc2Gain.gain.linearRampToValueAtTime(0.07, now+3);
 
       const filter=audioCtx.createBiquadFilter();
       filter.type='lowpass';
-      filter.frequency.value=420;
-      filter.Q.value=1;
+      filter.frequency.value=650; // mais aberto, não tão abafado
+      filter.Q.value=0.9;
 
-      // Vento / ruído abafado
+      // Vento / ruído abafado - bem de fundo agora
       const wind=audioCtx.createBufferSource();
       wind.buffer=noiseBuffer;
       wind.loop=true;
       const windFilter=audioCtx.createBiquadFilter();
       windFilter.type='bandpass';
-      windFilter.frequency.value=280;
-      windFilter.Q.value=0.8;
+      windFilter.frequency.value=320;
+      windFilter.Q.value=0.7;
       const windGain=audioCtx.createGain();
       windGain.gain.value=0;
-      windGain.gain.linearRampToValueAtTime(0.018, now+3);
+      windGain.gain.linearRampToValueAtTime(0.012, now+4);
 
-      // Liga tudo no master
       osc.connect(oscGain).connect(filter).connect(masterGain);
       osc2.connect(osc2Gain).connect(filter);
       wind.connect(windFilter).connect(windGain).connect(masterGain);
@@ -1320,11 +1319,14 @@
     if(!active||!soundOn){stopMusicPlayers();stopAmbient();return;}
     ensureAudio();
     if(AMBIENT_ONLY){
-      // Só ambiente sintético, sem mp3 de música
+      // MODO 1: Só ambiente (sem música mp3) - agora com drone audível
       stopMusicPlayers();
       startAmbient();
       return;
     }
+    // MODO 2: Música + Ambiente juntos (RECOMENDADO)
+    // Toca ambiente de fundo + gameplay.mp3 baixinho com filtro
+    startAmbient();
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     const stage=audioStages[nextStage],player=musicPlayers[activeMusicPlayer];
@@ -1335,7 +1337,7 @@
     if(player.dataset.src!==wanted){
       player.src=wanted;player.dataset.src=wanted;player.currentTime=0;
     }
-    player.loop=true;player.volume=MUSIC_VOLUME;
+    player.loop=true;player.volume=MUSIC_VOLUME; // .06 - bem de fundo
     const playPromise=player.play();
     if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
   }
