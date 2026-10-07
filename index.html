@@ -1103,7 +1103,7 @@
 
   let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  const MUSIC_VOLUME=.055; // bem baixinha, só ambiente tranquilo
+  const MUSIC_VOLUME=.18;
   const MUSIC_CROSSFADE_MS=3000;
   const audioStages=[
     {min:0,max:95,music:'gameplay.mp3'},
@@ -1179,7 +1179,7 @@
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
-        masterGain.gain.value=0.72;sfxGain.gain.value=.70; // volume geral mais tranquilo
+        masterGain.gain.value=1;sfxGain.gain.value=.82;
         sfxGain.connect(masterGain);masterGain.connect(audioCtx.destination);
         noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.7),audioCtx.sampleRate);
         const data=noiseBuffer.getChannelData(0);
@@ -1568,7 +1568,7 @@
     runStats.boxes++;runStats.reliefs++;
     eventState.lastCategory='good';eventState.lastEvent=reward.id;
     eventState.cooldownUntil=elapsed+8;nextBox=elapsed+15;
-    reward.run();flash=Math.max(flash,.3);playSfx('box',.5);tone(1040,.22,'triangle',.055);haptic(40);
+    reward.run();flash=Math.max(flash,.3);playSfx('box',.9);tone(1040,.22,'triangle',.055);haptic(40);
   }
   function ignoreMysteryBox(){
     if(mysteryCurse.armed||mysteryCurse.dual)return;
@@ -1872,7 +1872,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';playSfx('box',.5);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.9);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
   }
 
   function update(dt){
@@ -2038,7 +2038,7 @@
           coinFlights.push({x:o.x+o.size/2,y:o.y+o.size/2,toX:rect.left+rect.width/2,toY:rect.top+rect.height/2,age:0});
           coins++;runStats.coins++;storage.set('coins',coins);updateHUD();
           const pill=$('#coinsPill');pill.classList.remove('pop');void pill.offsetWidth;pill.classList.add('pop');
-          playSfx('coin',.45);haptic(18);
+          playSfx('coin',.78);haptic(18);
         }
         else if(o.golden){openGoldenBox();}
         else{mysteryCurse.ignored=0;openBox();}
