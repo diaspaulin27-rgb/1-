@@ -1103,10 +1103,8 @@
 
   let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  // MODO AMBIENTE PURO - sem melodia
-  const MUSIC_VOLUME=.06; // bem baixinho, só clima
+  const MUSIC_VOLUME=.055; // bem baixinha, só ambiente tranquilo
   const MUSIC_CROSSFADE_MS=3000;
-  const AMBIENT_ONLY=false; // false = MÚSICA + AMBIENTE (recomendado) | true = só ambiente
   const audioStages=[
     {min:0,max:95,music:'gameplay.mp3'},
     {min:96,max:100,music:'phase96-100.mp3'},
@@ -1115,65 +1113,6 @@
   const sfxBuffers={coin:null,box:null};
   const sfxLoading={coin:null,box:null};
   const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3'};
-  let ambientNodes=null;
-
-  function startAmbient(){
-    if(!ensureAudio()||ambientNodes) return;
-    try{
-      const now=audioCtx.currentTime;
-      // Drone agora mais audível em celular (110Hz + 220Hz)
-      const osc=audioCtx.createOscillator();
-      osc.type='triangle';
-      osc.frequency.value=110; // mais audível que 54Hz
-      const oscGain=audioCtx.createGain();
-      oscGain.gain.value=0;
-      oscGain.gain.linearRampToValueAtTime(0.09, now+3);
-
-      const osc2=audioCtx.createOscillator();
-      osc2.type='sine';
-      osc2.frequency.value=220;
-      osc2.detune.value=7;
-      const osc2Gain=audioCtx.createGain();
-      osc2Gain.gain.value=0;
-      osc2Gain.gain.linearRampToValueAtTime(0.07, now+3);
-
-      const filter=audioCtx.createBiquadFilter();
-      filter.type='lowpass';
-      filter.frequency.value=650; // mais aberto, não tão abafado
-      filter.Q.value=0.9;
-
-      // Vento / ruído abafado - bem de fundo agora
-      const wind=audioCtx.createBufferSource();
-      wind.buffer=noiseBuffer;
-      wind.loop=true;
-      const windFilter=audioCtx.createBiquadFilter();
-      windFilter.type='bandpass';
-      windFilter.frequency.value=320;
-      windFilter.Q.value=0.7;
-      const windGain=audioCtx.createGain();
-      windGain.gain.value=0;
-      windGain.gain.linearRampToValueAtTime(0.012, now+4);
-
-      osc.connect(oscGain).connect(filter).connect(masterGain);
-      osc2.connect(osc2Gain).connect(filter);
-      wind.connect(windFilter).connect(windGain).connect(masterGain);
-
-      osc.start(now); osc2.start(now); wind.start(now);
-      ambientNodes={osc, osc2, wind, gains:[oscGain, osc2Gain, windGain], filter};
-    }catch(e){}
-  }
-
-  function stopAmbient(){
-    if(!ambientNodes) return;
-    try{
-      const now=audioCtx.currentTime;
-      ambientNodes.gains.forEach(g=>{ g.gain.linearRampToValueAtTime(0.0001, now+1.5); });
-      setTimeout(()=>{
-        try{ ambientNodes.osc.stop(); ambientNodes.osc2.stop(); ambientNodes.wind.stop(); }catch{}
-        ambientNodes=null;
-      },1600);
-    }catch{ ambientNodes=null; }
-  }
 
   async function loadSfxBuffer(name){
     if(!ensureAudio()||!sfxSources[name])return null;
@@ -1240,7 +1179,7 @@
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
-        masterGain.gain.value=1;sfxGain.gain.value=.82;
+        masterGain.gain.value=0.72;sfxGain.gain.value=.70; // volume geral mais tranquilo
         sfxGain.connect(masterGain);masterGain.connect(audioCtx.destination);
         noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.7),audioCtx.sampleRate);
         const data=noiseBuffer.getChannelData(0);
@@ -1270,7 +1209,6 @@
     musicPlayers.forEach(a=>{a.pause();a.volume=0;});
   }
   function updateMusicStage(force=false){
-    if(AMBIENT_ONLY) return; // em modo ambiente não troca música
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     if(!force&&nextStage===musicStage)return;
@@ -1316,17 +1254,8 @@
   }
   function setMusicActive(active){
     musicActive=active;
-    if(!active||!soundOn){stopMusicPlayers();stopAmbient();return;}
+    if(!active||!soundOn){stopMusicPlayers();return;}
     ensureAudio();
-    if(AMBIENT_ONLY){
-      // MODO 1: Só ambiente (sem música mp3) - agora com drone audível
-      stopMusicPlayers();
-      startAmbient();
-      return;
-    }
-    // MODO 2: Música + Ambiente juntos (RECOMENDADO)
-    // Toca ambiente de fundo + gameplay.mp3 baixinho com filtro
-    startAmbient();
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     const stage=audioStages[nextStage],player=musicPlayers[activeMusicPlayer];
@@ -1337,7 +1266,7 @@
     if(player.dataset.src!==wanted){
       player.src=wanted;player.dataset.src=wanted;player.currentTime=0;
     }
-    player.loop=true;player.volume=MUSIC_VOLUME; // .06 - bem de fundo
+    player.loop=true;player.volume=MUSIC_VOLUME;
     const playPromise=player.play();
     if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
   }
@@ -1639,7 +1568,7 @@
     runStats.boxes++;runStats.reliefs++;
     eventState.lastCategory='good';eventState.lastEvent=reward.id;
     eventState.cooldownUntil=elapsed+8;nextBox=elapsed+15;
-    reward.run();flash=Math.max(flash,.3);playSfx('box',.9);tone(1040,.22,'triangle',.055);haptic(40);
+    reward.run();flash=Math.max(flash,.3);playSfx('box',.5);tone(1040,.22,'triangle',.055);haptic(40);
   }
   function ignoreMysteryBox(){
     if(mysteryCurse.armed||mysteryCurse.dual)return;
@@ -1943,7 +1872,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';playSfx('box',.9);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.5);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
   }
 
   function update(dt){
@@ -2109,7 +2038,7 @@
           coinFlights.push({x:o.x+o.size/2,y:o.y+o.size/2,toX:rect.left+rect.width/2,toY:rect.top+rect.height/2,age:0});
           coins++;runStats.coins++;storage.set('coins',coins);updateHUD();
           const pill=$('#coinsPill');pill.classList.remove('pop');void pill.offsetWidth;pill.classList.add('pop');
-          playSfx('coin',.78);haptic(18);
+          playSfx('coin',.45);haptic(18);
         }
         else if(o.golden){openGoldenBox();}
         else{mysteryCurse.ignored=0;openBox();}
