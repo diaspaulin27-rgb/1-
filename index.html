@@ -1105,6 +1105,7 @@
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
   const MUSIC_VOLUME=.03;
   const MUSIC_CROSSFADE_MS=3000;
+  const MUSIC_START_FADE_MS=4000;
   const audioStages=[
     {min:0,max:95,music:'gameplay.mp3'},
     {min:96,max:100,music:'phase96-100.mp3'},
@@ -1253,7 +1254,7 @@
       beginCrossfade();
     }
   }
-  function setMusicActive(active){
+  function setMusicActive(active,fadeIn=false){
     musicActive=active;
     if(!active||!soundOn){stopMusicPlayers();return;}
     ensureAudio();
@@ -1267,9 +1268,23 @@
     if(player.dataset.src!==wanted){
       player.src=wanted;player.dataset.src=wanted;player.currentTime=0;
     }
-    player.loop=true;player.volume=MUSIC_VOLUME;
+    player.loop=true;player.volume=fadeIn?0:MUSIC_VOLUME;
+    const beginStartFade=()=>{
+      if(!fadeIn||!musicActive||!soundOn)return;
+      const started=performance.now();
+      clearInterval(musicFadeTimer);musicFadeTimer=0;
+      musicFadeTimer=setInterval(()=>{
+        const t=clamp((performance.now()-started)/MUSIC_START_FADE_MS,0,1);
+        player.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
+        if(t>=1){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          if(musicActive&&soundOn)player.volume=MUSIC_VOLUME;
+        }
+      },50);
+    };
     const playPromise=player.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(()=>{});
+    if(playPromise&&playPromise.then)playPromise.then(beginStartFade).catch(()=>{});
+    else beginStartFade();
   }
   function updateAdaptiveMusic(){
     if(musicActive&&soundOn)updateMusicStage(false);
@@ -1345,7 +1360,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,true);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
