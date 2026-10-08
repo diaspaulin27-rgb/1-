@@ -1101,9 +1101,9 @@
   }
   function envSafeBottom(){ return 0; }
 
-  let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
+  let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null,musicGainNodes=[];
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  const MUSIC_VOLUME=.025;
+  const MUSIC_VOLUME=.12;
   const MUSIC_CROSSFADE_MS=3000;
   const MUSIC_START_FADE_MS=4000;
   const audioStages=[
@@ -1182,7 +1182,21 @@
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
         masterGain.gain.value=1;sfxGain.gain.value=.72;
-        sfxGain.connect(masterGain);masterGain.connect(audioCtx.destination);
+        sfxGain.connect(masterGain);
+        // No iPhone/Safari, HTMLAudioElement.volume pode ser ignorado.
+        // Roteamos cada música pelo Web Audio para controlar o volume de verdade.
+        musicGainNodes=musicPlayers.map(()=>{
+          const gain=audioCtx.createGain();
+          gain.gain.value=0;
+          gain.connect(masterGain);
+          return gain;
+        });
+        musicPlayers.forEach((player,i)=>{
+          player.volume=1;
+          const source=audioCtx.createMediaElementSource(player);
+          source.connect(musicGainNodes[i]);
+        });
+        masterGain.connect(audioCtx.destination);
         noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.7),audioCtx.sampleRate);
         const data=noiseBuffer.getChannelData(0);
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
@@ -1208,73 +1222,86 @@
   }
   function stopMusicPlayers(){
     clearInterval(musicFadeTimer);musicFadeTimer=0;
-    musicPlayers.forEach(a=>{a.pause();a.volume=0;});
+    musicPlayers.forEach((a,i)=>{
+      a.pause();a.volume=1;
+      if(musicGainNodes[i])musicGainNodes[i].gain.setValueAtTime(0,audioCtx?audioCtx.currentTime:0);
+    });
   }
   function updateMusicStage(){
     const nextStage=audioStageFor();
     if(nextStage<0||nextStage===musicStage)return;
     musicStage=nextStage;
-    if(!musicActive||!soundOn)return;
+    if(!musicActive||!soundOn||!ensureAudio())return;
 
     const stage=audioStages[nextStage],incomingIndex=1-activeMusicPlayer;
     const incoming=musicPlayers[incomingIndex],outgoing=musicPlayers[activeMusicPlayer];
+    const incomingGain=musicGainNodes[incomingIndex],outgoingGain=musicGainNodes[activeMusicPlayer];
     const wanted='assets/audio/music/'+stage.music;
 
     if(incoming.dataset.src!==wanted){
       incoming.src=wanted;incoming.dataset.src=wanted;incoming.currentTime=0;
     }
-    incoming.loop=true;incoming.volume=0;
+    incoming.loop=true;incoming.volume=1;
+    const now=audioCtx.currentTime;
+    const outStart=outgoing.paused?0:outgoingGain.gain.value;
+    incomingGain.gain.cancelScheduledValues(now);
+    incomingGain.gain.setValueAtTime(0,now);
 
-    // O crossfade só começa quando a nova faixa realmente começou a tocar.
-    // Isso evita que o carregamento do MP3 no Safari/iPhone consuma parte dos 3s
-    // e transforme a troca em um corte seco.
+    // O crossfade usa GainNodes; não depende do volume do elemento HTMLAudio.
     clearInterval(musicFadeTimer);musicFadeTimer=0;
-    const outStart=outgoing.paused?0:outgoing.volume;
     const beginCrossfade=()=>{
       if(musicStage!==nextStage||!musicActive||!soundOn)return;
       const started=performance.now();
       musicFadeTimer=setInterval(()=>{
         const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
-        incoming.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
-        outgoing.volume=soundOn&&musicActive?outStart*(1-t):0;
+        const time=audioCtx.currentTime;
+        incomingGain.gain.setValueAtTime(MUSIC_VOLUME*t,time);
+        outgoingGain.gain.setValueAtTime(outStart*(1-t),time);
         if(t>=1){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
-          outgoing.pause();outgoing.volume=0;activeMusicPlayer=incomingIndex;
+          outgoing.pause();
+          outgoingGain.gain.setValueAtTime(0,audioCtx.currentTime);
+          activeMusicPlayer=incomingIndex;
         }
       },50);
     };
     const playPromise=incoming.play();
-    if(playPromise&&playPromise.then){
-      playPromise.then(beginCrossfade).catch(()=>{});
-    }else{
-      beginCrossfade();
-    }
+    if(playPromise&&playPromise.then)playPromise.then(beginCrossfade).catch(()=>{});
+    else beginCrossfade();
   }
   function setMusicActive(active,fadeIn=false){
     musicActive=active;
     if(!active||!soundOn){stopMusicPlayers();return;}
-    ensureAudio();
+    if(!ensureAudio())return;
     const nextStage=audioStageFor();
     if(nextStage<0)return;
     const stage=audioStages[nextStage],player=musicPlayers[activeMusicPlayer];
+    const playerGain=musicGainNodes[activeMusicPlayer];
     const wanted='assets/audio/music/'+stage.music;
     musicStage=nextStage;
     clearInterval(musicFadeTimer);musicFadeTimer=0;
-    musicPlayers.forEach((a,i)=>{if(i!==activeMusicPlayer){a.pause();a.volume=0;}});
+    musicPlayers.forEach((a,i)=>{
+      if(i!==activeMusicPlayer){
+        a.pause();a.volume=1;
+        musicGainNodes[i].gain.setValueAtTime(0,audioCtx.currentTime);
+      }
+    });
     if(player.dataset.src!==wanted){
       player.src=wanted;player.dataset.src=wanted;player.currentTime=0;
     }
-    player.loop=true;player.volume=fadeIn?0:MUSIC_VOLUME;
+    player.loop=true;player.volume=1;
+    playerGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    playerGain.gain.setValueAtTime(fadeIn?0:MUSIC_VOLUME,audioCtx.currentTime);
     const beginStartFade=()=>{
       if(!fadeIn||!musicActive||!soundOn)return;
       const started=performance.now();
       clearInterval(musicFadeTimer);musicFadeTimer=0;
       musicFadeTimer=setInterval(()=>{
         const t=clamp((performance.now()-started)/MUSIC_START_FADE_MS,0,1);
-        player.volume=soundOn&&musicActive?MUSIC_VOLUME*t:0;
+        playerGain.gain.setValueAtTime(MUSIC_VOLUME*t,audioCtx.currentTime);
         if(t>=1){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
-          if(musicActive&&soundOn)player.volume=MUSIC_VOLUME;
+          if(musicActive&&soundOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
         }
       },50);
     };
