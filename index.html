@@ -1103,16 +1103,16 @@
 
   let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null;
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  const MUSIC_VOLUME=.18;
+  const MUSIC_VOLUME=.03;
   const MUSIC_CROSSFADE_MS=3000;
   const audioStages=[
     {min:0,max:95,music:'gameplay.mp3'},
     {min:96,max:100,music:'phase96-100.mp3'},
     {min:101,max:150,music:'after100.mp3'}
   ];
-  const sfxBuffers={coin:null,box:null};
-  const sfxLoading={coin:null,box:null};
-  const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3'};
+  const sfxBuffers={coin:null,box:null,ball:null};
+  const sfxLoading={coin:null,box:null,ball:null};
+  const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3',ball:'assets/audio/sfx/ball.mp3'};
 
   async function loadSfxBuffer(name){
     if(!ensureAudio()||!sfxSources[name])return null;
@@ -1139,6 +1139,7 @@
     if(!soundOn)return;
     loadSfxBuffer('coin');
     loadSfxBuffer('box');
+    loadSfxBuffer('ball');
   }
 
   function playSfx(name,volume=1){
@@ -1279,42 +1280,29 @@
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
   function ballHitSound(kind='paddle'){
-    if(!ensureAudio())return;
-    try{
-      const now=audioCtx.currentTime;
-      const volume=kind==='paddle'?.22:kind==='ceiling'?.14:.12;
+    if(!soundOn||!ensureAudio())return;
 
-      // Ataque bem curto e audível mesmo com a música tocando.
-      const attack=audioCtx.createOscillator(),attackGain=audioCtx.createGain();
-      attack.type='square';
-      attack.frequency.setValueAtTime(900,now);
-      attack.frequency.exponentialRampToValueAtTime(520,now+.018);
-      attackGain.gain.setValueAtTime(volume*.55,now);
-      attackGain.gain.exponentialRampToValueAtTime(.0001,now+.028);
-      attack.connect(attackGain).connect(sfxGain);
+    const volume=kind==='paddle'?.78:kind==='ceiling'?.52:.62;
 
-      // Corpo do "tok": curto, seco, sem reverb e sem cauda longa.
-      const body=audioCtx.createOscillator(),bodyGain=audioCtx.createGain();
-      body.type='triangle';
-      body.frequency.setValueAtTime(430,now);
-      body.frequency.exponentialRampToValueAtTime(250,now+.06);
-      bodyGain.gain.setValueAtTime(volume,now);
-      bodyGain.gain.exponentialRampToValueAtTime(.0001,now+.085);
-      body.connect(bodyGain).connect(sfxGain);
+    const playBuffer=buffer=>{
+      if(!buffer||!soundOn)return;
+      try{
+        const source=audioCtx.createBufferSource();
+        const gain=audioCtx.createGain();
+        source.buffer=buffer;
+        gain.gain.value=clamp(volume,0,1);
+        source.connect(gain).connect(sfxGain);
+        source.start();
+      }catch{}
+    };
 
-      // Pequeno clique de contato para o impacto aparecer sobre qualquer música.
-      const click=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),clickGain=audioCtx.createGain();
-      click.buffer=noiseBuffer;
-      filter.type='bandpass';filter.frequency.value=2400;filter.Q.value=1.1;
-      clickGain.gain.setValueAtTime(volume*.38,now);
-      clickGain.gain.exponentialRampToValueAtTime(.0001,now+.016);
-      click.connect(filter).connect(clickGain).connect(sfxGain);
-
-      attack.start(now);attack.stop(now+.032);
-      body.start(now);body.stop(now+.095);
-      click.start(now);click.stop(now+.020);
-    }catch{}
+    if(sfxBuffers.ball){
+      playBuffer(sfxBuffers.ball);
+    }else{
+      loadSfxBuffer('ball').then(playBuffer);
+    }
   }
+
   function impactSound(kind='paddle'){
     if(!soundOn)return;
     if(kind==='barrier'){
