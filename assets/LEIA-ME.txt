@@ -1,0 +1,7 @@
+PASTA DE ASSETS
+
+Este pacote reorganiza o código principal do jogo, mas não inclui os arquivos binários de imagens e áudio que já existem no repositório.
+
+Ao copiar estes arquivos para o repositório, MANTENHA a pasta assets existente e todo o seu conteúdo. O jogo espera encontrar, entre outros, assets/images/basketball_hoop_final.png e assets/audio/sfx/*.mp3.
+
+Não apague nem substitua a pasta assets atual do GitHub ao instalar esta estrutura.
