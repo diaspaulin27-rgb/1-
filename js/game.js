@@ -856,6 +856,41 @@
   const sfxLoading={coin:null,box:null,ball:null};
   const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3',ball:'assets/audio/sfx/ball.mp3'};
 
+  // A batida da bola usa HTMLAudio diretamente, independente do AudioContext.
+  // Isso evita que uma falha no Web Audio deixe todas as colisões silenciosas.
+  const ballAudioPlayers=Array.from({length:4},()=>{
+    const audio=new Audio(new URL(sfxSources.ball,document.baseURI).href);
+    audio.preload='auto';
+    audio.playsInline=true;
+    audio.volume=.42;
+    audio.addEventListener('error',()=>{
+      console.error('[1%] Erro no HTMLAudio da bola:',audio.error||'arquivo indisponível');
+    });
+    return audio;
+  });
+  let nextBallAudioPlayer=0;
+
+  function playBallHtmlAudio(volume=.42){
+    if(!soundOn)return false;
+    const audio=ballAudioPlayers[nextBallAudioPlayer];
+    nextBallAudioPlayer=(nextBallAudioPlayer+1)%ballAudioPlayers.length;
+    try{
+      audio.volume=clamp(volume,0,1);
+      try{audio.currentTime=0;}catch{}
+      const result=audio.play();
+      if(result&&typeof result.catch==='function'){
+        result.catch(error=>{
+          console.warn('[1%] HTMLAudio da bola não conseguiu tocar:',error);
+          ballFallbackSound('paddle');
+        });
+      }
+      return true;
+    }catch(error){
+      console.error('[1%] Falha ao iniciar HTMLAudio da bola:',error);
+      return false;
+    }
+  }
+
   async function loadSfxBuffer(name){
     if(!sfxSources[name]||!ensureAudio())return null;
     if(sfxBuffers[name])return sfxBuffers[name];
@@ -1104,20 +1139,19 @@
   }
 
   function ballHitSound(kind='paddle'){
-    if(!soundOn||!ensureAudio())return;
-    const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
+    if(!soundOn)return;
+    const volume=kind==='paddle'?.42:kind==='ceiling'?.30:.34;
 
-    if(sfxBuffers.ball){
-      playDecodedSfx(sfxBuffers.ball,volume,'ball');
-      return;
-    }
+    // Caminho principal: toca o MP3 original sem depender de decodeAudioData.
+    // O pequeno pool permite colisões próximas sem cortar a batida anterior.
+    const started=playBallHtmlAudio(volume);
+    if(started)return;
 
-    // Não atrasamos o som da colisão enquanto o MP3 carrega.
-    // O arquivo real assume automaticamente assim que estiver pronto.
+    // Reserva a síntese para casos em que o HTMLAudio falha ao iniciar.
     ballFallbackSound(kind);
-    if(!sfxLoading.ball){
+    if(!sfxBuffers.ball&&!sfxLoading.ball){
       loadSfxBuffer('ball').then(buffer=>{
-        if(buffer)console.info('[1%] O som original da bola está pronto para as próximas colisões.');
+        if(buffer)console.info('[1%] O MP3 da bola foi decodificado como alternativa.');
       });
     }
   }
@@ -1164,7 +1198,9 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,true);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();
+    ballAudioPlayers.forEach(audio=>{try{audio.load();}catch{}});
+    reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,true);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
