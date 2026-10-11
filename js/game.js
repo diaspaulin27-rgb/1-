@@ -857,21 +857,31 @@
   const sfxSources={coin:'assets/audio/sfx/coin.mp3',box:'assets/audio/sfx/box.mp3',ball:'assets/audio/sfx/ball.mp3'};
 
   async function loadSfxBuffer(name){
-    if(!ensureAudio()||!sfxSources[name])return null;
+    if(!sfxSources[name]||!ensureAudio())return null;
     if(sfxBuffers[name])return sfxBuffers[name];
     if(sfxLoading[name])return sfxLoading[name];
 
-    sfxLoading[name]=fetch(sfxSources[name],{cache:'no-store'})
+    const sourceUrl=new URL(sfxSources[name],document.baseURI).href;
+    sfxLoading[name]=fetch(sourceUrl,{cache:'no-store'})
       .then(response=>{
-        if(!response.ok)throw new Error('SFX HTTP '+response.status);
+        if(!response.ok)throw new Error('HTTP '+response.status+' ao buscar '+sourceUrl);
         return response.arrayBuffer();
       })
-      .then(data=>audioCtx.decodeAudioData(data))
+      .then(data=>{
+        if(!data||data.byteLength<128)throw new Error('arquivo vazio ou pequeno demais');
+        if(!audioCtx)throw new Error('AudioContext não foi inicializado');
+        return audioCtx.decodeAudioData(data.slice(0));
+      })
       .then(buffer=>{
+        if(!buffer||!buffer.length||!buffer.duration)throw new Error('buffer de áudio inválido');
         sfxBuffers[name]=buffer;
+        console.info('[1%] SFX carregado:',name,Math.round(buffer.duration*1000)+'ms');
         return buffer;
       })
-      .catch(()=>null)
+      .catch(error=>{
+        console.error('[1%] Falha ao carregar/decodificar SFX "'+name+'":',error);
+        return null;
+      })
       .finally(()=>{sfxLoading[name]=null;});
 
     return sfxLoading[name];
@@ -879,31 +889,47 @@
 
   function preloadSfx(){
     if(!soundOn)return;
-    loadSfxBuffer('coin');
-    loadSfxBuffer('box');
-    loadSfxBuffer('ball');
+    ['coin','box','ball'].forEach(name=>{loadSfxBuffer(name);});
+  }
+
+  async function resumeAudioForPlayback(){
+    if(!soundOn||!ensureAudio())return false;
+    try{
+      if(audioCtx.state!=='running')await audioCtx.resume();
+      return !!audioCtx&&audioCtx.state==='running';
+    }catch(error){
+      console.warn('[1%] Não foi possível reativar o AudioContext:',error);
+      return false;
+    }
+  }
+
+  async function playDecodedSfx(buffer,volume=1,label='SFX'){
+    if(!buffer||!soundOn)return false;
+    if(!await resumeAudioForPlayback())return false;
+    try{
+      const source=audioCtx.createBufferSource();
+      const gain=audioCtx.createGain();
+      source.buffer=buffer;
+      gain.gain.value=clamp(volume,0,1);
+      source.connect(gain).connect(sfxGain);
+      source.onended=()=>{try{source.disconnect();gain.disconnect();}catch{}};
+      source.start(0);
+      return true;
+    }catch(error){
+      console.error('[1%] Falha ao reproduzir '+label+':',error);
+      return false;
+    }
   }
 
   function playSfx(name,volume=1){
-    if(!soundOn||!sfxSources[name]||!ensureAudio())return;
-
-    const playBuffer=buffer=>{
-      if(!buffer||!soundOn)return;
-      try{
-        const source=audioCtx.createBufferSource();
-        const gain=audioCtx.createGain();
-        source.buffer=buffer;
-        gain.gain.value=clamp(volume,0,1);
-        source.connect(gain).connect(sfxGain);
-        source.start();
-      }catch{}
-    };
-
+    if(!soundOn||!sfxSources[name])return;
     if(sfxBuffers[name]){
-      playBuffer(sfxBuffers[name]);
-    }else{
-      loadSfxBuffer(name).then(playBuffer);
+      playDecodedSfx(sfxBuffers[name],volume,name);
+      return;
     }
+    loadSfxBuffer(name).then(buffer=>{
+      if(buffer)playDecodedSfx(buffer,volume,name);
+    });
   }
 
   function stopSfx(){
@@ -942,10 +968,17 @@
         const data=noiseBuffer.getChannelData(0);
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
       }
-      if(audioCtx.state==='suspended')audioCtx.resume();
+      if(audioCtx.state!=='running'){
+        audioCtx.resume().catch(error=>{
+          console.warn('[1%] AudioContext continua suspenso:',error);
+        });
+      }
       masterGain.gain.setTargetAtTime(soundOn?1:0,audioCtx.currentTime,.03);
       return true;
-    }catch{return false;}
+    }catch(error){
+      console.error('[1%] Não foi possível inicializar o áudio:',error);
+      return false;
+    }
   }
   function tone(freq=440,dur=.05,type='sine',vol=.035,delay=0){
     if(!ensureAudio())return;
@@ -1058,27 +1091,34 @@
     tone(420*(1-progress*.65),.085+progress*.06,'sine',.06);
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
+  function ballFallbackSound(kind='paddle'){
+    // Fallback curto para que uma falha no MP3 não deixe a colisão muda.
+    if(!soundOn||!ensureAudio())return;
+    const settings=kind==='paddle'
+      ?{freq:210,duration:.045,volume:.025,noise:.035}
+      :kind==='ceiling'
+        ?{freq:280,duration:.035,volume:.016,noise:.020}
+        :{freq:245,duration:.04,volume:.020,noise:.025};
+    tone(settings.freq,settings.duration,'triangle',settings.volume);
+    noiseHit(.035,settings.noise,950);
+  }
+
   function ballHitSound(kind='paddle'){
     if(!soundOn||!ensureAudio())return;
-
     const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
 
-    const playBuffer=buffer=>{
-      if(!buffer||!soundOn)return;
-      try{
-        const source=audioCtx.createBufferSource();
-        const gain=audioCtx.createGain();
-        source.buffer=buffer;
-        gain.gain.value=clamp(volume,0,1);
-        source.connect(gain).connect(sfxGain);
-        source.start();
-      }catch{}
-    };
-
     if(sfxBuffers.ball){
-      playBuffer(sfxBuffers.ball);
-    }else{
-      loadSfxBuffer('ball').then(playBuffer);
+      playDecodedSfx(sfxBuffers.ball,volume,'ball');
+      return;
+    }
+
+    // Não atrasamos o som da colisão enquanto o MP3 carrega.
+    // O arquivo real assume automaticamente assim que estiver pronto.
+    ballFallbackSound(kind);
+    if(!sfxLoading.ball){
+      loadSfxBuffer('ball').then(buffer=>{
+        if(buffer)console.info('[1%] O som original da bola está pronto para as próximas colisões.');
+      });
     }
   }
 
