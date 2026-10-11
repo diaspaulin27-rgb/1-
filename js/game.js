@@ -1002,12 +1002,12 @@
   }
   function ballHitSound(kind='paddle'){
     if(!soundOn)return;
-    ensureAudio();
+    if(!ensureAudio())return;
 
     const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
 
     const playBuffer=buffer=>{
-      if(!buffer||!soundOn)return;
+      if(!buffer||!soundOn||!audioCtx)return;
       try{
         const source=audioCtx.createBufferSource();
         const gain=audioCtx.createGain();
@@ -1015,15 +1015,17 @@
         gain.gain.value=clamp(volume,0,1);
         source.connect(gain).connect(sfxGain);
         source.start(0);
-      }catch{}
+      }catch(e){
+        console.error('Ball sound error:',e);
+      }
     };
 
     if(sfxBuffers.ball){
       playBuffer(sfxBuffers.ball);
     }else{
-      loadSfxBuffer('ball').then(playBuffer);
+      loadSfxBuffer('ball').then(playBuffer).catch(()=>{});
     }
-  }
+}
 
   function impactSound(kind='paddle'){
     if(!soundOn)return;
@@ -1067,7 +1069,12 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);setTimeout(()=>preloadSfx(),100);
+    clearInterval(adTimer);clearInterval(reviveTimer);
+if(ensureAudio()){
+  preloadSfx();
+  setTimeout(()=>preloadSfx(),150);
+}
+reset(startScore);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
