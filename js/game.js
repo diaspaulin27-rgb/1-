@@ -870,8 +870,12 @@
   });
   let nextBallAudioPlayer=0;
 
-  function playBallHtmlAudio(volume=.42){
+  function playBallHtmlAudio(volume=.42,kind='paddle'){
     if(!soundOn)return false;
+    // Tenta retomar o Web Audio sem torná-lo uma dependência do MP3.
+    // A chamada inicial de ensureAudio() também acontece em startGame,
+    // durante o gesto do usuário que inicia a partida.
+    ensureAudio();
     const audio=ballAudioPlayers[nextBallAudioPlayer];
     nextBallAudioPlayer=(nextBallAudioPlayer+1)%ballAudioPlayers.length;
     try{
@@ -881,7 +885,7 @@
       if(result&&typeof result.catch==='function'){
         result.catch(error=>{
           console.warn('[1%] HTMLAudio da bola não conseguiu tocar:',error);
-          ballFallbackSound('paddle');
+          ballFallbackSound(kind);
         });
       }
       return true;
@@ -1144,7 +1148,7 @@
 
     // Caminho principal: toca o MP3 original sem depender de decodeAudioData.
     // O pequeno pool permite colisões próximas sem cortar a batida anterior.
-    const started=playBallHtmlAudio(volume);
+    const started=playBallHtmlAudio(volume,kind);
     if(started)return;
 
     // Reserva a síntese para casos em que o HTMLAudio falha ao iniciar.
