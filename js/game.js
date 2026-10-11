@@ -1000,6 +1000,19 @@
     tone(420*(1-progress*.65),.085+progress*.06,'sine',.06);
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
+  function ballHitFallback(kind='paddle'){
+    if(!soundOn)return;
+    if(!ensureAudio())return;
+
+    const settings=kind==='paddle'
+      ?{freq:190,duration:.045,volume:.035}
+      :kind==='ceiling'
+        ?{freq:270,duration:.035,volume:.024}
+        :{freq:225,duration:.04,volume:.029};
+
+    tone(settings.freq,settings.duration,'triangle',settings.volume);
+  }
+
   function ballHitSound(kind='paddle'){
     if(!soundOn)return;
     if(!ensureAudio())return;
@@ -1007,7 +1020,7 @@
     const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
 
     const playBuffer=buffer=>{
-      if(!buffer||!soundOn||!audioCtx)return;
+      if(!buffer||!soundOn||!audioCtx)return false;
       try{
         const source=audioCtx.createBufferSource();
         const gain=audioCtx.createGain();
@@ -1015,17 +1028,27 @@
         gain.gain.value=clamp(volume,0,1);
         source.connect(gain).connect(sfxGain);
         source.start(0);
+        return true;
       }catch(e){
         console.error('Ball sound error:',e);
+        return false;
       }
     };
 
     if(sfxBuffers.ball){
-      playBuffer(sfxBuffers.ball);
-    }else{
-      loadSfxBuffer('ball').then(playBuffer).catch(()=>{});
+      if(!playBuffer(sfxBuffers.ball))ballHitFallback(kind);
+      return;
     }
-}
+
+    // Reproduz um impacto leve imediatamente enquanto o arquivo carrega.
+    ballHitFallback(kind);
+
+    try{
+      loadSfxBuffer('ball').catch(()=>null);
+    }catch(e){
+      console.error('Ball sound loading error:',e);
+    }
+  }
 
   function impactSound(kind='paddle'){
     if(!soundOn)return;
