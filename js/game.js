@@ -199,8 +199,6 @@
   let skip25EligibleThisRun=false,skip25ModalOpen=false;
   let targetX=0, pointerX=0, dragging=false, shake=0, flash=0;
   let startHintRemaining=0;
-  // Arte da bola 1% será adicionada depois. A conquista já é persistida
-  // em zanon1_secretUnlocks.onePercentBall; não equipar uma skin sem arte.
   const savedSecretUnlocks=storage.get('secretUnlocks',{});
   const secretUnlocks=savedSecretUnlocks&&typeof savedSecretUnlocks==='object'&&!Array.isArray(savedSecretUnlocks)?savedSecretUnlocks:{};
   const secretMissions=[
@@ -234,7 +232,6 @@
     if(!secretRun)return;
     if(before<96&&score===96){secretRun.blackout=true;secretRun.blackoutFailed=restHits>0;}
     if(secretRun.blackout&&score>=96&&score<=100&&restHits>0)secretRun.blackoutFailed=true;
-    // Bônus de pontos não substituem as rebatidas do percurso completo.
     if(secretRun.blackout&&score-before>1&&before<=100)secretRun.blackoutFailed=true;
     if(secretRun.blackout&&before<=100&&score>100){
       if(!secretRun.blackoutFailed)awardSecret('blackout');
@@ -333,7 +330,6 @@
   ];
   const skinImages={};
 
-  // Cesta de basquete: imagem visual separada da colisão.
   const basketballHoopImage=new Image();
   let basketballHoopReady=false;
   basketballHoopImage.onload=()=>{basketballHoopReady=true;if(mode==='playing')render();};
@@ -539,8 +535,6 @@
   let activeSkin=()=>skins.find(s=>s.id===selected)||skins[0];
 
   const paddle={x:0,y:0,w:145,h:24,baseW:145,vx:0};
-  // Padronização visual: a skin não pode parecer vantagem/desvantagem.
-  // Mantemos a colisão original e unificamos apenas o desenho.
   const PADDLE_VISUAL_THICKNESS=16;
   const ball={x:0,y:0,r:15,vx:0,vy:0,trail:[]};
   const fakeBall={active:false,x:0,y:0,r:15,vx:0,vy:0,trail:[]};
@@ -556,9 +550,6 @@
     fakeBall.r=ball.r;
   }
 
-  // ===== RASTROS DAS 6 BOLAS =====
-  // Regra visual: todas usam exatamente o mesmo alcance da bola de fogo atual.
-  // O corpo dos emojis também usa o mesmo font-size (2*r) da 🔥.
   const TRAIL_PROFILES={
     soccer:{limit:12,fade:4},
     donut:{limit:12,fade:4},
@@ -576,43 +567,10 @@
   function clearSkinTrailParticles(){
     ball._trailClock=0;fakeBall._trailClock=0;
   }
-  function updateSkinTrailParticles(){ /* rastros usam somente o histórico curto da bola */ }
-  function drawSkinTrailParticles(){ /* mantido como no-op para preservar o loop atual */ }
-
-  function drawTrailStar(c,x,y,r,color,alpha,rot=0){
-    c.save();c.translate(x,y);c.rotate(rot);c.globalAlpha=alpha;c.fillStyle=color;
-    c.beginPath();
-    for(let i=0;i<8;i++){
-      const a=i*Math.PI/4-Math.PI/2,rr=i%2===0?r:r*.34;
-      const px=Math.cos(a)*rr,py=Math.sin(a)*rr;
-      if(i===0)c.moveTo(px,py);else c.lineTo(px,py);
-    }
-    c.closePath();c.fill();c.restore();
-  }
-  function drawTrailSparkle(c,x,y,r,color,alpha,rot=0){
-    c.save();c.translate(x,y);c.rotate(rot);c.globalAlpha=alpha;c.strokeStyle=color;c.lineCap='round';
-    c.lineWidth=Math.max(1,r*.24);
-    c.beginPath();c.moveTo(0,-r);c.lineTo(0,r);c.moveTo(-r,0);c.lineTo(r,0);c.stroke();
-    c.lineWidth=Math.max(.8,r*.16);
-    c.beginPath();c.moveTo(-r*.55,-r*.55);c.lineTo(r*.55,r*.55);c.moveTo(r*.55,-r*.55);c.lineTo(-r*.55,r*.55);c.stroke();
-    c.restore();
-  }
-  function drawContinuousTrailBody(c,trail,r,colorA,colorB,alpha=.42,width=.48){
-    const points=trail.slice(-12);if(points.length<2)return;
-    c.save();c.lineCap='round';c.lineJoin='round';
-    for(let i=0;i<points.length-1;i++){
-      const p=points[i],next=points[i+1],strength=(i+1)/points.length;
-      const life=clamp(p.life??1,0,1);
-      c.globalAlpha=life*strength*alpha;
-      c.strokeStyle=i%2?colorA:colorB;
-      c.lineWidth=Math.max(1,r*(.12+strength*width));
-      c.beginPath();c.moveTo(p.x,p.y);c.lineTo(next.x,next.y);c.stroke();
-    }
-    c.restore();c.globalAlpha=1;
-  }
+  function updateSkinTrailParticles(){}
+  function drawSkinTrailParticles(){}
 
   function drawSoccerTrail(c,trail,r,time){
-    // Mesmo desenho/alcance do 🔥; muda apenas a paleta e a textura para grama.
     const points=trail.slice(-12);
     const greens=['#1f8d35','#35b54a','#63cb59','#9be27c'];
     for(let i=0;i<points.length-1;i++){
@@ -624,7 +582,6 @@
       c.fillStyle=i%2?'#42b84e':'#247f34';c.shadowColor='#55c95d';c.shadowBlur=7;
       c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
       c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
-      // Textura de grama dentro da mesma silhueta do fogo.
       c.shadowBlur=0;c.lineCap='round';
       for(let j=0;j<4;j++){
         const bx=(-.52+j*.35)*size;
@@ -641,7 +598,6 @@
   }
 
   function drawDonutTrail(c,trail,r,time,preview=false){
-    // Mesmo desenho/alcance do 🔥; rosa predominante com textura de granulados coloridos.
     const points=trail.slice(-12);
     const sprinkles=['#ff72b5','#ff94c8','#8fd4ff','#ffd95a','#8ee46d'];
     for(let i=0;i<points.length-1;i++){
@@ -653,7 +609,6 @@
       c.fillStyle=i%2?'#ff78b9':'#ff4f9f';c.shadowColor='#ff79bb';c.shadowBlur=7;
       c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
       c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
-      // Granulados pequenos sobre a mesma cauda.
       c.shadowBlur=0;c.lineCap='round';
       for(let j=0;j<5;j++){
         const phase=i*1.7+j*1.37;
@@ -672,7 +627,6 @@
   }
 
   function drawBlueFireTrail(c,trail,r,time){
-    // Mesma geometria, tamanho e duração do rastro 🔥; apenas a paleta muda para azul.
     const points=trail.slice(-12);
     for(let i=0;i<points.length-1;i++){
       const p=points[i],next=points[i+1],strength=(i+1)/points.length;
@@ -687,7 +641,6 @@
   }
 
   function drawSnowTrail(c,trail,r,time){
-    // Mesmo formato e alcance dos rastros atuais, em azul bebê com brilho gelado.
     const points=trail.slice(-12);
     for(let i=0;i<points.length-1;i++){
       const p=points[i],next=points[i+1],strength=(i+1)/points.length;
@@ -705,7 +658,6 @@
   }
 
   function drawChalkTrail(c,trail,r,time,preview=false){
-    // Mesmo desenho/alcance do 🔥; branco e azul com textura suave de fumaça/giz.
     const points=trail.slice(-12);
     for(let i=0;i<points.length-1;i++){
       const p=points[i],next=points[i+1],strength=(i+1)/points.length;
@@ -716,7 +668,6 @@
       c.fillStyle=i%2?'#dff3ff':'#84bfe8';c.shadowColor='#bfe6ff';c.shadowBlur=6;
       c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
       c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
-      // Textura de giz: poucas manchas simples, sem gradients pesados.
       c.shadowBlur=0;
       for(let j=0;j<3;j++){
         const phase=i*1.91+j*2.09;
@@ -733,7 +684,6 @@
   }
 
   function drawMoonTrail(c,trail,r,time,preview=false){
-    // Mesmo desenho/alcance do 🔥; branco amarelado e brilhante.
     const points=trail.slice(-12);
     for(let i=0;i<points.length-1;i++){
       const p=points[i],next=points[i+1],strength=(i+1)/points.length;
@@ -745,7 +695,6 @@
       c.beginPath();c.moveTo(-size,0);c.quadraticCurveTo(-size,-size,flicker,-size*2.7);
       c.quadraticCurveTo(size,-size,size,0);c.quadraticCurveTo(0,size,-size,0);c.fill();
       c.shadowBlur=0;
-      // Brilhos discretos preservando a mesma silhueta principal.
       if(i%2===0){
         const s=Math.max(1,size*.18);
         c.globalAlpha=life*strength*.72;c.strokeStyle='#ffffff';c.lineWidth=Math.max(.8,size*.07);c.lineCap='round';
@@ -756,7 +705,6 @@
       c.restore();
     }
   }
-  function offsetSafe(i,time,r){return Math.sin(i*1.73+time*1.9)*r*.20;}
 
   function drawPaletteTrail(c,trail,r,time,palette){
     const points=trail.slice(-12),outerA=palette[0],outerB=palette[1]||palette[0],core=palette[2]||'#ffffff';
@@ -906,10 +854,7 @@
     }
   }
 
-  function stopSfx(){
-    // Os SFX agora são BufferSources curtos e independentes.
-    // Não há elementos <audio> persistentes para pausar.
-  }
+  function stopSfx(){}
   const musicPlayers=[new Audio(),new Audio()];
   musicPlayers.forEach(a=>{a.preload='auto';a.loop=true;a.volume=0;a.playsInline=true;});
 
@@ -924,8 +869,6 @@
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
         masterGain.gain.value=1;sfxGain.gain.value=.72;
         sfxGain.connect(masterGain);
-        // No iPhone/Safari, HTMLAudioElement.volume pode ser ignorado.
-        // Roteamos cada música pelo Web Audio para controlar o volume de verdade.
         musicGainNodes=musicPlayers.map(()=>{
           const gain=audioCtx.createGain();
           gain.gain.value=0;
@@ -988,7 +931,6 @@
     incomingGain.gain.cancelScheduledValues(now);
     incomingGain.gain.setValueAtTime(0,now);
 
-    // O crossfade usa GainNodes; não depende do volume do elemento HTMLAudio.
     clearInterval(musicFadeTimer);musicFadeTimer=0;
     const beginCrossfade=()=>{
       if(musicStage!==nextStage||!musicActive||!soundOn)return;
@@ -1059,8 +1001,8 @@
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
   function ballHitSound(kind='paddle'){
-  if(!soundOn)return;
-  ensureAudio();
+    if(!soundOn)return;
+    ensureAudio();
 
     const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
 
@@ -1125,7 +1067,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);setTimeout(()=>preloadSfx(),100);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);setTimeout(()=>preloadSfx(),100);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
@@ -1133,7 +1075,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   }
   function hideAll(){ ['#start','#gameOver','#paused','#adScreen','#reviveScreen'].forEach(s=>$(s).classList.add('hidden')); }
-  function show(sel){ hideAll(); if(sel!=='#adScreen')$('#skip25Offer').classList.remove('show'); $(sel).classList.remove('hidden'); }
 
   function updateHUD(){
     $('#score').textContent=String(score).padStart(3,'0');
@@ -1250,7 +1191,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   }
 
   function currentSpeedFactor(){
-    // Mais ritmo no início; o reforço desaparece suavemente até o ponto 60.
     const earlyBoost=.30*(1-clamp(gameplayScore()/60,0,1));
     let f=1+gameplayScore()*.01+earlyBoost;
     if(gameplayScore()>60) f+=(gameplayScore()-60)*.004;
@@ -1311,8 +1251,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   function updateBoxSpawns(){
     if(rescueProtected()||restHits>0||mysteryCurse.armed||mysteryCurse.dual||eventState.activeChallenge||objects.some(o=>o.type==='box'))return;
     if(goldenQueue.length){
-      // O marco fica reservado até terminar o efeito/desafio e a caixa anterior sair.
-      // Efeito persistente não bloqueia a caixa que pode encerrá-lo.
       onBoxAppeared();
       const size=56,mark=goldenQueue.shift();
       objects.push({type:'box',golden:true,mark,x:rand(18,W-size-18),y:-size,
@@ -1352,7 +1290,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   function startDualChallenge(speed){
     mysteryCurse.armed=false;
     eventState.activeChallenge=null;restHits=0;freeBoxQueued=false;
-    // Temporários ficam suspensos; o desafio usa a barra original e duas bolas reais.
     modifiers=[];controlsSign=1;eventState.activeEffect=null;
     eventState.megaPaddleUntil=0;eventState.fakeBallUntil=0;fakeBall.active=false;fakeBall.trail=[];
     objects=[];nextCoin=elapsed+rand(6,10);nextBox=elapsed+15;
@@ -1525,7 +1462,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     const c=eventState.activeChallenge;if(!c)return;
     if(elapsed>=c.endAt){finishSportChallenge(false);return;}
 
-    // Física somente nas duas bordas do aro. A rede continua 100% visual.
     const visualW=95;
     const rimHalf=visualW*.40;
     const postR=Math.max(2.5,ballBaseRadius*.20);
@@ -1537,7 +1473,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
       const d2=dx*dx+dy*dy;
       if(d2>=minD*minD)return false;
       const d=Math.sqrt(d2)||.001,nx=dx/d,ny=dy/d;
-      // Só rebate se a bola estiver entrando no ponto de colisão.
       const toward=ball.vx*nx+ball.vy*ny;
       if(toward>=0)return false;
       const push=minD-d+.25;
@@ -1553,7 +1488,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     collideRimPoint(leftX);
     collideRimPoint(rightX);
 
-    // Prêmio somente quando a bola atravessa o aro de CIMA para BAIXO.
     const crossedDown=oldY<c.y&&ball.y>=c.y&&ball.vy>0;
     const insideRim=ball.x-ball.r>leftX&&ball.x+ball.r<rightX;
     if(crossedDown&&insideRim)finishSportChallenge(true);
@@ -1647,7 +1581,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     if(startHintRemaining>0){
       startHintRemaining=Math.max(0,startHintRemaining-dt);
       if(startHintRemaining<=0)$('#skip25Offer').classList.remove('show');
-      // O gesto demonstrado não move a barra; relógios e bola aguardam a largada.
       return;
     }
     elapsed+=dt;updateSecretNotice(); shake=Math.max(0,shake-dt*30); flash=Math.max(0,flash-dt);
@@ -1735,8 +1668,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
         impactSound('ceiling');
       }
       checkSportCrossing(oldY);
-      // Rebatida precisa: a bola só conta se cruzar a FACE SUPERIOR da barra vindo de cima.
-      // O contato lateral só vale nesse exato cruzamento: se qualquer parte da bola tocar a barra, rebate.
       const crossedPaddleTop=oldY+ball.r<=paddle.y && ball.y+ball.r>=paddle.y;
       const overlapsPaddle=ball.x+ball.r>=paddle.x && ball.x-ball.r<=paddle.x+paddle.w;
       if(ball.vy>0 && crossedPaddleTop && overlapsPaddle){
@@ -1821,7 +1752,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   }
 
   function beginDefeat(falling){
-    // Só inicia depois de a bola inteira passar pela barra e não haver escudo.
     if(mode!=='playing'||rescueProtected()||score>=80||falling.done||falling.vy<=0||eventState.barrierCharges>0||falling.y-falling.r<=paddle.y+paddle.h)return false;
     const endY=H+falling.r+2,distance=Math.max(0,endY-falling.y);
     defeatAnimation={ball:falling,age:0,duration:.42,x:falling.x,y:falling.y,endY,
@@ -1933,7 +1863,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   }
 
   function prepareRevive(){
-    // O resgate por vídeo encerra todos os bônus e trolls da tentativa anterior.
     eventState.megaPaddleUntil=0;eventState.fakeBallUntil=0;
     eventState.barrierCharges=0;eventState.hiddenLives=0;
     eventState.activeEffect=null;eventState.cooldownUntil=0;barrierPulse=0;
@@ -1948,7 +1877,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
   }
 
   function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
-  // Teste visual: use 'circles' para restaurar os círculos originais.
   const BACKGROUND_STYLE='soft';
   let softBackgroundLayer=null;
   function drawBackgroundTexture(visual){
@@ -1958,7 +1886,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
       ctx.globalAlpha=.055;
       for(let i=0;i<3;i++){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(W*(.15+i*.42),H*(.28+i*.24),W*(.48-i*.07),0,Math.PI*2);ctx.fill();}
     }else{
-      // Luz estática nas bordas; camada reaproveitada até mudar o tamanho da tela.
       if(!softBackgroundLayer||softBackgroundLayer.width!==W||softBackgroundLayer.height!==H){
         softBackgroundLayer=document.createElement('canvas');softBackgroundLayer.width=W;softBackgroundLayer.height=H;
         const c=softBackgroundLayer.getContext('2d');
@@ -2050,7 +1977,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
         ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();
       }
       if(blackout){
-        // Ponta curta e clara: continua sendo rastro, sem revelar o corpo da bola.
         const length=Math.hypot(movingBall.vx,movingBall.vy)||1;
         ctx.globalAlpha=1;ctx.strokeStyle='#fff';ctx.lineWidth=style.width*.75;ctx.shadowBlur=10;
         ctx.beginPath();ctx.moveTo(movingBall.x-movingBall.vx/length*7,movingBall.y-movingBall.vy/length*7);ctx.lineTo(movingBall.x,movingBall.y);ctx.stroke();
@@ -2062,7 +1988,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     else if(!neon&&TRAIL_PROFILES[skin.id])drawEmojiSkinTrail(ctx,skin,movingBall.trail,movingBall.r,elapsed);
     ctx.globalAlpha=1;
     if(skin.image)drawSkin(ctx,skin,movingBall.x,movingBall.y,movingBall.r);
-    // Emojis continuam no overlay DOM estável; PNGs são desenhados no canvas.
   }
   function drawFireTrail(c,trail,r,time){
     const points=trail.slice(-12);
@@ -2116,9 +2041,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     const sw=crop?crop.sw:img.naturalWidth,sh=crop?crop.sh:img.naturalHeight;
     if(!sw||!sh)return false;
 
-    // Todas as skins ocupam exatamente a mesma caixa visual.
-    // O recorte transparente é removido antes, então comprimento e espessura
-    // percebidos ficam iguais independentemente do PNG original.
     const dw=w,dh=Math.max(h,12);
     const cx=x+w/2,cy=y+h/2;
     c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
@@ -2134,8 +2056,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     const currentPaddle=paddleSkins.find(s=>s.id===selectedPaddle)||paddleSkins[0];
     const visualX=paddle.x-stretch/2,visualW=paddle.w+stretch;
 
-    // Usa a mesma linguagem visual do preview da loja:
-    // todas as skins cabem na mesma espessura perceptiva.
     const visualThickness=PADDLE_VISUAL_THICKNESS;
     const visualY=paddle.y+(height-visualThickness)/2;
 
@@ -2205,7 +2125,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     const y=Math.min(H-24,paddle.y+paddle.h+22),x=12,w=W-24,h=8;
     ctx.save();ctx.shadowColor='#ffc83d';ctx.shadowBlur=8+barrierPulse*18;
     ctx.globalAlpha=.68+barrierPulse*.3;ctx.strokeStyle='#ffdc73';ctx.lineWidth=2;
-    // Segmentos vazados: proteção fixa, sem o volume da barra controlável.
     const count=Math.max(6,Math.floor(w/30)),gap=7,segment=(w-gap*(count-1))/count;
     for(let i=0;i<count;i++){
       const left=x+i*(segment+gap);
@@ -2477,8 +2396,6 @@ clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();res
     const {x,y}=shopBallPosition(shopTime);
     const paddleY=184;
 
-    // Safari pode deslocar visualmente alguns emojis em relação ao anchor do canvas.
-    // ⚽️ e ❄️ usam o glifo real recortado para que a borda inferior toque o centro do bastão.
     let previewCenterYOffset=0;
     if(skin.id==='soccer'){
       const glyph=getSoccerPreviewGlyph(48);
