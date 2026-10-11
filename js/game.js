@@ -1059,7 +1059,8 @@
     tone(220*(1-progress*.6),.065,'triangle',.015,.008);
   }
   function ballHitSound(kind='paddle'){
-    if(!soundOn||!ensureAudio())return;
+  if(!soundOn)return;
+  ensureAudio();
 
     const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
 
@@ -1071,7 +1072,7 @@
         source.buffer=buffer;
         gain.gain.value=clamp(volume,0,1);
         source.connect(gain).connect(sfxGain);
-        source.start();
+        source.start(0);
       }catch{}
     };
 
@@ -1124,7 +1125,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,true);
+clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);setTimeout(()=>preloadSfx(),100);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
