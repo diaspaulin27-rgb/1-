@@ -1147,7 +1147,7 @@
     if(!soundOn||!sfxSources[name]||!ensureAudio())return;
 
     const playBuffer=buffer=>{
-      if(!buffer||!soundOn)return;
+      if(!buffer||!soundOn)return false;
       try{
         const source=audioCtx.createBufferSource();
         const gain=audioCtx.createGain();
@@ -1155,13 +1155,26 @@
         gain.gain.value=clamp(volume,0,1);
         source.connect(gain).connect(sfxGain);
         source.start();
-      }catch{}
+        return true;
+      }catch{return false;}
+    };
+    const fallback=()=>{
+      if(!soundOn)return;
+      // Fallbacks discretos: a coleta continua audível mesmo sem o MP3.
+      if(name==='coin'){
+        tone(1200,.055,'sine',.035*clamp(volume,0,1));
+        tone(1600,.045,'sine',.022*clamp(volume,0,1),.035);
+      }else if(name==='box'){
+        tone(400,.075,'triangle',.035*clamp(volume,0,1));
+      }
     };
 
     if(sfxBuffers[name]){
-      playBuffer(sfxBuffers[name]);
+      if(!playBuffer(sfxBuffers[name]))fallback();
     }else{
-      loadSfxBuffer(name).then(playBuffer);
+      loadSfxBuffer(name).then(buffer=>{
+        if(!playBuffer(buffer))fallback();
+      });
     }
   }
 
@@ -1229,30 +1242,49 @@
   }
   function updateMusicStage(){
     const nextStage=audioStageFor();
-    if(nextStage<0||nextStage===musicStage)return;
-    musicStage=nextStage;
-    if(!musicActive||!soundOn||!ensureAudio())return;
+    if(nextStage<0||!musicActive||!soundOn||!ensureAudio())return;
 
-    const stage=audioStages[nextStage],incomingIndex=1-activeMusicPlayer;
-    const incoming=musicPlayers[incomingIndex],outgoing=musicPlayers[activeMusicPlayer];
-    const incomingGain=musicGainNodes[incomingIndex],outgoingGain=musicGainNodes[activeMusicPlayer];
+    const stage=audioStages[nextStage];
     const wanted='assets/audio/music/'+stage.music;
+    const current=musicPlayers[activeMusicPlayer];
+
+    // Não reinicia a faixa se ela já for a correta e estiver tocando.
+    if(nextStage===musicStage&&current.dataset.src===wanted&&!current.paused)return;
+
+    clearInterval(musicFadeTimer);musicFadeTimer=0;
+    const now=audioCtx.currentTime;
+    const incomingIndex=1-activeMusicPlayer;
+    const incoming=musicPlayers[incomingIndex];
+    const incomingGain=musicGainNodes[incomingIndex];
+    const outgoing=musicPlayers[activeMusicPlayer];
+    const outgoingGain=musicGainNodes[activeMusicPlayer];
+    const outStart=outgoing.paused?0:outgoingGain.gain.value;
 
     if(incoming.dataset.src!==wanted){
-      incoming.src=wanted;incoming.dataset.src=wanted;incoming.currentTime=0;
+      incoming.src=wanted;
+      incoming.dataset.src=wanted;
+      incoming.currentTime=0;
     }
-    incoming.loop=true;incoming.volume=1;
-    const now=audioCtx.currentTime;
-    const outStart=outgoing.paused?0:outgoingGain.gain.value;
+    incoming.loop=true;
+    incoming.volume=1;
     incomingGain.gain.cancelScheduledValues(now);
     incomingGain.gain.setValueAtTime(0,now);
 
-    // O crossfade usa GainNodes; não depende do volume do elemento HTMLAudio.
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
+    const requestedStage=nextStage;
     const beginCrossfade=()=>{
-      if(musicStage!==nextStage||!musicActive||!soundOn)return;
+      if(musicStage!==requestedStage||!musicActive||!soundOn){
+        incoming.pause();
+        incomingGain.gain.setValueAtTime(0,audioCtx.currentTime);
+        return;
+      }
       const started=performance.now();
       musicFadeTimer=setInterval(()=>{
+        if(!musicActive||!soundOn||musicStage!==requestedStage){
+          clearInterval(musicFadeTimer);musicFadeTimer=0;
+          incoming.pause();
+          incomingGain.gain.setValueAtTime(0,audioCtx.currentTime);
+          return;
+        }
         const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
         const time=audioCtx.currentTime;
         incomingGain.gain.setValueAtTime(MUSIC_VOLUME*t,time);
@@ -1265,8 +1297,14 @@
         }
       },50);
     };
+
+    // Marca a fase antes de iniciar para impedir que atualizações concorrentes
+    // iniciem várias trocas de música.
+    musicStage=nextStage;
     const playPromise=incoming.play();
-    if(playPromise&&playPromise.then)playPromise.then(beginCrossfade).catch(()=>{});
+    if(playPromise&&playPromise.then)playPromise.then(beginCrossfade).catch(error=>{
+      console.error('[1%] Falha ao tocar a música da fase:',wanted,error);
+    });
     else beginCrossfade();
   }
   function setMusicActive(active,fadeIn=false){
@@ -1321,9 +1359,8 @@
     if(!soundOn||!ensureAudio())return;
 
     const volume=kind==='paddle'?.42:kind==='ceiling'?.285:.33;
-
     const playBuffer=buffer=>{
-      if(!buffer||!soundOn)return;
+      if(!buffer||!soundOn)return false;
       try{
         const source=audioCtx.createBufferSource();
         const gain=audioCtx.createGain();
@@ -1331,13 +1368,29 @@
         gain.gain.value=clamp(volume,0,1);
         source.connect(gain).connect(sfxGain);
         source.start();
-      }catch{}
+        return true;
+      }catch{return false;}
+    };
+    const fallback=()=>{
+      if(!soundOn)return;
+      // Impact curto e suave, usado somente quando ball.mp3 não está disponível.
+      const scale=clamp(volume,0,1);
+      if(kind==='paddle'){
+        tone(520,.035,'triangle',.045*scale);
+        tone(230,.045,'sine',.028*scale,.008);
+      }else if(kind==='ceiling'){
+        tone(680,.025,'triangle',.028*scale);
+      }else{
+        tone(390,.03,'triangle',.032*scale);
+      }
     };
 
     if(sfxBuffers.ball){
-      playBuffer(sfxBuffers.ball);
+      if(!playBuffer(sfxBuffers.ball))fallback();
     }else{
-      loadSfxBuffer('ball').then(playBuffer);
+      loadSfxBuffer('ball').then(buffer=>{
+        if(!playBuffer(buffer))fallback();
+      });
     }
   }
 
@@ -1436,7 +1489,7 @@
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
       goldenQueue.push(nextGoldenMark);nextGoldenMark+=25;
     }
-    if(Math.floor(before/10)!==Math.floor(score/10))updateMusicStage();
+    updateMusicStage(); // Também detecta as trocas exatas em 96 e 101 pontos.
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
     if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
@@ -1594,7 +1647,7 @@
     runStats.boxes++;runStats.reliefs++;
     eventState.lastCategory='good';eventState.lastEvent=reward.id;
     eventState.cooldownUntil=elapsed+8;nextBox=elapsed+15;
-    reward.run();flash=Math.max(flash,.3);playSfx('box',.9);tone(1040,.22,'triangle',.055);haptic(40);
+    reward.run();flash=Math.max(flash,.3);playSfx('box',.72);tone(1040,.18,'triangle',.038);haptic(40);
   }
   function ignoreMysteryBox(){
     if(mysteryCurse.armed||mysteryCurse.dual)return;
@@ -1898,7 +1951,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';playSfx('box',.675);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.58);tone(good?720:155,.14,good?'sine':'sawtooth',.038);haptic(good?25:55);
   }
 
   function update(dt){
@@ -2064,7 +2117,7 @@
           coinFlights.push({x:o.x+o.size/2,y:o.y+o.size/2,toX:rect.left+rect.width/2,toY:rect.top+rect.height/2,age:0});
           coins++;runStats.coins++;storage.set('coins',coins);updateHUD();
           const pill=$('#coinsPill');pill.classList.remove('pop');void pill.offsetWidth;pill.classList.add('pop');
-          playSfx('coin',.585);haptic(18);
+          playSfx('coin',.52);haptic(18);
         }
         else if(o.golden){openGoldenBox();}
         else{mysteryCurse.ignored=0;openBox();}
