@@ -86,6 +86,22 @@
 
     .secondaryRow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .secondary { height:52px; border-radius:18px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); color:#fff; font-weight:800; }
+
+    /* Pause menu: frosted-glass treatment, scoped only to #paused. */
+    #paused { background:radial-gradient(ellipse at 50% 42%,rgba(5,22,48,.28),rgba(2,10,27,.64)); backdrop-filter:blur(16px) saturate(1.18); }
+    #paused .card { position:relative; width:min(530px,100%); min-height:min(660px,76dvh); padding:48px 30px 30px; border-radius:32px; border:2px solid rgba(231,244,255,.62); background:linear-gradient(145deg,rgba(195,218,237,.25),rgba(42,66,96,.48) 45%,rgba(18,36,65,.62)); box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.08),0 28px 80px rgba(0,0,0,.34); backdrop-filter:blur(24px) saturate(1.25); display:flex; flex-direction:column; justify-content:flex-start; }
+    #paused .brand { margin:0 0 20px; font-size:12px; letter-spacing:.34em; color:#e4edf8; opacity:.82; }
+    #paused h2 { font-size:clamp(38px,9vw,54px)!important; line-height:1.05; letter-spacing:-.045em; text-shadow:0 3px 12px rgba(0,0,0,.22); }
+    #paused .pause-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:34px; }
+    #paused .pause-icon { min-width:0; height:82px; border-radius:22px; color:#fff; font-size:31px; font-weight:850; background:linear-gradient(145deg,rgba(223,239,250,.34),rgba(56,86,118,.36)); border:1px solid rgba(225,242,255,.3); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 5px 12px rgba(0,0,0,.18); text-shadow:0 2px 4px rgba(0,0,0,.24); }
+    #paused .pause-icon[aria-pressed="false"] { background:linear-gradient(145deg,rgba(110,119,132,.48),rgba(51,61,76,.62)); color:rgba(255,255,255,.62); }
+    #paused #resume { height:84px; margin-top:18px; border-radius:22px; color:#fff; font-size:clamp(18px,4.7vw,23px); background:linear-gradient(180deg,#3988ff,#1251c9); border:1px solid rgba(204,229,255,.62); box-shadow:inset 0 2px 0 rgba(255,255,255,.34),0 9px 18px rgba(0,20,80,.3); text-shadow:0 1px 2px rgba(0,0,0,.15); }
+    #paused #quit { width:100%; height:78px; margin-top:16px; border-radius:22px; background:linear-gradient(180deg,rgba(210,218,226,.48),rgba(100,115,130,.54)); border:1px solid rgba(238,246,255,.35); box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 6px 14px rgba(0,0,0,.16); font-size:20px; }
+    #paused .pause-action-icon { display:inline-block; margin-right:12px; font-size:25px; vertical-align:-1px; }
+    #paused .pause-brand-mark { position:absolute; right:26px; bottom:18px; font-size:23px; font-weight:950; letter-spacing:-.06em; color:rgba(255,255,255,.76); text-shadow:0 2px 4px rgba(0,0,0,.22); }
+    @media(max-width:390px) { #paused .card { padding:38px 20px 28px; min-height:min(590px,75dvh); border-radius:28px; } #paused .pause-controls { gap:9px; margin-top:28px; } #paused .pause-icon { height:70px; border-radius:18px; font-size:27px; } #paused #resume { height:72px; } #paused #quit { height:68px; } }
+    @media(max-height:700px) { #paused .card { min-height:0; padding-top:28px; padding-bottom:45px; } #paused .pause-controls { margin-top:20px; } #paused .pause-icon { height:62px; } #paused #resume { height:66px; margin-top:12px; } #paused #quit { height:62px; margin-top:12px; } }
+
     .micro { margin-top:18px; font-size:12px; color:rgba(255,255,255,.54); line-height:1.5; }
     .buildLabel { margin:10px 0 0; font-size:10px; letter-spacing:.08em; color:rgba(255,255,255,.45); }
     #gameOver h2 { margin:0; font-size:44px; letter-spacing:-.045em; }
@@ -205,13 +221,18 @@
       <button class="secondary" id="closeShare" style="width:100%;margin-top:10px">VOLTAR</button>
     </div>
   </section>
-  <section class="overlay hidden" id="paused">
+  <section class="overlay hidden" id="paused" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="card">
       <div class="brand">PAUSADO</div>
-      <h2 style="font-size:46px;margin:0">Respire.</h2>
-      <button class="primary" id="resume">CONTINUAR</button>
-      <button class="secondary" id="sound" style="width:100%;margin-top:10px">SOM: ON</button>
-      <button class="secondary" id="quit" style="width:100%;margin-top:10px">SAIR</button>
+      <h2 id="pauseTitle" style="margin:0">Respire.</h2>
+      <div class="pause-controls" aria-label="Controles de áudio e vibração">
+        <button class="pause-icon" id="sound" aria-label="Efeitos sonoros" aria-pressed="true" title="Efeitos sonoros">◖))</button>
+        <button class="pause-icon" id="musicToggle" aria-label="Música" aria-pressed="true" title="Música">♫</button>
+        <button class="pause-icon" id="vibrationToggle" aria-label="Vibração" aria-pressed="true" title="Vibração">▯〰</button>
+      </div>
+      <button class="primary" id="resume"><span class="pause-action-icon" aria-hidden="true">⌂</span>CONTINUAR</button>
+      <button class="secondary" id="quit"><span class="pause-action-icon" aria-hidden="true">⇥</span>SAIR</button>
+      <div class="pause-brand-mark" aria-label="1 por cento">1%</div>
     </div>
   </section>
 
@@ -447,7 +468,7 @@
   }
 
   let W=0,H=0,dpr=1,last=0,raf=0;
-  let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
+  let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true), musicOn=storage.get('music',true), vibrationOn=storage.get('vibration',true);
   let score=0;
   const storedBest=Number(storage.get('best',0));
   const storedCoins=Number(storage.get('coins',0));
@@ -1189,12 +1210,11 @@
     return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
   }
   function ensureAudio(){
-    if(!soundOn)return false;
     try{
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
-        masterGain.gain.value=1;sfxGain.gain.value=.72;
+        masterGain.gain.value=1;sfxGain.gain.value=soundOn?.72:0;
         sfxGain.connect(masterGain);
         // No iPhone/Safari, HTMLAudioElement.volume pode ser ignorado.
         // Roteamos cada música pelo Web Audio para controlar o volume de verdade.
@@ -1215,7 +1235,7 @@
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
       }
       if(audioCtx.state==='suspended')audioCtx.resume();
-      masterGain.gain.setTargetAtTime(soundOn?1:0,audioCtx.currentTime,.03);
+      masterGain.gain.setTargetAtTime(1,audioCtx.currentTime,.03);sfxGain.gain.setTargetAtTime(soundOn?.72:0,audioCtx.currentTime,.03);
       return true;
     }catch{return false;}
   }
@@ -1242,7 +1262,7 @@
   }
   function updateMusicStage(){
     const nextStage=audioStageFor();
-    if(nextStage<0||!musicActive||!soundOn||!ensureAudio())return;
+    if(nextStage<0||!musicActive||!musicOn||!ensureAudio())return;
 
     const stage=audioStages[nextStage];
     const wanted='assets/audio/music/'+stage.music;
@@ -1272,14 +1292,14 @@
 
     const requestedStage=nextStage;
     const beginCrossfade=()=>{
-      if(musicStage!==requestedStage||!musicActive||!soundOn){
+      if(musicStage!==requestedStage||!musicActive||!musicOn){
         incoming.pause();
         incomingGain.gain.setValueAtTime(0,audioCtx.currentTime);
         return;
       }
       const started=performance.now();
       musicFadeTimer=setInterval(()=>{
-        if(!musicActive||!soundOn||musicStage!==requestedStage){
+        if(!musicActive||!musicOn||musicStage!==requestedStage){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
           incoming.pause();
           incomingGain.gain.setValueAtTime(0,audioCtx.currentTime);
@@ -1309,7 +1329,7 @@
   }
   function setMusicActive(active,fadeIn=false){
     musicActive=active;
-    if(!active||!soundOn){stopMusicPlayers();return;}
+    if(!active||!musicOn){stopMusicPlayers();return;}
     if(!ensureAudio())return;
     const nextStage=audioStageFor();
     if(nextStage<0)return;
@@ -1331,7 +1351,7 @@
     playerGain.gain.cancelScheduledValues(audioCtx.currentTime);
     playerGain.gain.setValueAtTime(fadeIn?0:MUSIC_VOLUME,audioCtx.currentTime);
     const beginStartFade=()=>{
-      if(!fadeIn||!musicActive||!soundOn)return;
+      if(!fadeIn||!musicActive||!musicOn)return;
       const started=performance.now();
       clearInterval(musicFadeTimer);musicFadeTimer=0;
       musicFadeTimer=setInterval(()=>{
@@ -1339,7 +1359,7 @@
         playerGain.gain.setValueAtTime(MUSIC_VOLUME*t,audioCtx.currentTime);
         if(t>=1){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
-          if(musicActive&&soundOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
+          if(musicActive&&musicOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
         }
       },50);
     };
@@ -1348,7 +1368,7 @@
     else beginStartFade();
   }
   function updateAdaptiveMusic(){
-    if(musicActive&&soundOn)updateMusicStage();
+    if(musicActive&&musicOn)updateMusicStage();
   }
   function eightBallSound(progress=0){
     tone(1420*(1-progress*.5),.018,'triangle',.045);
@@ -1404,7 +1424,7 @@
   function victorySound(){
     setMusicActive(false);[261.6,329.6,392,523.2].forEach((f,i)=>tone(f,.42,'sine',.04,i*.11));
   }
-  function haptic(ms=15){ if(navigator.vibrate) navigator.vibrate(ms); }
+  function haptic(ms=15){ if(vibrationOn&&navigator.vibrate) navigator.vibrate(ms); }
 
   function reset(startScore=0){
     startHintRemaining=0;dragging=false;
@@ -1436,7 +1456,7 @@
     updateHUD();
   }
   function startGame(startScore=0){
-    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(true,true);
+    clearInterval(adTimer);clearInterval(reviveTimer);ensureAudio();preloadSfx();reset(startScore);startHintRemaining=3;mode='playing';hideAll();setMusicActive(musicOn,true);
     skip25ModalOpen=false;
     skip25EligibleThisRun=startScore===0&&skip25Unlocked&&Math.random()<.80;
     const skipOffer=$('#skip25Offer');
@@ -1492,8 +1512,8 @@
     updateMusicStage(); // Também detecta as trocas exatas em 96 e 101 pontos.
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
-    if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
-    if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(navigator.vibrate)navigator.vibrate([80,50,140]);}
+    if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(vibrationOn&&navigator.vibrate)navigator.vibrate([70,40,90]);}
+    if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(vibrationOn&&navigator.vibrate)navigator.vibrate([80,50,140]);}
     const newSpectrum=[
       [105,'AZUL ABISSAL'],[110,'CIANO PROFUNDO'],[115,'TURQUESA ELÉTRICA'],
       [120,'VERDE RADIOATIVO'],[125,'VERDE ÁCIDO'],[130,'DOURADO SOLAR'],
@@ -1502,7 +1522,7 @@
     if(newSpectrum){flash=.3;toast(newSpectrum[1]);}
     if(before<MAX_SCORE&&score>=MAX_SCORE){
       flash=.95; shake=12; mode='over'; toast('150 · VOCÊ ZEROU O IMPOSSÍVEL');
-      if(navigator.vibrate)navigator.vibrate([90,40,90,40,180]);
+      if(vibrationOn&&navigator.vibrate)navigator.vibrate([90,40,90,40,180]);
       victorySound();
       setTimeout(()=>finishGame('150 · IMPOSSÍVEL'),180);
     }
@@ -2207,7 +2227,7 @@
     let remaining=3;$('#reviveCountdown').textContent=remaining;show('#reviveScreen');render();
     reviveTimer=setInterval(()=>{
       remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
-      if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(true);last=performance.now();raf=requestAnimationFrame(loop);}
+      if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(musicOn);last=performance.now();raf=requestAnimationFrame(loop);}
     },1000);
   }
 
@@ -2254,7 +2274,7 @@
     let remaining=3;$('#reviveCountdown').textContent=remaining;
     reviveTimer=setInterval(()=>{
       remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
-      if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(true);last=performance.now();raf=requestAnimationFrame(loop);}
+      if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(musicOn);last=performance.now();raf=requestAnimationFrame(loop);}
     },1000);
   }
 
@@ -2638,7 +2658,7 @@
   function closeSkip25Modal(){
     if(!skip25ModalOpen)return;
     clearInterval(adTimer);skip25ModalOpen=false;mode='playing';$('#adScreen').classList.add('hidden');
-    setMusicActive(true);last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+    setMusicActive(musicOn);last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   }
   function requestRewardedStart(){
     if(!skip25ModalOpen)return;
@@ -2751,13 +2771,30 @@
   };
   $('#home').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   $('#pause').onclick=()=>{if(mode==='playing'||mode==='dying'){pausedFrom=mode;mode='paused';setMusicActive(false);cancelAnimationFrame(raf);show('#paused');}};
-  $('#resume').onclick=()=>{mode=pausedFrom;hideAll();setMusicActive(mode==='playing');last=performance.now();raf=requestAnimationFrame(loop);};
+  $('#resume').onclick=()=>{mode=pausedFrom;hideAll();setMusicActive(mode==='playing'&&musicOn);last=performance.now();raf=requestAnimationFrame(loop);};
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
+  function updatePauseToggles(){
+    const soundButton=$('#sound'),musicButton=$('#musicToggle'),vibrationButton=$('#vibrationToggle');
+    soundButton.setAttribute('aria-pressed',String(soundOn));soundButton.textContent=soundOn?'◖))':'◖×';
+    soundButton.title=language==='en'?'Sound effects: '+(soundOn?'on':'off'):'Efeitos sonoros: '+(soundOn?'ligados':'desligados');
+    musicButton.setAttribute('aria-pressed',String(musicOn));musicButton.textContent=musicOn?'♫':'♩̸';
+    musicButton.title=language==='en'?'Music: '+(musicOn?'on':'off'):'Música: '+(musicOn?'ligada':'desligada');
+    vibrationButton.setAttribute('aria-pressed',String(vibrationOn));vibrationButton.textContent=vibrationOn?'▯〰':'▯';
+    vibrationButton.title=language==='en'?'Vibration: '+(vibrationOn?'on':'off'):'Vibração: '+(vibrationOn?'ligada':'desligada');
+  }
   $('#sound').onclick=()=>{
-    soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
-    if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);stopSfx();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
+    soundOn=!soundOn;storage.set('sound',soundOn);
+    if(ensureAudio())sfxGain.gain.setTargetAtTime(soundOn?.72:0,audioCtx.currentTime,.03);
+    updatePauseToggles();
   };
-  $('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
+  $('#musicToggle').onclick=()=>{
+    musicOn=!musicOn;storage.set('music',musicOn);
+    if(musicOn){ensureAudio();if(mode==='playing')setMusicActive(musicOn,true);}
+    else{setMusicActive(false);}
+    updatePauseToggles();
+  };
+  $('#vibrationToggle').onclick=()=>{vibrationOn=!vibrationOn;storage.set('vibration',vibrationOn);updatePauseToggles();};
+  updatePauseToggles();
 
   let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity,shopPreviewTrail=[],shopPreviewTrailSkin=selected;
   function shopBallPosition(time){
@@ -2947,7 +2984,7 @@
   $('#shopListen').onclick=()=>{
     if(!shopOpen||shopPreviewId!=='eight'||performance.now()-lastShopListen<250)return;
     lastShopListen=performance.now();
-    if(!soundOn){soundOn=true;storage.set('sound',true);$('#sound').textContent=language==='en'?'SOUND: ON':'SOM: ON';}
+    if(!soundOn){soundOn=true;storage.set('sound',true);if(audioCtx&&sfxGain)sfxGain.gain.setTargetAtTime(.72,audioCtx.currentTime,.03);updatePauseToggles();}
     $('#shopListen').textContent=tr('OUVIR SOM DA BOLA 8');
     if(!ensureAudio()){$('#shopFeature').textContent=tr('Não foi possível iniciar o áudio neste navegador.');return;}
     eightBallSound(0);
