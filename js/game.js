@@ -1078,9 +1078,20 @@
         }
       },50);
     };
-    const playPromise=incoming.play();
-    if(playPromise&&playPromise.then)playPromise.then(beginCrossfade).catch(()=>{});
-    else beginCrossfade();
+    let playPromise;
+    try{
+      playPromise=incoming.play();
+    }catch(error){
+      console.warn('[1%] Não foi possível iniciar a música da fase:',stage.music,error);
+      if(musicStage===nextStage)musicStage=-1;
+      return;
+    }
+    if(playPromise&&playPromise.then){
+      playPromise.then(beginCrossfade).catch(error=>{
+        console.warn('[1%] Não foi possível iniciar a música da fase:',stage.music,error);
+        if(musicStage===nextStage)musicStage=-1;
+      });
+    }else beginCrossfade();
   }
   function setMusicActive(active,fadeIn=false){
     musicActive=active;
@@ -1106,7 +1117,7 @@
     playerGain.gain.cancelScheduledValues(audioCtx.currentTime);
     playerGain.gain.setValueAtTime(fadeIn?0:MUSIC_VOLUME,audioCtx.currentTime);
     const beginStartFade=()=>{
-      if(!fadeIn||!musicActive||!soundOn)return;
+      if(!fadeIn||!musicActive||!soundOn||musicStage!==nextStage||player!==musicPlayers[activeMusicPlayer])return;
       const started=performance.now();
       clearInterval(musicFadeTimer);musicFadeTimer=0;
       musicFadeTimer=setInterval(()=>{
@@ -1276,7 +1287,8 @@
     while(nextGoldenMark<=125&&score>=nextGoldenMark){
       goldenQueue.push(nextGoldenMark);nextGoldenMark+=25;
     }
-    if(Math.floor(before/10)!==Math.floor(score/10))updateMusicStage();
+    // Verifica a trilha após cada mudança de pontuação: as trocas devem ocorrer exatamente em 96 e 101.
+    updateMusicStage();
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
     if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
