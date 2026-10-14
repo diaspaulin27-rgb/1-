@@ -1146,7 +1146,7 @@
     if(!soundOn)return;
     if(!ensureAudio())return;
 
-    const volume=kind==='paddle'?.56:kind==='ceiling'?.38:.44;
+    const volume=kind==='paddle'?.42:kind==='ceiling'?.285:.33;
 
     const playBuffer=buffer=>{
       if(!buffer||!soundOn||!audioCtx)return false;
@@ -1738,7 +1738,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';playSfx('box',.9);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.675);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
   }
 
   function update(dt){
@@ -1904,7 +1904,7 @@
           coinFlights.push({x:o.x+o.size/2,y:o.y+o.size/2,toX:rect.left+rect.width/2,toY:rect.top+rect.height/2,age:0});
           coins++;runStats.coins++;storage.set('coins',coins);updateHUD();
           const pill=$('#coinsPill');pill.classList.remove('pop');void pill.offsetWidth;pill.classList.add('pop');
-          playSfx('coin',.78);haptic(18);
+          playSfx('coin',.585);haptic(18);
         }
         else if(o.golden){openGoldenBox();}
         else{mysteryCurse.ignored=0;openBox();}
