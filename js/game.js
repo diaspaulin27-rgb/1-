@@ -1738,7 +1738,7 @@
     if(category==='good')runStats.reliefs++;
     noticeSource=free?'GOL! CAIXA GRÁTIS':'';
     try{event.run();}finally{noticeSource='';}
-    const good=category!=='troll';playSfx('box',.675);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
+    const good=category!=='troll';playSfx('box',.4);tone(good?720:155,.16,good?'sine':'sawtooth',.05);haptic(good?25:55);
   }
 
   function update(dt){
