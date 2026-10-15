@@ -87,20 +87,91 @@
     .secondaryRow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .secondary { height:52px; border-radius:18px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); color:#fff; font-weight:800; }
 
-    /* Pause menu: frosted-glass treatment, scoped only to #paused. */
-    #paused { background:radial-gradient(ellipse at 50% 42%,rgba(5,22,48,.28),rgba(2,10,27,.64)); backdrop-filter:blur(16px) saturate(1.18); }
-    #paused .card { position:relative; width:min(530px,100%); min-height:min(660px,76dvh); padding:48px 30px 30px; border-radius:32px; border:2px solid rgba(231,244,255,.62); background:linear-gradient(145deg,rgba(195,218,237,.25),rgba(42,66,96,.48) 45%,rgba(18,36,65,.62)); box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.08),0 28px 80px rgba(0,0,0,.34); backdrop-filter:blur(24px) saturate(1.25); display:flex; flex-direction:column; justify-content:flex-start; }
-    #paused .brand { margin:0 0 20px; font-size:12px; letter-spacing:.34em; color:#e4edf8; opacity:.82; }
-    #paused h2 { font-size:clamp(38px,9vw,54px)!important; line-height:1.05; letter-spacing:-.045em; text-shadow:0 3px 12px rgba(0,0,0,.22); }
-    #paused .pause-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:34px; }
-    #paused .pause-icon { min-width:0; height:82px; border-radius:22px; color:#fff; font-size:31px; font-weight:850; background:linear-gradient(145deg,rgba(223,239,250,.34),rgba(56,86,118,.36)); border:1px solid rgba(225,242,255,.3); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 5px 12px rgba(0,0,0,.18); text-shadow:0 2px 4px rgba(0,0,0,.24); }
-    #paused .pause-icon[aria-pressed="false"] { background:linear-gradient(145deg,rgba(110,119,132,.48),rgba(51,61,76,.62)); color:rgba(255,255,255,.62); }
-    #paused #resume { height:84px; margin-top:18px; border-radius:22px; color:#fff; font-size:clamp(18px,4.7vw,23px); background:linear-gradient(180deg,#3988ff,#1251c9); border:1px solid rgba(204,229,255,.62); box-shadow:inset 0 2px 0 rgba(255,255,255,.34),0 9px 18px rgba(0,20,80,.3); text-shadow:0 1px 2px rgba(0,0,0,.15); }
-    #paused #quit { width:100%; height:78px; margin-top:16px; border-radius:22px; background:linear-gradient(180deg,rgba(210,218,226,.48),rgba(100,115,130,.54)); border:1px solid rgba(238,246,255,.35); box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 6px 14px rgba(0,0,0,.16); font-size:20px; }
-    #paused .pause-action-icon { display:inline-block; margin-right:12px; font-size:25px; vertical-align:-1px; }
-    #paused .pause-brand-mark { position:absolute; right:26px; bottom:18px; font-size:23px; font-weight:950; letter-spacing:-.06em; color:rgba(255,255,255,.76); text-shadow:0 2px 4px rgba(0,0,0,.22); }
-    @media(max-width:390px) { #paused .card { padding:38px 20px 28px; min-height:min(590px,75dvh); border-radius:28px; } #paused .pause-controls { gap:9px; margin-top:28px; } #paused .pause-icon { height:70px; border-radius:18px; font-size:27px; } #paused #resume { height:72px; } #paused #quit { height:68px; } }
-    @media(max-height:700px) { #paused .card { min-height:0; padding-top:28px; padding-bottom:45px; } #paused .pause-controls { margin-top:20px; } #paused .pause-icon { height:62px; } #paused #resume { height:66px; margin-top:12px; } #paused #quit { height:62px; margin-top:12px; } }
+    /* Pause menu — refined blue frosted glass, isolated from the rest of the game. */
+    #paused {
+      padding:24px 18px;
+      background:radial-gradient(ellipse at 50% 35%,rgba(9,32,62,.22),rgba(1,8,22,.58));
+      -webkit-backdrop-filter:blur(18px) saturate(1.2);
+      backdrop-filter:blur(18px) saturate(1.2);
+    }
+    #paused .card {
+      position:relative;
+      overflow:hidden;
+      width:min(430px,100%);
+      min-height:min(650px,78dvh);
+      padding:42px 26px 30px;
+      border-radius:30px;
+      border:1px solid rgba(224,240,255,.56);
+      background:
+        linear-gradient(128deg,rgba(218,235,249,.22) 0%,rgba(85,119,154,.18) 34%,rgba(9,30,59,.42) 100%),
+        rgba(27,54,83,.34);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 0 rgba(255,255,255,.09),0 24px 60px rgba(0,7,22,.28);
+      -webkit-backdrop-filter:blur(28px) saturate(1.28);
+      backdrop-filter:blur(28px) saturate(1.28);
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+    }
+    #paused .card::before {
+      content:"";
+      position:absolute;
+      inset:1px;
+      border-radius:29px;
+      pointer-events:none;
+      background:linear-gradient(125deg,rgba(255,255,255,.13),transparent 26%,transparent 68%,rgba(111,173,229,.07));
+    }
+    #paused .brand { position:relative; margin:0 0 19px; font-size:12px; font-weight:800; letter-spacing:.34em; color:#e5f0fc; opacity:.84; text-align:center; }
+    #paused h2 { position:relative; font-size:clamp(38px,9vw,52px)!important; line-height:1.05; letter-spacing:-.045em; text-align:center; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.2); }
+    #paused .pause-controls { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:34px; }
+    #paused .pause-icon {
+      display:flex; align-items:center; justify-content:center;
+      min-width:0; height:78px; padding:0;
+      border-radius:20px; color:#f8fbff;
+      background:linear-gradient(145deg,rgba(210,231,249,.27),rgba(66,96,129,.28) 55%,rgba(28,52,79,.35));
+      border:1px solid rgba(220,239,255,.38);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(0,0,0,.1),0 5px 12px rgba(0,9,25,.14);
+      transition:background .18s ease,border-color .18s ease,transform .18s ease;
+    }
+    #paused .pause-icon svg { width:34px; height:34px; display:block; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 1px 1px rgba(0,0,0,.16)); }
+    #paused .pause-icon[data-icon="sound"] svg { width:38px; height:38px; }
+    #paused .pause-icon[aria-pressed="false"] { background:linear-gradient(145deg,rgba(91,104,120,.34),rgba(37,49,65,.45)); color:rgba(236,243,250,.52); border-color:rgba(209,222,235,.2); }
+    #paused #resume {
+      position:relative; display:flex; align-items:center; justify-content:center; gap:12px;
+      width:100%; height:78px; margin-top:18px; padding:0 16px;
+      border-radius:21px; color:#fff; font-size:clamp(18px,4.7vw,23px); font-weight:850; letter-spacing:.015em;
+      background:linear-gradient(180deg,#438cff 0%,#2670ec 48%,#1452c4 100%);
+      border:1px solid rgba(206,230,255,.72);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.36),inset 0 -2px 0 rgba(0,31,100,.16),0 8px 18px rgba(0,25,87,.26);
+      text-shadow:0 1px 2px rgba(0,0,0,.16);
+    }
+    #paused #quit {
+      position:relative; display:flex; align-items:center; justify-content:center; gap:12px;
+      width:100%; height:72px; margin-top:14px; padding:0 16px;
+      border-radius:21px; color:#fff; font-size:20px; font-weight:800;
+      background:linear-gradient(180deg,rgba(205,218,230,.39),rgba(103,121,140,.43));
+      border:1px solid rgba(230,241,251,.38);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,8,24,.14);
+    }
+    #paused .pause-action-icon { display:inline-flex; align-items:center; justify-content:center; width:27px; height:27px; flex:none; }
+    #paused .pause-action-icon svg { width:27px; height:27px; display:block; fill:currentColor; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+    #paused .pause-brand-mark { position:absolute; right:24px; bottom:19px; font-size:23px; font-weight:950; letter-spacing:-.06em; color:rgba(255,255,255,.78); text-shadow:0 2px 4px rgba(0,0,0,.22); }
+    @media(max-width:390px) {
+      #paused { padding:18px 16px; }
+      #paused .card { padding:36px 20px 28px; min-height:min(590px,76dvh); border-radius:27px; }
+      #paused .card::before { border-radius:26px; }
+      #paused .pause-controls { gap:9px; margin-top:28px; }
+      #paused .pause-icon { height:68px; border-radius:17px; }
+      #paused .pause-icon svg { width:31px; height:31px; }
+      #paused #resume { height:70px; border-radius:19px; }
+      #paused #quit { height:64px; border-radius:19px; }
+    }
+    @media(max-height:700px) {
+      #paused .card { min-height:0; padding-top:26px; padding-bottom:48px; }
+      #paused .pause-controls { margin-top:20px; }
+      #paused .pause-icon { height:60px; }
+      #paused #resume { height:64px; margin-top:12px; }
+      #paused #quit { height:60px; margin-top:10px; }
+    }
 
     .micro { margin-top:18px; font-size:12px; color:rgba(255,255,255,.54); line-height:1.5; }
     .buildLabel { margin:10px 0 0; font-size:10px; letter-spacing:.08em; color:rgba(255,255,255,.45); }
@@ -226,12 +297,18 @@
       <div class="brand">PAUSADO</div>
       <h2 id="pauseTitle" style="margin:0">Respire.</h2>
       <div class="pause-controls" aria-label="Controles de áudio e vibração">
-        <button class="pause-icon" id="sound" aria-label="Efeitos sonoros" aria-pressed="true" title="Efeitos sonoros">◖))</button>
-        <button class="pause-icon" id="musicToggle" aria-label="Música" aria-pressed="true" title="Música">♫</button>
-        <button class="pause-icon" id="vibrationToggle" aria-label="Vibração" aria-pressed="true" title="Vibração">▯〰</button>
+        <button class="pause-icon" id="sound" data-icon="sound" aria-label="Efeitos sonoros" aria-pressed="true" title="Efeitos sonoros">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" stroke="none" d="M5 15h7l9-7v24l-9-7H5z"/><path d="M26 14c3 3 3 9 0 12M30 10c6 5 6 15 0 20" stroke-width="2.8"/></svg>
+        </button>
+        <button class="pause-icon" id="musicToggle" aria-label="Música" aria-pressed="true" title="Música">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" stroke="none" d="M17 7v21.5a5.3 5.3 0 1 1-3-4.8V12l17-4v17.5a5.3 5.3 0 1 1-3-4.8V5z"/></svg>
+        </button>
+        <button class="pause-icon" id="vibrationToggle" aria-label="Vibração" aria-pressed="true" title="Vibração">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="12" y="5" width="16" height="30" rx="3"/><path d="M17 9h6M18 30h4M7 12c-3 3-3 13 0 16M33 12c3 3 3 13 0 16M3 16c-2 2-2 6 0 8M37 16c2 2 2 6 0 8"/></svg>
+        </button>
       </div>
-      <button class="primary" id="resume"><span class="pause-action-icon" aria-hidden="true">⌂</span>CONTINUAR</button>
-      <button class="secondary" id="quit"><span class="pause-action-icon" aria-hidden="true">⇥</span>SAIR</button>
+      <button class="primary" id="resume"><span class="pause-action-icon" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M3 13.2 14 4l11 9.2-2 2.3-2-1.7V24h-6v-6h-3v6H6V13.8l-1.9 1.7z" stroke="none"/></svg></span>CONTINUAR</button>
+      <button class="secondary" id="quit"><span class="pause-action-icon" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M15 3H5a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10v-3H6V6h9z" stroke="none"/><path d="M13 14h12m-5-5 5 5-5 5" fill="none" stroke-width="2.8"/></svg></span>SAIR</button>
       <div class="pause-brand-mark" aria-label="1 por cento">1%</div>
     </div>
   </section>
@@ -2775,11 +2852,11 @@
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   function updatePauseToggles(){
     const soundButton=$('#sound'),musicButton=$('#musicToggle'),vibrationButton=$('#vibrationToggle');
-    soundButton.setAttribute('aria-pressed',String(soundOn));soundButton.textContent=soundOn?'◖))':'◖×';
+    soundButton.setAttribute('aria-pressed',String(soundOn));
     soundButton.title=language==='en'?'Sound effects: '+(soundOn?'on':'off'):'Efeitos sonoros: '+(soundOn?'ligados':'desligados');
-    musicButton.setAttribute('aria-pressed',String(musicOn));musicButton.textContent=musicOn?'♫':'♩̸';
+    musicButton.setAttribute('aria-pressed',String(musicOn));
     musicButton.title=language==='en'?'Music: '+(musicOn?'on':'off'):'Música: '+(musicOn?'ligada':'desligada');
-    vibrationButton.setAttribute('aria-pressed',String(vibrationOn));vibrationButton.textContent=vibrationOn?'▯〰':'▯';
+    vibrationButton.setAttribute('aria-pressed',String(vibrationOn));
     vibrationButton.title=language==='en'?'Vibration: '+(vibrationOn?'on':'off'):'Vibração: '+(vibrationOn?'ligada':'desligada');
   }
   $('#sound').onclick=()=>{
