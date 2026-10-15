@@ -78,6 +78,106 @@
 
     .secondaryRow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .secondary { height:52px; border-radius:18px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.14); color:#fff; font-weight:800; }
+
+    /* Pause menu — compact blue frosted glass. */
+    #paused {
+      padding:20px 18px;
+      background:radial-gradient(ellipse at 50% 35%,rgba(9,32,62,.22),rgba(1,8,22,.58));
+      -webkit-backdrop-filter:blur(18px) saturate(1.2);
+      backdrop-filter:blur(18px) saturate(1.2);
+    }
+    #paused .card {
+      position:relative;
+      overflow:hidden;
+      width:min(315px,100%);
+      min-height:min(520px,62dvh);
+      padding:27px 20px 24px;
+      border-radius:28px;
+      border:1px solid rgba(224,240,255,.56);
+      background:
+        linear-gradient(128deg,rgba(218,235,249,.22) 0%,rgba(85,119,154,.18) 34%,rgba(9,30,59,.42) 100%),
+        rgba(27,54,83,.34);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 0 rgba(255,255,255,.09),0 24px 60px rgba(0,7,22,.28);
+      -webkit-backdrop-filter:blur(28px) saturate(1.28);
+      backdrop-filter:blur(28px) saturate(1.28);
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+    }
+    #paused .card::before {
+      content:"";
+      position:absolute;
+      inset:1px;
+      border-radius:27px;
+      pointer-events:none;
+      background:linear-gradient(125deg,rgba(255,255,255,.13),transparent 26%,transparent 68%,rgba(111,173,229,.07));
+    }
+    #paused .brand { position:relative; margin:0 0 14px; font-size:11px; font-weight:800; letter-spacing:.34em; color:#e5f0fc; opacity:.84; text-align:center; }
+    #paused h2 { position:relative; font-size:clamp(33px,7.8vw,42px)!important; line-height:1.05; letter-spacing:-.045em; text-align:center; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.2); }
+    #paused .pause-controls { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:26px; }
+    #paused .pause-icon {
+      display:flex; align-items:center; justify-content:center;
+      min-width:0; height:58px; padding:0;
+      border-radius:17px; color:#f8fbff;
+      background:linear-gradient(145deg,rgba(210,231,249,.19),rgba(66,96,129,.19) 55%,rgba(28,52,79,.25));
+      border:1px solid rgba(220,239,255,.32);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.1),0 4px 10px rgba(0,9,25,.12);
+      transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+    }
+    #paused .pause-icon[aria-pressed="true"] {
+      color:#fff;
+      background:linear-gradient(145deg,#3979ed 0%,#245de0 58%,#194bbd 100%);
+      border-color:rgba(153,193,255,.82);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(48,112,242,.12),0 5px 13px rgba(16,67,180,.2);
+    }
+    #paused .pause-icon[aria-pressed="false"] {
+      background:linear-gradient(145deg,rgba(210,231,249,.12),rgba(66,96,129,.12) 55%,rgba(28,52,79,.18));
+      color:rgba(245,249,255,.9);
+      border-color:rgba(220,239,255,.24);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(0,9,25,.08);
+    }
+    #paused .pause-icon svg { width:30px; height:30px; display:block; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 1px 1px rgba(0,0,0,.12)); }
+    #paused .pause-icon[data-icon="sound"] svg { width:33px; height:33px; }
+    #paused #resume {
+      position:relative; display:flex; align-items:center; justify-content:center; gap:10px;
+      width:100%; height:58px; margin-top:26px; padding:0 14px;
+      border-radius:18px; color:#fff; font-size:clamp(16px,4.4vw,20px); font-weight:850; letter-spacing:.015em;
+      background:linear-gradient(180deg,#438cff 0%,#2670ec 48%,#1452c4 100%);
+      border:1px solid rgba(206,230,255,.72);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.36),inset 0 -2px 0 rgba(0,31,100,.16),0 8px 18px rgba(0,25,87,.22);
+      text-shadow:0 1px 2px rgba(0,0,0,.16);
+    }
+    #paused #quit {
+      position:relative; display:flex; align-items:center; justify-content:center; gap:10px;
+      width:100%; height:52px; margin-top:14px; padding:0 14px;
+      border-radius:18px; color:#fff; font-size:18px; font-weight:800;
+      background:linear-gradient(180deg,rgba(205,218,230,.32),rgba(103,121,140,.36));
+      border:1px solid rgba(230,241,251,.34);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.08),0 5px 12px rgba(0,8,24,.12);
+    }
+    #paused .pause-action-icon { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; flex:none; }
+    #paused .pause-action-icon svg { width:24px; height:24px; display:block; fill:currentColor; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+    #paused .pause-brand-mark { position:absolute; right:18px; bottom:14px; font-size:20px; font-weight:950; letter-spacing:-.06em; color:rgba(255,255,255,.78); text-shadow:0 2px 4px rgba(0,0,0,.22); }
+    @media(max-width:390px) {
+      #paused { padding:16px 20px; }
+      #paused .card { width:min(315px,100%); padding:25px 17px 24px; min-height:min(500px,61dvh); border-radius:25px; }
+      #paused .card::before { border-radius:24px; }
+      #paused .pause-controls { gap:9px; margin-top:23px; }
+      #paused .pause-icon { height:55px; border-radius:15px; }
+      #paused .pause-icon svg { width:28px; height:28px; }
+      #paused #resume { height:55px; border-radius:17px; margin-top:25px; }
+      #paused #quit { height:50px; border-radius:17px; margin-top:13px; }
+    }
+    @media(max-height:700px) {
+      #paused .card { min-height:0; padding-top:20px; padding-bottom:40px; }
+      #paused .brand { margin-bottom:10px; }
+      #paused .pause-controls { margin-top:18px; }
+      #paused .pause-icon { height:50px; }
+      #paused #resume { height:52px; margin-top:16px; }
+      #paused #quit { height:48px; margin-top:10px; }
+    }
+
+
     .micro { margin-top:18px; font-size:12px; color:rgba(255,255,255,.54); line-height:1.5; }
     .buildLabel { margin:10px 0 0; font-size:10px; letter-spacing:.08em; color:rgba(255,255,255,.45); }
     #gameOver h2 { margin:0; font-size:44px; letter-spacing:-.045em; }
