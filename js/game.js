@@ -189,6 +189,16 @@
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
+  function updateSoundButton(){
+    const button=$('#sound');
+    if(!button)return;
+    const label=language==='en'
+      ? 'Sound: '+(soundOn?'on':'off')
+      : 'Som: '+(soundOn?'ligado':'desligado');
+    button.setAttribute('aria-label',label);
+    button.setAttribute('title',label);
+    button.setAttribute('aria-pressed',String(soundOn));
+  }
   let score=0;
   const storedBest=Number(storage.get('best',0));
   const storedCoins=Number(storage.get('coins',0));
@@ -2471,9 +2481,10 @@
   $('#skip25Close').onclick=closeSkip25Modal;
   function drawShareCard(result){
     const card=document.createElement('canvas');card.width=1080;card.height=1350;
-    const c=card.getContext('2d'),palette=visualState(result.record);
+    const c=card.getContext('2d');
+    // O cartão de compartilhamento mantém a identidade azul em qualquer recorde.
     const background=c.createLinearGradient(0,0,1080,1350);
-    background.addColorStop(0,palette.top);background.addColorStop(1,palette.bottom);
+    background.addColorStop(0,'#1d5a87');background.addColorStop(1,'#08336d');
     c.fillStyle=background;c.fillRect(0,0,1080,1350);
     c.fillStyle='rgba(3,10,28,.34)';c.fillRect(0,0,1080,1350);
     c.strokeStyle='rgba(255,211,72,.55)';c.lineWidth=3;
@@ -2481,7 +2492,7 @@
     c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
     c.font='950 72px system-ui, sans-serif';c.fillText('1% - The Impossible Ball',540,150);
 
-    c.fillStyle='#ffd84d';c.font='800 30px system-ui, sans-serif';
+    c.fillStyle='#a8d9ff';c.font='800 30px system-ui, sans-serif';
     c.fillText(language==='en'?'MY RECORD':'MEU RECORDE',540,365);
     c.fillStyle='#fff4b0';c.font='950 220px system-ui, sans-serif';
     c.fillText(String(result.record),540,535);
@@ -2491,7 +2502,7 @@
     c.fillStyle='#e7edf8';c.font='650 28px system-ui, sans-serif';
     c.fillText(language==='en'?'Each bounce makes everything 1% harder.':'Cada rebatida deixa tudo 1% mais difícil.',540,825);
 
-    c.fillStyle='#ffd84d';c.font='950 48px system-ui, sans-serif';
+    c.fillStyle='#a8d9ff';c.font='950 48px system-ui, sans-serif';
     c.fillText(language==='en'?'ACCEPT THE CHALLENGE?':'ACEITA O DESAFIO?',540,1025);
 
     c.fillStyle='#ffd84d';c.font='800 24px system-ui, sans-serif';
@@ -2553,10 +2564,10 @@
   $('#resume').onclick=()=>{mode=pausedFrom;hideAll();setMusicActive(mode==='playing');last=performance.now();raf=requestAnimationFrame(loop);};
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   $('#sound').onclick=()=>{
-    soundOn=!soundOn;storage.set('sound',soundOn);$('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
+    soundOn=!soundOn;storage.set('sound',soundOn);updateSoundButton();
     if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);stopSfx();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
   };
-  $('#sound').textContent=language==='en'?'SOUND: '+(soundOn?'ON':'OFF'):'SOM: '+(soundOn?'ON':'OFF');
+  updateSoundButton();
 
   let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity,shopPreviewTrail=[],shopPreviewTrailSkin=selected;
   function shopBallPosition(time){
@@ -2746,7 +2757,7 @@
   $('#shopListen').onclick=()=>{
     if(!shopOpen||shopPreviewId!=='eight'||performance.now()-lastShopListen<250)return;
     lastShopListen=performance.now();
-    if(!soundOn){soundOn=true;storage.set('sound',true);$('#sound').textContent=language==='en'?'SOUND: ON':'SOM: ON';}
+    if(!soundOn){soundOn=true;storage.set('sound',true);updateSoundButton();}
     $('#shopListen').textContent=tr('OUVIR SOM DA BOLA 8');
     if(!ensureAudio()){$('#shopFeature').textContent=tr('Não foi possível iniciar o áudio neste navegador.');return;}
     eightBallSound(0);
