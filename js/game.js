@@ -204,12 +204,12 @@
     if(musicButton){
       const label=language==='en'?'Music: '+(musicOn?'on':'off'):'Música: '+(musicOn?'ligada':'desligada');
       musicButton.setAttribute('aria-label',label);musicButton.setAttribute('title',label);
-      musicButton.setAttribute('aria-pressed',String(musicOn));musicButton.textContent=musicOn?'♫':'♩̸';
+      musicButton.setAttribute('aria-pressed',String(musicOn));
     }
     if(vibrationButton){
       const label=language==='en'?'Vibration: '+(vibrationOn?'on':'off'):'Vibração: '+(vibrationOn?'ligada':'desligada');
       vibrationButton.setAttribute('aria-label',label);vibrationButton.setAttribute('title',label);
-      vibrationButton.setAttribute('aria-pressed',String(vibrationOn));vibrationButton.textContent=vibrationOn?'▯〰':'▯';
+      vibrationButton.setAttribute('aria-pressed',String(vibrationOn));
     }
   }
   let score=0;
