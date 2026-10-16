@@ -188,7 +188,7 @@
   }
 
   let W=0,H=0,dpr=1,last=0,raf=0;
-  let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true);
+  let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true), musicOn=storage.get('music',true), vibrationOn=storage.get('vibration',true);
   function updateSoundButton(){
     const button=$('#sound');
     if(!button)return;
@@ -198,6 +198,19 @@
     button.setAttribute('aria-label',label);
     button.setAttribute('title',label);
     button.setAttribute('aria-pressed',String(soundOn));
+  }
+  function updatePauseToggles(){
+    const musicButton=$('#musicToggle'),vibrationButton=$('#vibrationToggle');
+    if(musicButton){
+      const label=language==='en'?'Music: '+(musicOn?'on':'off'):'Música: '+(musicOn?'ligada':'desligada');
+      musicButton.setAttribute('aria-label',label);musicButton.setAttribute('title',label);
+      musicButton.setAttribute('aria-pressed',String(musicOn));musicButton.textContent=musicOn?'♫':'♩̸';
+    }
+    if(vibrationButton){
+      const label=language==='en'?'Vibration: '+(vibrationOn?'on':'off'):'Vibração: '+(vibrationOn?'ligada':'desligada');
+      vibrationButton.setAttribute('aria-label',label);vibrationButton.setAttribute('title',label);
+      vibrationButton.setAttribute('aria-pressed',String(vibrationOn));vibrationButton.textContent=vibrationOn?'▯〰':'▯';
+    }
   }
   let score=0;
   const storedBest=Number(storage.get('best',0));
@@ -1054,7 +1067,7 @@
     const nextStage=audioStageFor();
     if(nextStage<0||nextStage===musicStage)return;
     musicStage=nextStage;
-    if(!musicActive||!soundOn||!ensureAudio())return;
+    if(!musicActive||!musicOn||!ensureAudio())return;
 
     const stage=audioStages[nextStage],incomingIndex=1-activeMusicPlayer;
     const incoming=musicPlayers[incomingIndex],outgoing=musicPlayers[activeMusicPlayer];
@@ -1073,7 +1086,7 @@
     // O crossfade usa GainNodes; não depende do volume do elemento HTMLAudio.
     clearInterval(musicFadeTimer);musicFadeTimer=0;
     const beginCrossfade=()=>{
-      if(musicStage!==nextStage||!musicActive||!soundOn)return;
+      if(musicStage!==nextStage||!musicActive||!musicOn)return;
       const started=performance.now();
       musicFadeTimer=setInterval(()=>{
         const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
@@ -1105,7 +1118,7 @@
   }
   function setMusicActive(active,fadeIn=false){
     musicActive=active;
-    if(!active||!soundOn){stopMusicPlayers();return;}
+    if(!active||!musicOn){stopMusicPlayers();return;}
     if(!ensureAudio())return;
     const nextStage=audioStageFor();
     if(nextStage<0)return;
@@ -1127,7 +1140,7 @@
     playerGain.gain.cancelScheduledValues(audioCtx.currentTime);
     playerGain.gain.setValueAtTime(fadeIn?0:MUSIC_VOLUME,audioCtx.currentTime);
     const beginStartFade=()=>{
-      if(!fadeIn||!musicActive||!soundOn||musicStage!==nextStage||player!==musicPlayers[activeMusicPlayer])return;
+      if(!fadeIn||!musicActive||!musicOn||musicStage!==nextStage||player!==musicPlayers[activeMusicPlayer])return;
       const started=performance.now();
       clearInterval(musicFadeTimer);musicFadeTimer=0;
       musicFadeTimer=setInterval(()=>{
@@ -1135,7 +1148,7 @@
         playerGain.gain.setValueAtTime(MUSIC_VOLUME*t,audioCtx.currentTime);
         if(t>=1){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
-          if(musicActive&&soundOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
+          if(musicActive&&musicOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
         }
       },50);
     };
@@ -1144,7 +1157,7 @@
     else beginStartFade();
   }
   function updateAdaptiveMusic(){
-    if(musicActive&&soundOn)updateMusicStage();
+    if(musicActive&&musicOn)updateMusicStage();
   }
   function eightBallSound(progress=0){
     tone(1420*(1-progress*.5),.018,'triangle',.045);
@@ -1210,7 +1223,7 @@
   function victorySound(){
     setMusicActive(false);[261.6,329.6,392,523.2].forEach((f,i)=>tone(f,.42,'sine',.04,i*.11));
   }
-  function haptic(ms=15){ if(navigator.vibrate) navigator.vibrate(ms); }
+  function haptic(ms=15){ if(vibrationOn&&navigator.vibrate) navigator.vibrate(ms); }
 
   function reset(startScore=0){
     startHintRemaining=0;dragging=false;
@@ -1301,8 +1314,8 @@
     updateMusicStage();
     updateHUD(); if(!suppressFlash)flash=.12;celebrateProgress(before);secretScoreChanged(before);
     if(n>1)toast('+'+n+' PONTOS · CAIXA');
-    if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(navigator.vibrate)navigator.vibrate([70,40,90]);}
-    if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(navigator.vibrate)navigator.vibrate([80,50,140]);}
+    if(before<96&&score>=96){toast('BLACKOUT · SIGA O RASTRO');if(vibrationOn&&navigator.vibrate)navigator.vibrate([70,40,90]);}
+    if(before<100&&score>=100){flash=.65;toast('100% · PRETO ABSOLUTO');if(vibrationOn&&navigator.vibrate)navigator.vibrate([80,50,140]);}
     const newSpectrum=[
       [105,'AZUL ABISSAL'],[110,'CIANO PROFUNDO'],[115,'TURQUESA ELÉTRICA'],
       [120,'VERDE RADIOATIVO'],[125,'VERDE ÁCIDO'],[130,'DOURADO SOLAR'],
@@ -1311,7 +1324,7 @@
     if(newSpectrum){flash=.3;toast(newSpectrum[1]);}
     if(before<MAX_SCORE&&score>=MAX_SCORE){
       flash=.95; shake=12; mode='over'; toast('150 · VOCÊ ZEROU O IMPOSSÍVEL');
-      if(navigator.vibrate)navigator.vibrate([90,40,90,40,180]);
+      if(vibrationOn&&navigator.vibrate)navigator.vibrate([90,40,90,40,180]);
       victorySound();
       setTimeout(()=>finishGame('150 · IMPOSSÍVEL'),180);
     }
@@ -2564,10 +2577,20 @@
   $('#resume').onclick=()=>{mode=pausedFrom;hideAll();setMusicActive(mode==='playing');last=performance.now();raf=requestAnimationFrame(loop);};
   $('#quit').onclick=()=>{setMusicActive(false);reset(0);mode='menu';show('#start');render();};
   $('#sound').onclick=()=>{
-    soundOn=!soundOn;storage.set('sound',soundOn);updateSoundButton();
-    if(soundOn){ensureAudio();if(mode==='playing')setMusicActive(true);}else{setMusicActive(false);stopSfx();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
+    soundOn=!soundOn;storage.set('sound',soundOn);updateSoundButton();updatePauseToggles();
+    if(soundOn){ensureAudio();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(1,audioCtx.currentTime,.03);}
+    else{stopSfx();if(audioCtx&&masterGain)masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,.03);}
   };
-  updateSoundButton();
+  $('#musicToggle').onclick=()=>{
+    musicOn=!musicOn;storage.set('music',musicOn);updatePauseToggles();
+    if(musicOn){ensureAudio();if(mode==='playing')setMusicActive(true,true);}
+    else setMusicActive(false);
+  };
+  $('#vibrationToggle').onclick=()=>{
+    vibrationOn=!vibrationOn;storage.set('vibration',vibrationOn);updatePauseToggles();
+    if(!vibrationOn&&navigator.vibrate)navigator.vibrate(0);
+  };
+  updateSoundButton();updatePauseToggles();
 
   let shopPreviewId=selected,shopPreviewPaddleId=selectedPaddle,shopCategory='balls',shopOpen=false,shopRaf=0,shopTime=0,shopLast=0,lastShopListen=-Infinity,shopPreviewTrail=[],shopPreviewTrailSkin=selected;
   function shopBallPosition(time){
