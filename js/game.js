@@ -844,7 +844,7 @@
 
   let audioCtx=null,masterGain=null,sfxGain=null,noiseBuffer=null,musicGainNodes=[];
   let musicActive=false,musicStage=-1,musicFadeTimer=0,activeMusicPlayer=0;
-  const MUSIC_VOLUME=.00;
+  const MUSIC_VOLUME=.04;
   const MUSIC_CROSSFADE_MS=3000;
   const MUSIC_START_FADE_MS=4000;
   const audioStages=[
