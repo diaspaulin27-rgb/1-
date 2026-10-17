@@ -1069,52 +1069,47 @@
     musicStage=nextStage;
     if(!musicActive||!musicOn||!ensureAudio())return;
 
-    const stage=audioStages[nextStage],incomingIndex=1-activeMusicPlayer;
-    const incoming=musicPlayers[incomingIndex],outgoing=musicPlayers[activeMusicPlayer];
-    const incomingGain=musicGainNodes[incomingIndex],outgoingGain=musicGainNodes[activeMusicPlayer];
-    const wanted='assets/audio/music/'+stage.music;
-
-    if(incoming.dataset.src!==wanted){
-      incoming.src=wanted;incoming.dataset.src=wanted;incoming.currentTime=0;
-    }
-    incoming.loop=true;incoming.volume=1;
+    // Troca imediata de faixa ao cruzar 96 ou 101, sem crossfade.
+    // O timer de fade inicial fica independente e continua seus 4 segundos.
+    const wanted='assets/audio/music/'+audioStages[nextStage].music;
     const now=audioCtx.currentTime;
-    const outStart=outgoing.paused?0:outgoingGain.gain.value;
-    incomingGain.gain.cancelScheduledValues(now);
-    incomingGain.gain.setValueAtTime(0,now);
 
-    // O crossfade usa GainNodes; não depende do volume do elemento HTMLAudio.
-    clearInterval(musicFadeTimer);musicFadeTimer=0;
-    const beginCrossfade=()=>{
-      if(musicStage!==nextStage||!musicActive||!musicOn)return;
-      const started=performance.now();
-      musicFadeTimer=setInterval(()=>{
-        const t=clamp((performance.now()-started)/MUSIC_CROSSFADE_MS,0,1);
-        const time=audioCtx.currentTime;
-        incomingGain.gain.setValueAtTime(MUSIC_VOLUME*t,time);
-        outgoingGain.gain.setValueAtTime(outStart*(1-t),time);
-        if(t>=1){
-          clearInterval(musicFadeTimer);musicFadeTimer=0;
-          outgoing.pause();
-          outgoingGain.gain.setValueAtTime(0,audioCtx.currentTime);
-          activeMusicPlayer=incomingIndex;
-        }
-      },50);
-    };
+    musicPlayers.forEach((player,i)=>{
+      const gain=musicGainNodes[i];
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0,now);
+      player.pause();
+      player.volume=1;
+    });
+
+    const player=musicPlayers[activeMusicPlayer];
+    const playerGain=musicGainNodes[activeMusicPlayer];
+    if(player.dataset.src!==wanted){
+      player.src=wanted;
+      player.dataset.src=wanted;
+      player.currentTime=0;
+    }
+    player.loop=true;
+    player.volume=1;
+    // Se o fade inicial já terminou, usa o volume normal; caso contrário,
+    // o timer original continua elevando este mesmo GainNode gradualmente.
+    if(!musicFadeTimer)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
+
+    const requestedStage=nextStage;
     let playPromise;
     try{
-      playPromise=incoming.play();
+      playPromise=player.play();
     }catch(error){
-      console.warn('[1%] Não foi possível iniciar a música da fase:',stage.music,error);
-      if(musicStage===nextStage)musicStage=-1;
+      console.warn('[1%] Não foi possível iniciar a música da fase:',audioStages[requestedStage].music,error);
+      if(musicStage===requestedStage)musicStage=-1;
       return;
     }
-    if(playPromise&&playPromise.then){
-      playPromise.then(beginCrossfade).catch(error=>{
-        console.warn('[1%] Não foi possível iniciar a música da fase:',stage.music,error);
-        if(musicStage===nextStage)musicStage=-1;
+    if(playPromise&&playPromise.catch){
+      playPromise.catch(error=>{
+        console.warn('[1%] Não foi possível iniciar a música da fase:',audioStages[requestedStage].music,error);
+        if(musicStage===requestedStage)musicStage=-1;
       });
-    }else beginCrossfade();
+    }
   }
   function setMusicActive(active,fadeIn=false){
     musicActive=active;
@@ -1145,10 +1140,11 @@
       clearInterval(musicFadeTimer);musicFadeTimer=0;
       musicFadeTimer=setInterval(()=>{
         const t=clamp((performance.now()-started)/MUSIC_START_FADE_MS,0,1);
-        playerGain.gain.setValueAtTime(MUSIC_VOLUME*t,audioCtx.currentTime);
+        const currentGain=musicGainNodes[activeMusicPlayer];
+        if(currentGain)currentGain.gain.setValueAtTime(MUSIC_VOLUME*t,audioCtx.currentTime);
         if(t>=1){
           clearInterval(musicFadeTimer);musicFadeTimer=0;
-          if(musicActive&&musicOn)playerGain.gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
+          if(musicActive&&musicOn&&musicGainNodes[activeMusicPlayer])musicGainNodes[activeMusicPlayer].gain.setValueAtTime(MUSIC_VOLUME,audioCtx.currentTime);
         }
       },50);
     };
