@@ -1005,19 +1005,19 @@
     return audioStages.findIndex(s=>points>=s.min&&points<=s.max);
   }
   function ensureAudio(){
-    if(!soundOn)return false;
     try{
       if(!audioCtx){
         audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         masterGain=audioCtx.createGain();sfxGain=audioCtx.createGain();
-        masterGain.gain.value=1;sfxGain.gain.value=.72;
+        // O ganho principal controla apenas os efeitos sonoros.
+        masterGain.gain.value=soundOn?1:0;sfxGain.gain.value=.72;
         sfxGain.connect(masterGain);
-        // No iPhone/Safari, HTMLAudioElement.volume pode ser ignorado.
-        // Roteamos cada música pelo Web Audio para controlar o volume de verdade.
+        // A música usa um canal independente: desligar os efeitos não a silencia.
+        // O GainNode permite controlar o volume mesmo no iPhone/Safari.
         musicGainNodes=musicPlayers.map(()=>{
           const gain=audioCtx.createGain();
           gain.gain.value=0;
-          gain.connect(masterGain);
+          gain.connect(audioCtx.destination);
           return gain;
         });
         musicPlayers.forEach((player,i)=>{
