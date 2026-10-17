@@ -1066,8 +1066,10 @@
   function updateMusicStage(){
     const nextStage=audioStageFor();
     if(nextStage<0||nextStage===musicStage)return;
-    musicStage=nextStage;
     if(!musicActive||!musicOn||!ensureAudio())return;
+    // Só registra a fase depois de confirmar que o sistema de áudio está pronto.
+    // Assim, uma falha temporária não bloqueia uma tentativa posterior.
+    musicStage=nextStage;
 
     // Troca imediata de faixa ao cruzar 96 ou 101, sem crossfade.
     // O timer de fade inicial fica independente e continua seus 4 segundos.
@@ -1148,9 +1150,20 @@
         }
       },50);
     };
-    const playPromise=player.play();
-    if(playPromise&&playPromise.then)playPromise.then(beginStartFade).catch(()=>{});
-    else beginStartFade();
+    let playPromise;
+    try{
+      playPromise=player.play();
+    }catch(error){
+      console.warn('[1%] Não foi possível iniciar a música:',stage.music,error);
+      if(musicStage===nextStage)musicStage=-1;
+      return;
+    }
+    if(playPromise&&playPromise.then){
+      playPromise.then(beginStartFade).catch(error=>{
+        console.warn('[1%] Não foi possível iniciar a música:',stage.music,error);
+        if(musicStage===nextStage)musicStage=-1;
+      });
+    }else beginStartFade();
   }
   function updateAdaptiveMusic(){
     if(musicActive&&musicOn)updateMusicStage();
