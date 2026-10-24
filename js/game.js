@@ -136,9 +136,14 @@
   Object.freeze(translations);
 
   function tr(value){
-    if(language!=='en'||value===undefined||value===null)return value;
+    if(value===undefined||value===null)return value;
     const s=String(value);
-    if(translations[s])return translations[s];
+    const locale = language || 'pt';
+    const external = window.ZANON_LANGUAGES && window.ZANON_LANGUAGES[locale];
+    if (locale !== 'pt' && external && Object.prototype.hasOwnProperty.call(external, s)) return external[s];
+    if (locale === 'en' && translations[s]) return translations[s];
+    if (locale !== 'pt' && translations[s]) return translations[s];
+    if (locale !== 'en') return s;
 
     let m=s.match(/^\+(\d+) PONTOS · CAIXA$/);
     if(m)return '+'+m[1]+' POINTS · BOX';
@@ -164,7 +169,10 @@
   }
 
   function applyLanguage(){
-    document.documentElement.lang=language==='en'?'en':'pt-BR';
+    document.documentElement.lang=({
+      pt:'pt-BR',en:'en',es:'es',fr:'fr',de:'de',ja:'ja',ko:'ko',
+      'zh-CN':'zh-CN','zh-TW':'zh-TW',hi:'hi',it:'it'
+    })[language] || 'pt-BR';
     const root=document.body;
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     const nodes=[];
@@ -177,7 +185,10 @@
     nodes.forEach(n=>{const v=n.nodeValue,trim=v.trim(),translated=tr(trim);if(translated!==trim)n.nodeValue=v.replace(trim,translated);});
     document.querySelectorAll('[aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.getAttribute('aria-label'))));
     document.querySelectorAll('[title]').forEach(el=>el.setAttribute('title',tr(el.getAttribute('title'))));
-    if($('#languageTitle'))$('#languageTitle').textContent=language==='en'?'Language':'Idioma';
+    if($('#languageTitle')) {
+      const titles={pt:'Idioma',en:'Language',es:'Idioma',fr:'Langue',de:'Sprache',ja:'言語',ko:'언어','zh-CN':'语言','zh-TW':'語言',hi:'भाषा',it:'Lingua'};
+      $('#languageTitle').textContent=titles[language]||'Idioma';
+    }
   }
 
   function chooseLanguage(value){
@@ -192,9 +203,15 @@
   function updateSoundButton(){
     const button=$('#sound');
     if(!button)return;
-    const label=language==='en'
-      ? 'Sound: '+(soundOn?'on':'off')
-      : 'Som: '+(soundOn?'ligado':'desligado');
+    const labels={
+      pt:['Som: ligado','Som: desligado'], en:['Sound: on','Sound: off'],
+      es:['Sonido: activado','Sonido: desactivado'], fr:['Son : activé','Son : désactivé'],
+      de:['Ton: an','Ton: aus'], ja:['音: オン','音: オフ'], ko:['소리: 켜짐','소리: 꺼짐'],
+      'zh-CN':['声音：开','声音：关'],'zh-TW':['聲音：開','聲音：關'],
+      hi:['ध्वनि: चालू','ध्वनि: बंद'], it:['Audio: attivo','Audio: disattivato']
+    };
+    const pair=labels[language]||labels.pt;
+    const label=pair[soundOn?0:1];
     button.setAttribute('aria-label',label);
     button.setAttribute('title',label);
     button.setAttribute('aria-pressed',String(soundOn));
@@ -202,7 +219,14 @@
   function updatePauseToggles(){
     const musicButton=$('#musicToggle'),vibrationButton=$('#vibrationToggle');
     if(musicButton){
-      const label=language==='en'?'Music: '+(musicOn?'on':'off'):'Música: '+(musicOn?'ligada':'desligada');
+      const labels={
+        pt:['Música: ligada','Música: desligada'],en:['Music: on','Music: off'],
+        es:['Música: activada','Música: desactivada'],fr:['Musique : activée','Musique : désactivée'],
+        de:['Musik: an','Musik: aus'],ja:['音楽: オン','音楽: オフ'],ko:['음악: 켜짐','음악: 꺼짐'],
+        'zh-CN':['音乐：开','音乐：关'],'zh-TW':['音樂：開','音樂：關'],
+        hi:['संगीत: चालू','संगीत: बंद'],it:['Musica: attiva','Musica: disattivata']
+      };
+      const pair=labels[language]||labels.pt; const label=pair[musicOn?0:1];
       musicButton.setAttribute('aria-label',label);musicButton.setAttribute('title',label);
       musicButton.setAttribute('aria-pressed',String(musicOn));
     }
@@ -2816,9 +2840,17 @@
     if(document.hidden){cancelAnimationFrame(shopRaf);shopRaf=0;}else startShopPreview();
   });
 
-  $('#languageEnglish').onclick=()=>chooseLanguage('en');
-  $('#languagePortuguese').onclick=()=>chooseLanguage('pt');
-  if(language==='en'||language==='pt'){
+  const languageButtons = document.querySelectorAll('[data-language]');
+  languageButtons.forEach(button => {
+    button.addEventListener('click', () => chooseLanguage(button.dataset.language));
+  });
+  // Compatibility with the original two-button selector.
+  if (!languageButtons.length) {
+    if ($('#languageEnglish')) $('#languageEnglish').onclick=()=>chooseLanguage('en');
+    if ($('#languagePortuguese')) $('#languagePortuguese').onclick=()=>chooseLanguage('pt');
+  }
+  const supportedLanguages=['pt','en','es','fr','de','ja','ko','zh-CN','zh-TW','hi','it'];
+  if(supportedLanguages.includes(language)){
     applyLanguage();
     $('#languageScreen').classList.add('hidden');
   }else{
