@@ -195,7 +195,9 @@
     language=value;storage.set('language',language);applyLanguage();
     $('#languageScreen').classList.add('hidden');
     $('#start').classList.remove('hidden');
-    resize();render();
+    $('#languageScreen').classList.add('hidden');
+    resize();
+    render();
   }
 
   let W=0,H=0,dpr=1,last=0,raf=0;
