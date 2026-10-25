@@ -2855,6 +2855,7 @@
   if(supportedLanguages.includes(language)){
     applyLanguage();
     $('#languageScreen').classList.add('hidden');
+    $('#start').classList.remove('hidden');
   }else{
     $('#languageScreen').classList.remove('hidden');
     $('#start').classList.add('hidden');
