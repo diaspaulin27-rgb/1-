@@ -60,124 +60,247 @@
     h1 { margin:0; font-size:clamp(70px,25vw,116px); font-weight:950; letter-spacing:-.09em; line-height:.82; text-shadow:0 16px 45px rgba(0,0,0,.2); }
     .tag { margin:22px auto 0; max-width:340px; font-size:18px; line-height:1.4; font-weight:650; color:rgba(255,255,255,.82); }
     .primary { width:100%; height:62px; margin-top:32px; border-radius:22px; color:#0865ec; background:#fff; font-weight:950; font-size:18px; box-shadow:0 16px 45px rgba(1,17,53,.26); }
-    /* Language selector — compact abyss-blue frosted glass, matching Pause. */
+
+    /* ===== Language selector — ZANON BLUE NEON (inspirado na referencia) ===== */
     #languageScreen {
       z-index:40;
       padding: max(14px,env(safe-area-inset-top)) 18px max(14px,env(safe-area-inset-bottom));
-      background:radial-gradient(ellipse at 50% 34%,rgba(9,32,62,.26),rgba(1,8,22,.72));
-      -webkit-backdrop-filter:blur(18px) saturate(1.2);
-      backdrop-filter:blur(18px) saturate(1.2);
+      background:
+        radial-gradient(ellipse 140% 70% at 50% -10%, rgba(70,130,255,.32), transparent 60%),
+        radial-gradient(ellipse 80% 50% at 15% 10%, rgba(35,80,220,.28), transparent 60%),
+        radial-gradient(ellipse 90% 60% at 85% 15%, rgba(30,60,200,.18), transparent 65%),
+        radial-gradient(ellipse 120% 80% at 50% 120%, rgba(10,40,120,.55), transparent 60%),
+        linear-gradient(180deg, #04102a 0%, #020a1e 55%, #010716 100%);
+      -webkit-backdrop-filter: blur(22px) saturate(1.25);
+      backdrop-filter: blur(22px) saturate(1.25);
+    }
+    #languageScreen::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(100deg, transparent 0%, rgba(80,140,255,.08) 45%, transparent 50%, transparent 100%),
+        linear-gradient(105deg, transparent 0%, rgba(60,120,255,.06) 30%, transparent 55%);
+      opacity:.8;
     }
     #languageScreen .languagePanel {
       position:relative;
       overflow:hidden;
-      width:min(330px,100%);
-      max-height:88dvh;
-      padding:20px 17px 12px;
-      border-radius:25px;
-      border:1px solid rgba(224,240,255,.56);
+      width:min(360px, 92vw);
+      max-height:86dvh;
+      padding:22px 18px 14px;
+      border-radius:26px;
+      border:1px solid rgba(90,170,255,.55);
       background:
-        linear-gradient(128deg,rgba(218,235,249,.22) 0%,rgba(85,119,154,.18) 34%,rgba(9,30,59,.46) 100%),
-        rgba(27,54,83,.38);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 0 rgba(255,255,255,.09),0 24px 60px rgba(0,7,22,.32);
-      -webkit-backdrop-filter:blur(28px) saturate(1.28);
-      backdrop-filter:blur(28px) saturate(1.28);
+        linear-gradient(180deg, rgba(18,40,82,.88) 0%, rgba(10,26,62,.94) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -1px 0 rgba(0,0,0,.35),
+        0 0 0 1px rgba(70,140,255,.18),
+        0 0 28px rgba(56,132,255,.38),
+        0 0 64px rgba(20,60,160,.35),
+        0 24px 60px rgba(0,5,20,.55);
+      -webkit-backdrop-filter: blur(32px) saturate(1.4);
+      backdrop-filter: blur(32px) saturate(1.4);
       display:flex;
       flex-direction:column;
       align-items:stretch;
     }
+    /* brilho superior do vidro */
     #languageScreen .languagePanel::before {
       content:"";
       position:absolute;
       inset:1px;
-      border-radius:24px;
+      border-radius:25px;
       pointer-events:none;
-      background:linear-gradient(125deg,rgba(255,255,255,.13),transparent 27%,transparent 68%,rgba(111,173,229,.08));
+      background:
+        radial-gradient(ellipse 80% 30% at 50% 0%, rgba(180,210,255,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), transparent 18%);
+    }
+    /* linha neon inferior */
+    #languageScreen .languagePanel::after {
+      content:"";
+      position:absolute;
+      left:12px; right:12px; bottom:1px;
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(90,170,255,.9), transparent);
+      box-shadow: 0 0 12px rgba(90,170,255,.9);
+      opacity:.9;
+      pointer-events:none;
     }
     #languageScreen .languageBrand {
       position:relative;
-      margin:0 0 8px;
-      color:#e5f0fc;
-      font-size:10px;
-      font-weight:850;
+      z-index:1;
+      margin:0 0 10px;
+      color:#9fc6ff;
+      font-size:10.5px;
+      font-weight:800;
       letter-spacing:.22em;
-      opacity:.86;
+      opacity:.9;
       text-align:center;
+      text-shadow: 0 0 8px rgba(90,170,255,.6);
     }
     #languageScreen h2 {
       position:relative;
-      margin:0 0 13px;
-      color:#fff;
-      font-size:clamp(17px,4.8vw,21px);
-      line-height:1.2;
-      letter-spacing:-.025em;
-      font-weight:800;
+      z-index:1;
+      margin:0 0 18px;
+      color:#ffffff;
+      font-size:clamp(22px, 6vw, 28px);
+      line-height:1.1;
+      letter-spacing:-.02em;
+      font-weight:750;
       text-align:center;
-      text-shadow:0 2px 8px rgba(0,0,0,.18);
+      text-shadow: 0 2px 16px rgba(0,0,0,.45), 0 0 18px rgba(90,170,255,.25);
     }
     .languageButtons {
       position:relative;
-      display:grid;
-      flex:0 1 auto;
-      gap:7px;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
       margin:0;
-      max-height:min(56dvh,470px);
+      max-height:min(56dvh, 460px);
       overflow-y:auto;
       overscroll-behavior:contain;
       touch-action:pan-y;
-      padding:2px 4px 5px 2px;
-      scrollbar-width:none;
-      -ms-overflow-style:none;
+      padding:2px 10px 8px 2px;
+      scrollbar-width: thin;
+      scrollbar-color: #4aa0ff rgba(255,255,255,.06);
     }
-    .languageButtons::-webkit-scrollbar { display:none; }
+    .languageButtons::-webkit-scrollbar { width:4px; }
+    .languageButtons::-webkit-scrollbar-track { background: rgba(255,255,255,.06); border-radius:999px; }
+    .languageButtons::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #6ab3ff, #2f7fff);
+      border-radius:999px;
+      box-shadow: 0 0 8px rgba(70,150,255,.9);
+    }
+    /* trilho de brilho lateral inspirado na imagem */
+    .languageButtons::after {
+      content:"";
+      position:sticky;
+      top:0;
+      bottom:0;
+      right:0;
+      width:2px;
+      align-self:stretch;
+      background: linear-gradient(180deg, rgba(90,170,255,.9) 0%, rgba(90,170,255,.9) 35%, rgba(90,170,255,.15) 100%);
+      box-shadow: 0 0 8px rgba(90,170,255,.8);
+      border-radius:999px;
+      pointer-events:none;
+      opacity:.0; /* só aparece quando tem scroll - controlado por JS se quiser */
+    }
     .languageButton {
       width:100%;
-      min-height:40px;
-      height:40px;
+      min-height:46px;
+      height:46px;
       flex:none;
-      border-radius:13px;
-      color:#f3f8ff;
-      font-size:15px;
-      font-weight:800;
+      border-radius:999px;
+      color:#d8e6ff;
+      font-size:15.5px;
+      font-weight:650;
       letter-spacing:.01em;
-      background:linear-gradient(145deg,rgba(210,231,249,.17),rgba(66,96,129,.17) 55%,rgba(28,52,79,.25));
-      border:1px solid rgba(220,239,255,.31);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(0,0,0,.1),0 4px 10px rgba(0,9,25,.12);
-      transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+      background: linear-gradient(180deg, rgba(24,48,92,.85), rgba(14,32,68,.92));
+      border:1px solid rgba(110,170,240,.22);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        inset 0 -1px 0 rgba(0,0,0,.25),
+        0 3px 10px rgba(0,10,30,.25);
+      transition: all .22s cubic-bezier(.2,.8,.2,1);
+      position:relative;
+      overflow:hidden;
     }
-    .languageButton:active { transform:scale(.985); }
-    .languageButton:focus-visible { outline:2px solid #9dcaff; outline-offset:2px; }
+    .languageButton::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.12), transparent 60%);
+      opacity:.6;
+      pointer-events:none;
+    }
+    .languageButton:hover {
+      border-color: rgba(120,190,255,.45);
+      color:#eaf2ff;
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.14),
+        0 6px 16px rgba(0,15,40,.35);
+    }
+    .languageButton:active { transform: scale(.98); }
+    .languageButton:focus-visible { outline:2px solid #7ab8ff; outline-offset:2px; }
+    /* ESTADO SELECIONADO - igual ao English da foto com neon forte */
+    .languageButton.selected,
+    .languageButton[aria-selected="true"],
+    .languageButton.active {
+      color:#ffffff;
+      background: linear-gradient(180deg, rgba(38,96,184,.95), rgba(24,66,148,.98));
+      border:2px solid #5ab0ff;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.28),
+        0 0 0 1px rgba(90,170,255,.4),
+        0 0 14px rgba(90,170,255,.95),
+        0 0 32px rgba(50,120,255,.55),
+        0 6px 20px rgba(0,0,0,.35);
+      text-shadow: 0 0 8px rgba(140,190,255,.8);
+    }
+    .languageButton.selected::after,
+    .languageButton[aria-selected="true"]::after,
+    .languageButton.active::after {
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius:999px;
+      border:1px solid rgba(120,200,255,.7);
+      box-shadow: 0 0 18px rgba(90,170,255,.8) inset;
+      pointer-events:none;
+      opacity:.9;
+    }
     .languageScrollCue {
       position:relative;
+      z-index:1;
       display:grid;
       place-items:center;
-      height:23px;
-      min-height:23px;
-      margin-top:4px;
-      color:#8fcaff;
-      filter:drop-shadow(0 0 7px rgba(73,157,255,.65));
-      animation:languageArrowPulse 1.15s ease-in-out infinite;
-      transition:opacity .18s ease;
+      height:30px;
+      min-height:30px;
+      margin-top:10px;
+      color:#6ab8ff;
+      filter: drop-shadow(0 0 8px rgba(70,150,255,.9)) drop-shadow(0 0 18px rgba(70,150,255,.5));
+      animation: languageArrowPulse 1.25s ease-in-out infinite;
+      transition: opacity .2s ease;
+      cursor:pointer;
     }
     .languageScrollCue svg {
-      width:19px;
-      height:19px;
+      width:22px;
+      height:22px;
       fill:none;
       stroke:currentColor;
-      stroke-width:2.4;
+      stroke-width:2.6;
       stroke-linecap:round;
       stroke-linejoin:round;
     }
-    .languageScrollCue.is-hidden { opacity:0; visibility:hidden; animation:none; }
+    .languageScrollCue::before {
+      content:"";
+      position:absolute;
+      width:36px; height:36px;
+      border-radius:50%;
+      background: radial-gradient(circle, rgba(70,150,255,.22), transparent 70%);
+      pointer-events:none;
+    }
+    .languageScrollCue.is-hidden { opacity:0; visibility:hidden; animation:none; pointer-events:none; }
     @keyframes languageArrowPulse {
-      0%,100% { transform:translateY(-2px); opacity:.55; }
+      0%,100% { transform:translateY(-3px); opacity:.65; }
       50% { transform:translateY(3px); opacity:1; }
     }
-    @media(max-height:650px) {
-      #languageScreen .languagePanel { max-height:92dvh; padding-top:14px; }
-      .languageButtons { max-height:57dvh; gap:5px; }
-      .languageButton { min-height:36px; height:36px; }
-      #languageScreen h2 { margin-bottom:9px; }
+    @media(max-height:680px) {
+      #languageScreen .languagePanel { max-height:92dvh; padding-top:16px; }
+      .languageButtons { max-height:58dvh; gap:8px; }
+      .languageButton { min-height:42px; height:42px; font-size:14.5px; }
+      #languageScreen h2 { margin-bottom:12px; }
+    }
+    @media(max-width:360px) {
+      #languageScreen .languagePanel { width:94vw; padding:18px 14px 12px; border-radius:22px; }
+      .languageButtons { padding-right:8px; }
     }
     @media(prefers-reduced-motion:reduce) {
       .languageScrollCue { animation:none; }
