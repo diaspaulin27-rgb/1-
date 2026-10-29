@@ -67,7 +67,11 @@
    ========================================== */
 
 #languageScreen {
+  position: fixed;
+  inset: 0;
   z-index: 40;
+  display: grid;
+  place-items: center;
   padding:
     max(14px, env(safe-area-inset-top))
     18px
