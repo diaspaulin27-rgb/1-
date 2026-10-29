@@ -22,10 +22,10 @@
   <button id="skip25Offer" aria-label="Pular 25 fases">PULAR +25<small>ASSISTIR VÍDEO</small></button>
 
   <section class="overlay" id="languageScreen">
-    <div class="card">
-      <div class="brand">1% · ZANON</div>
+    <div class="languagePanel">
+      <div class="languageBrand">1% · ZANON</div>
       <h2 id="languageTitle">Escolha seu idioma / Choose your language</h2>
-      <div class="languageButtons">
+      <div class="languageButtons" id="languageButtons">
         <button class="languageButton" id="languagePortuguese" data-language="pt">Português</button>
         <button class="languageButton" id="languageEnglish" data-language="en">English</button>
         <button class="languageButton" id="languageSpanish" data-language="es">Español</button>
@@ -37,6 +37,9 @@
         <button class="languageButton" id="languageChineseTraditional" data-language="zh-TW">繁體中文</button>
         <button class="languageButton" id="languageHindi" data-language="hi">हिन्दी</button>
         <button class="languageButton" id="languageItalian" data-language="it">Italiano</button>
+      </div>
+      <div class="languageScrollCue" id="languageScrollCue" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path><path d="M6 15l6 6 6-6" opacity=".7"></path></svg>
       </div>
     </div>
   </section>
