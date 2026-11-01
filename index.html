@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0769f7">
   <title>1% — ZANON Prototype</title>
-    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="zanonSplash">
+    <img src="assets/images/937CA6B2-7838-487E-A6F9-5234E2CAE271.png" alt="By ZANON">
+  </div>
+
   <canvas id="game" aria-label="Jogo 1%"></canvas>
   <span id="fireEmojiOverlay" class="fireEmojiOverlay" aria-hidden="true">🔥</span>
   <span id="fakeFireEmojiOverlay" class="fireEmojiOverlay" aria-hidden="true">🔥</span>
@@ -146,6 +150,25 @@
     <p class="shopHint" id="shopHint">Toque numa bola para experimentar o visual.</p>
     <div class="shopGrid" id="shopGrid"></div>
   </section>
+
+<script>
+  (() => {
+    const splash = document.getElementById("zanonSplash");
+    if (!splash) return;
+
+    const hideSplash = () => splash.classList.add("hide");
+
+    if (document.readyState === "complete") {
+      window.setTimeout(hideSplash, 1000);
+    } else {
+      window.addEventListener("load", () => {
+        window.setTimeout(hideSplash, 1000);
+      }, { once: true });
+    }
+
+    window.setTimeout(hideSplash, 5000);
+  })();
+</script>
 
 <script src="js/languages.js" defer></script>
 <script src="js/game.js" defer></script>
