@@ -1,0 +1,25 @@
+{
+  "name": "1-",
+  "version": "1.0.0",
+  "description": "Esta versão separa o arquivo monolítico em arquivos menores, mantendo o código do jogo e a correção de áudio baseada em Web Audio.",
+  "main": "fix-ball.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diaspaulin27-rgb/1-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/diaspaulin27-rgb/1-/issues"
+  },
+  "homepage": "https://github.com/diaspaulin27-rgb/1-#readme",
+  "dependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}
