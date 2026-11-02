@@ -642,3 +642,45 @@ none; }
 
 @media (prefers-reduced-motion: reduce) { #zanonSplash { transition:
 none; } }
+
+
+
+/* ===== 1% • ZANON - Sistema de Ícones Padronizado (Lucide) ===== */
+.icon { width:24px; height:24px; display:inline-block; flex:none; }
+.icon-lg { width:28px; height:28px; display:inline-block; flex:none; }
+.icon-xl { width:30px; height:30px; display:inline-block; flex:none; }
+.icon-sm { width:20px; height:20px; display:inline-block; flex:none; }
+
+/* Padronização dos controles de pausa para usar currentColor */
+.pause-icon { color: white; }
+.pause-icon svg { stroke: currentColor; }
+.pause-icon[aria-pressed="false"] { opacity: 0.45; }
+.pause-icon[aria-pressed="false"] svg { stroke: currentColor; }
+
+/* Ação continuar/sair com ícone alinhado */
+.pause-action-icon { display:inline-grid; place-items:center; margin-right:8px; }
+.pause-action-icon .icon, .pause-action-icon .icon-lg { width:22px; height:22px; }
+
+/* Botões de fechar com ícone X centralizado */
+#skip25Close, #closeShop { display:grid; place-items:center; }
+#skip25Close .icon, #closeShop .icon { width:22px; height:22px; }
+
+/* Botão assistir vídeo com play grande */
+#skip25Watch { display:grid; place-items:center; width:88px; height:88px; border-radius:50%; margin:18px auto; background:rgba(255,255,255,.12); color:white; border:1px solid rgba(255,255,255,.2); }
+#skip25Watch .icon-xl { width:36px; height:36px; margin-left:3px; }
+
+/* Ícone carrinho na loja */
+.cartIcon { display:inline-grid; place-items:center; margin-right:8px; }
+.cartIcon .icon { width:22px; height:22px; }
+
+/* HUD pause com ícone */
+#pause { display:grid; place-items:center; }
+#pause .icon-lg { width:24px; height:24px; }
+
+/* Language cue padronizado */
+.languageScrollCue svg { width:28px; height:28px; stroke: currentColor; opacity:.85; }
+
+/* Preservação: moeda dourada custom NÃO é sobrescrita - mantém identidade */
+.coinSymbol { /* preservado */ }
+
+/* Preservação: emojis de skins (fogo, bola 8, gelo, unicórnio, bolas/bastões) permanecem como emoji */
