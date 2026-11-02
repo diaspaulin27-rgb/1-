@@ -67,7 +67,7 @@
     'Assistir vídeo':'Watch video','Toque no play para assistir.':'Tap play to watch.',
     'AINDA NÃO ACABOU':'NOT OVER YET','Continuar?':'Continue?',
     'Você tem sete segundos para decidir.':'You have seven seconds to decide.',
-    '▶ ASSISTIR E CONTINUAR':'▶ WATCH & CONTINUE','JOGAR DO ZERO':'PLAY FROM ZERO',
+    'ASSISTIR E CONTINUAR':'WATCH & CONTINUE','JOGAR DO ZERO':'PLAY FROM ZERO',
     'ANÚNCIO RECOMPENSADO':'REWARDED AD','Preparando resgate':'Preparing rescue',
     'Simulação do anúncio para este protótipo.':'Ad simulation for this prototype.',
     'RESGATE ATIVADO':'RESCUE ACTIVATED','Prepare-se':'Get ready',
@@ -1620,8 +1620,8 @@
       else if(/^(ALÍVIO|BÔNUS|ESCUDO|DOURADA|CESTA!|GOL!|FIELD GOAL!|GOLFE!|DESAFIO SUPERADO|SKIN)/.test(text))kind='good';
       else kind='neutral';
     }
-    const banner=$('#eventBanner'),icons={troll:'⚠',good:'✦',sport:'◎',neutral:'•'};
-    $('#noticeTitle').textContent=icons[kind]+' '+tr(noticeSource||text);
+    const banner=$('#eventBanner'),icons={troll:`<svg class="event-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,good:`<svg class="event-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063A2 2 0 0 0 14.063 15.5l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v5"/><path d="M5 21H2"/></svg>`,sport:'◎',neutral:'•'};
+    $('#noticeTitle').innerHTML=icons[kind]+' '+tr(noticeSource||text);
     $('#noticeDetail').textContent=tr(noticeSource?text:detail);
     banner.style.top=top===null?'':top+'px';banner.className='show '+kind;
     noticePriority=priority;noticeUntil=performance.now()+duration;clearTimeout(eventBannerTimer);
