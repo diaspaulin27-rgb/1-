@@ -1,4 +1,6 @@
 <!doctype html>
+<!-- 1% • ZANON - Ícones padronizados Lucide 24x24 stroke 2.2 round currentColor | Moeda dourada e emojis skins preservados -->
+
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -19,7 +21,7 @@
   <div id="hud">
     <div class="pill" id="scorePill"><div class="scoreLine"><span class="scoreLabel">SCORE</span><span id="score">000</span></div><div id="personalBest">RECORDE <span id="hudBest">0</span></div></div>
     <div class="pill" id="coinsPill" aria-label="Moedas: 0"><svg class="coinSymbol" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="hudGold" x2=".8" y2="1"><stop stop-color="#fff2a5"/><stop offset=".5" stop-color="#ffd24b"/><stop offset="1" stop-color="#df8f15"/></linearGradient></defs><circle cx="16" cy="16" r="14" fill="url(#hudGold)" stroke="#fff0a4" stroke-width="1.5"/><circle cx="16" cy="16" r="10.5" fill="none" stroke="#b77915" stroke-opacity=".5"/><path d="M20 10.5c-1-1.8-7-2-8 .5-1.8 4.8 10 3.2 8 8-1 3-7 3-9 .5M16 6.5v19" fill="none" stroke="#805009" stroke-width="2.4" stroke-linecap="round"/></svg><span id="coinCount">0</span></div>
-    <button class="pill" id="pause" aria-label="Pausar">Ⅱ</button>
+    <button class="pill" id="pause" aria-label="Pausar"><svg class="icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button>
   </div>
   <div id="achievement" role="status" aria-live="polite"></div>
   <div id="eventBanner" role="status" aria-live="polite"><span id="noticeTitle"></span><span id="noticeDetail"></span></div>
@@ -43,7 +45,7 @@
         <button class="languageButton" id="languageChineseTraditional" data-language="zh-TW">繁體中文</button>
       </div>
       <div class="languageScrollCue" id="languageScrollCue" aria-hidden="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path><path d="M6 15l6 6 6-6" opacity=".7"></path></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/></svg>
       </div>
     </div>
   </section>
@@ -53,7 +55,7 @@
       <h1>1%</h1>
       <p class="tag">Cada rebatida deixa tudo 1% mais difícil. Quanto você aguenta?</p>
       <button class="primary" id="play">JOGAR DO ZERO</button>
-      <button class="shopStart openShop"><span class="cartIcon" aria-hidden="true">🛒</span>LOJA</button>
+      <button class="shopStart openShop"><span class="cartIcon" aria-hidden="true"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>LOJA</button>
     </div>
   </section>
 
@@ -95,28 +97,28 @@
       <h2 id="pauseTitle" style="margin:0">Respire.</h2>
       <div class="pause-controls" aria-label="Controles de áudio e vibração">
         <button class="pause-icon" id="sound" data-icon="sound" aria-label="Efeitos sonoros" aria-pressed="true" title="Efeitos sonoros">
-          <svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" stroke="none" d="M5 15h7l9-7v24l-9-7H5z"/><path d="M26 14c3 3 3 9 0 12M30 10c6 5 6 15 0 20" stroke-width="2.8"/></svg>
+          <svg class="icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
         </button>
         <button class="pause-icon" id="musicToggle" aria-label="Música" aria-pressed="true" title="Música">
-          <svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" stroke="none" d="M17 7v21.5a5.3 5.3 0 1 1-3-4.8V12l17-4v17.5a5.3 5.3 0 1 1-3-4.8V5z"/></svg>
+          <svg class="icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="18" r="4"/><path d="M12 18V2l7-2v16"/></svg>
         </button>
         <button class="pause-icon" id="vibrationToggle" aria-label="Vibração" aria-pressed="true" title="Vibração">
-          <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="12" y="5" width="16" height="30" rx="3"/><path d="M17 9h6M18 30h4M7 12c-3 3-3 13 0 16M33 12c3 3 3 13 0 16M3 16c-2 2-2 6 0 8M37 16c2 2 2 6 0 8"/></svg>
+          <svg class="icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 8 2 2-2 2 2 2-2 2"/><path d="m22 8-2 2 2 2-2 2 2 2"/><rect width="12" height="20" x="6" y="2" rx="2" ry="2"/></svg>
         </button>
       </div>
-      <button class="primary" id="resume"><span class="pause-action-icon" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M3 13.2 14 4l11 9.2-2 2.3-2-1.7V24h-6v-6h-3v6H6V13.8l-1.9 1.7z" stroke="none"/></svg></span>CONTINUAR</button>
-      <button class="secondary" id="quit"><span class="pause-action-icon" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M15 3H5a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10v-3H6V6h9z" stroke="none"/><path d="M13 14h12m-5-5 5 5-5 5" fill="none" stroke-width="2.8"/></svg></span>SAIR</button>
+      <button class="primary" id="resume"><span class="pause-action-icon" aria-hidden="true"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>CONTINUAR</button>
+      <button class="secondary" id="quit"><span class="pause-action-icon" aria-hidden="true"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span>SAIR</button>
       <div class="pause-brand-mark" aria-label="1 por cento">1%</div>
     </div>
   </section>
 
   <section class="overlay hidden" id="adScreen">
     <div class="card" style="position:relative">
-      <button id="skip25Close" aria-label="Fechar">×</button>
+      <button id="skip25Close" aria-label="Fechar"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       <div class="brand">ATALHO +25</div>
       <h2 style="font-size:36px;margin:0">Pule 25 fases</h2>
       <p class="tag" style="font-size:15px;margin-top:12px">Assista a um vídeo e comece direto no 25.</p>
-      <button id="skip25Watch" aria-label="Assistir vídeo">▶</button>
+      <button id="skip25Watch" aria-label="Assistir vídeo"><svg class="icon-xl" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
       <div id="adCountdown" hidden>3</div>
       <p class="micro" id="skip25AdNote">Toque no play para assistir.</p>
     </div>
@@ -128,13 +130,13 @@
       <h2 id="reviveTitle" style="font-size:42px;margin:0">Continuar?</h2>
       <div id="reviveCountdown">7</div>
       <p class="tag" id="reviveStatus" style="font-size:15px;margin-top:12px">Você tem sete segundos para decidir.</p>
-      <button class="primary" id="watchReviveAd" style="margin-top:20px">▶ ASSISTIR E CONTINUAR</button>
+      <button class="primary" id="watchReviveAd" style="margin-top:20px"><span class="inline-flex items-center gap-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg> ASSISTIR E CONTINUAR</span></button>
       <button class="secondary" id="giveUp" style="width:100%;margin-top:10px">JOGAR DO ZERO</button>
     </div>
   </section>
 
   <section id="shopPanel" class="hidden">
-    <div class="shopHead"><h2>LOJA</h2><button id="closeShop">×</button></div>
+    <div class="shopHead"><h2>LOJA</h2><button id="closeShop"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
     <div id="shopBalance" aria-label="Moedas: 0"><svg class="coinSymbol" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="shopGold" x2=".8" y2="1"><stop stop-color="#fff2a5"/><stop offset=".5" stop-color="#ffd24b"/><stop offset="1" stop-color="#df8f15"/></linearGradient></defs><circle cx="16" cy="16" r="14" fill="url(#shopGold)" stroke="#fff0a4" stroke-width="1.5"/><circle cx="16" cy="16" r="10.5" fill="none" stroke="#b77915" stroke-opacity=".5"/><path d="M20 10.5c-1-1.8-7-2-8 .5-1.8 4.8 10 3.2 8 8-1 3-7 3-9 .5M16 6.5v19" fill="none" stroke="#805009" stroke-width="2.4" stroke-linecap="round"/></svg><span id="shopBalanceCount">0</span></div>
     <div class="shopShowcase">
       <canvas id="shopPreview" width="1120" height="420" aria-label="Prévia da skin em movimento"></canvas>
