@@ -53,13 +53,7 @@
     'Você chegou ao ':'You reached ',
     'REBATIDAS':'BOUNCES','CAIXAS':'BOXES','TROLLS':'TROLLS','ALÍVIOS':'RELIEFS','MOEDAS':'COINS',
     'SEGREDOS':'SECRETS','VINGANÇA · JOGAR DE NOVO':'REVENGE · PLAY AGAIN',
-    'COMPARTILHAR':'SHARE','INÍCIO':'HOME','Desafie alguém.':'Challenge someone.',
-    'Cartão com o resultado da partida':'Card with your game result',
-    'Preparando sua imagem…':'Preparing your image…','SALVAR IMAGEM':'SAVE IMAGE','VOLTAR':'BACK',
-    'Compartilhe o cartão ou salve a imagem.':'Share the card or save the image.','Consegue passar?':'Can you beat it?',
-    'Salve a imagem para enviar. Se ela abrir em outra tela, mantenha o dedo sobre ela para salvar.':'Save the image to send it. If it opens on another screen, press and hold it to save.',
-    'Não foi possível gerar a imagem. Feche e tente novamente.':'Could not generate the image. Close it and try again.',
-    'Não foi possível compartilhar. Você pode salvar a imagem e enviar depois.':'Could not share. You can save the image and send it later.',
+    'INÍCIO':'HOME',
     'PAUSADO':'PAUSED','Respire.':'Breathe.','CONTINUAR':'RESUME','SOM: ON':'SOUND: ON',
     'SAIR':'QUIT','SOM: OFF':'SOUND: OFF',
     'ATALHO +25':'SHORTCUT +25','Pule 25 fases':'Skip 25 levels',
@@ -131,7 +125,6 @@
     'AINDA NÃO ACABOU':'NOT OVER YET','NO ESCURO EU RESOLVO':'I HANDLE THE DARK',
     'FRIO SOB PRESSÃO':'COOL UNDER PRESSURE','ALÉM DO ABISMO':'BEYOND THE ABYSS',
     'Você tem sete segundos para decidir.':'You have seven seconds to decide.',
-    'Compartilhe o cartão ou salve a imagem.':'Share the card or save the image.'
   };
   Object.freeze(translations);
 
@@ -2023,10 +2016,9 @@
     offerRevive();
   }
 
-  let finalRun=null,shareFile=null,shareURL=null,shareGeneration=0;
   function finishGame(title='Foi quase.'){
     mode='over';setMusicActive(false);clearInterval(reviveTimer);clearInterval(adTimer);
-    finalRun=saveRunResult();
+    saveRunResult();
     secretPanel.className='';secretGlow.className='';
     updateHUD();
     $('#finalScore').textContent=score; $('#bestScore').textContent=best;
@@ -2527,80 +2519,6 @@
   $('#skip25Offer').onclick=openSkip25Modal;
   $('#skip25Watch').onclick=requestRewardedStart;
   $('#skip25Close').onclick=closeSkip25Modal;
-  function drawShareCard(result){
-    const card=document.createElement('canvas');card.width=1080;card.height=1350;
-    const c=card.getContext('2d');
-    // O cartão de compartilhamento mantém a identidade azul em qualquer recorde.
-    const background=c.createLinearGradient(0,0,1080,1350);
-    background.addColorStop(0,'#1d5a87');background.addColorStop(1,'#08336d');
-    c.fillStyle=background;c.fillRect(0,0,1080,1350);
-    c.fillStyle='rgba(3,10,28,.34)';c.fillRect(0,0,1080,1350);
-    c.strokeStyle='rgba(255,211,72,.55)';c.lineWidth=3;
-    roundRect(c,48,48,984,1254,40);c.stroke();
-    c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
-    c.font='950 72px system-ui, sans-serif';c.fillText('1% - The Impossible Ball',540,150);
-
-    c.fillStyle='#a8d9ff';c.font='800 30px system-ui, sans-serif';
-    c.fillText(language==='en'?'MY RECORD':'MEU RECORDE',540,365);
-    c.fillStyle='#fff4b0';c.font='950 220px system-ui, sans-serif';
-    c.fillText(String(result.record),540,535);
-
-    c.fillStyle='#fff';c.font='900 54px system-ui, sans-serif';
-    c.fillText(language==='en'?'Can you beat it?':'Consegue superar?',540,760);
-    c.fillStyle='#e7edf8';c.font='650 28px system-ui, sans-serif';
-    c.fillText(language==='en'?'Each bounce makes everything 1% harder.':'Cada rebatida deixa tudo 1% mais difícil.',540,825);
-
-    c.fillStyle='#a8d9ff';c.font='950 48px system-ui, sans-serif';
-    c.fillText(language==='en'?'ACCEPT THE CHALLENGE?':'ACEITA O DESAFIO?',540,1025);
-
-    c.fillStyle='#ffd84d';c.font='800 24px system-ui, sans-serif';
-    c.fillText('Z A N O N',540,1160);
-    return card;
-  }
-  function closeShareCard(){
-    shareGeneration++;shareFile=null;
-    if(shareURL){URL.revokeObjectURL(shareURL);shareURL=null;}
-    $('#shareImage').removeAttribute('src');$('#saveCard').removeAttribute('href');
-    $('#shareDialog').classList.add('hidden');$('#shareResult').focus();
-  }
-  async function openShareCard(){
-    if(!finalRun)return;
-    const result={...finalRun},generation=++shareGeneration;
-    if(shareURL)URL.revokeObjectURL(shareURL);shareURL=null;shareFile=null;
-    $('#shareDialog').classList.remove('hidden');$('#closeShare').focus();
-    $('#shareImage').hidden=true;$('#saveCard').hidden=true;$('#saveCard').style.display='none';$('#sendCard').disabled=true;
-    $('#shareStatus').textContent=tr('Preparando sua imagem…');
-    try{
-      const canvas=drawShareCard(result);
-      const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG indisponível')),'image/png'));
-      if(generation!==shareGeneration)return;
-      const filename='1porcento-score-'+result.score+'.png';
-      shareURL=URL.createObjectURL(blob);$('#shareImage').src=shareURL;$('#shareImage').hidden=false;
-      const save=$('#saveCard');save.href=shareURL;save.download=filename;save.hidden=false;save.style.display='flex';
-      shareFile=typeof File==='function'?new File([blob],filename,{type:'image/png'}):null;
-      const supported=!!(shareFile&&navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]}));
-      $('#sendCard').disabled=!supported;
-      $('#shareStatus').textContent=tr(supported?'Compartilhe o cartão ou salve a imagem.':'Salve a imagem para enviar. Se ela abrir em outra tela, mantenha o dedo sobre ela para salvar.');
-    }catch(error){if(generation===shareGeneration)$('#shareStatus').textContent=tr('Não foi possível gerar a imagem. Feche e tente novamente.');}
-  }
-  $('#shareResult').onclick=openShareCard;
-  $('#closeShare').onclick=closeShareCard;
-  $('#sendCard').onclick=async()=>{
-    if(!shareFile)return;
-    const generation=shareGeneration;$('#sendCard').disabled=true;
-    try{await navigator.share({files:[shareFile],title:'1% · Consegue passar?'});}
-    catch(error){if(generation===shareGeneration&&error.name!=='AbortError')$('#shareStatus').textContent=tr('Não foi possível compartilhar. Você pode salvar a imagem e enviar depois.');}
-    finally{if(generation===shareGeneration)$('#sendCard').disabled=false;}
-  };
-  addEventListener('keydown',event=>{
-    if($('#shareDialog').classList.contains('hidden'))return;
-    if(event.key==='Escape'){closeShareCard();return;}
-    if(event.key==='Tab'){
-      const targets=[$('#sendCard'),$('#saveCard'),$('#closeShare')].filter(el=>!el.disabled&&!el.hidden);
-      const index=targets.indexOf(document.activeElement),next=(index+(event.shiftKey?-1:1)+targets.length)%targets.length;
-      event.preventDefault();targets[next].focus();
-    }
-  });
   $('#watchReviveAd').onclick=requestReviveAd;
   $('#giveUp').onclick=()=>{
     if(mode!=='revive')return;
