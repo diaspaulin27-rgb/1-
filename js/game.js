@@ -136,28 +136,46 @@
     if (locale !== 'pt' && external && Object.prototype.hasOwnProperty.call(external, s)) return external[s];
     if (locale === 'en' && translations[s]) return translations[s];
     if (locale !== 'pt' && translations[s]) return translations[s];
-    if (locale !== 'en') return s;
-
-    let m=s.match(/^\+(\d+) PONTOS · CAIXA$/);
-    if(m)return '+'+m[1]+' POINTS · BOX';
+    if (locale === 'pt') return s;
+    // Padrões dinâmicos — funcionam em TODAS as línguas, não só em EN.
+    // Antes: 'if (locale !== \'en\') return s;' bloqueava tudo abaixo para DE/ES/FR/etc.
+    // Agora cada padrão monta a tradução com fragmentos de ZANON_LANGUAGES (singular/plural correto).
+    const cnt=(n,sing,plur)=>n+' '+tr(n===1?sing:plur);
+    let m;
+    m=s.match(/^FALTOU (\d+) PONTO PARA SUPERAR SEU RECORDE$/);
+    if(m)return tr('FALTOU')+' '+m[1]+' '+tr('PONTO')+' '+tr('PARA SUPERAR SEU RECORDE');
+    m=s.match(/^FALTARAM (\d+) PONTOS PARA SUPERAR SEU RECORDE$/);
+    if(m)return tr('FALTARAM')+' '+m[1]+' '+tr('PONTOS')+' '+tr('PARA SUPERAR SEU RECORDE');
+    m=s.match(/^NOVO RECORDE · \+(\d+) PONTOS$/);
+    if(m)return tr('NOVO RECORDE')+' · +'+m[1]+' '+tr(m[1]==='1'?'PONTO':'PONTOS');
+    m=s.match(/^NOVO RECORDE · (.+)$/);
+    if(m)return tr('NOVO RECORDE')+' · '+tr(m[1]);
+    m=s.match(/^\+(\d+) PONTOS · CAIXA$/);
+    if(m)return '+'+m[1]+' '+tr(m[1]==='1'?'PONTO':'PONTOS')+' · '+tr('CAIXA');
+    m=s.match(/^\+(\d+) MOEDAS$/);
+    if(m)return '+'+m[1]+' '+tr(m[1]==='1'?'MOEDA':'MOEDAS');
+    m=s.match(/^BÔNUS: \+(\d+) PONTOS$/);
+    if(m)return tr('BÔNUS: +')+m[1]+' '+tr(m[1]==='1'?'PONTO':'PONTOS');
     m=s.match(/^(\d+) REBATIDAS · (\d+) CAIXAS$/);
-    if(m)return m[1]+' BOUNCES · '+m[2]+' BOXES';
+    if(m)return cnt(Number(m[1]),'REBATIDA','REBATIDAS')+' · '+cnt(Number(m[2]),'CAIXA','CAIXAS');
     m=s.match(/^(\d+) TROLLS · (\d+) ALÍVIOS · (\d+) MOEDAS$/);
-    if(m)return m[1]+' TROLLS · '+m[2]+' RELIEFS · '+m[3]+' COINS';
+    if(m)return cnt(Number(m[1]),'TROLL','TROLLS')+' · '+cnt(Number(m[2]),'ALÍVIO','ALÍVIOS')+' · '+cnt(Number(m[3]),'MOEDA','MOEDAS');
+    m=s.match(/^([\d ·]+) PONTOS$/);
+    if(m)return m[1]+' '+tr('PONTOS');
     m=s.match(/^(\d+) PONTOS$/);
-    if(m)return m[1]+' POINTS';
-    m=s.match(/^FALTOU (.+)$/); if(m)return 'YOU NEEDED '+m[1]+' POINT';
-    m=s.match(/^FALTARAM (.+)$/); if(m)return 'YOU NEEDED '+m[1]+' POINTS';
-    m=s.match(/^NOVO RECORDE · \+(\d+) PONTOS$/); if(m)return 'NEW RECORD · +'+m[1]+' POINTS';
-    m=s.match(/^Você chegou ao (.+)$/); if(m)return 'You reached '+tr(m[1]);
-    m=s.match(/^Dificuldade do ponto (.+)$/); if(m)return 'Difficulty at point '+m[1];
-    m=s.match(/^PROTEÇÃO · (.+)$/); if(m)return 'PROTECTION · '+m[1];
-    m=s.match(/^RESPIRO · (\d+) REBATIDA(S?)$/); if(m)return 'BREATHER · '+m[1]+' BOUNCE'+(m[2]?'S':'');
-    m=s.match(/^CESTA · (.+)$/); if(m)return 'BASKET · '+m[1];
-    m=s.match(/^Você chegou ao (.+)$/); if(m)return 'You reached '+tr(m[1]);
-    m=s.match(/^COMPRAR E USAR · (.+) MOEDAS$/); if(m)return 'BUY & USE · '+m[1]+' COINS';
-    m=s.match(/^(.+) moedas · disponível para comprar$/); if(m)return tr(m[1])+' coins · available to buy';
-    m=s.match(/^(.+) moedas · faltam (.+) moedas$/); if(m)return tr(m[1])+' coins · you need '+m[2]+' more coins';
+    if(m)return m[1]+' '+tr(m[1]==='1'?'PONTO':'PONTOS');
+    m=s.match(/^(\d+) MOEDAS$/);
+    if(m)return m[1]+' '+tr(m[1]==='1'?'MOEDA':'MOEDAS');
+    m=s.match(/^(\d+) segundos$/);
+    if(m)return m[1]+' '+tr('segundos');
+    m=s.match(/^Você chegou ao (.+)$/); if(m)return tr('Você chegou ao ')+tr(m[1]);
+    m=s.match(/^Dificuldade do ponto (.+)$/); if(m)return tr('Dificuldade do ponto ')+m[1];
+    m=s.match(/^PROTEÇÃO · (.+)$/); if(m)return tr('PROTEÇÃO · ')+m[1];
+    m=s.match(/^RESPIRO · (\d+) REBATIDA(S?)$/); if(m)return tr('RESPIRO · ')+m[1]+' '+tr(m[1]==='1'?'REBATIDA':'REBATIDAS');
+    m=s.match(/^CESTA · (.+)$/); if(m)return tr('CESTA · ')+m[1];
+    m=s.match(/^COMPRAR E USAR · (\d+) MOEDAS$/); if(m)return tr('COMPRAR E USAR')+' · '+m[1]+' '+tr(m[1]==='1'?'MOEDA':'MOEDAS');
+    m=s.match(/^(.+) moedas · disponível para comprar$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('disponível para comprar');
+    m=s.match(/^(.+) moedas · faltam (.+) moedas$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('faltam')+' '+m[2]+' '+tr('moedas');
     return s;
   }
 
@@ -226,7 +244,7 @@
       musicButton.setAttribute('aria-pressed',String(musicOn));
     }
     if(vibrationButton){
-      const label=language==='en'?'Vibration: '+(vibrationOn?'on':'off'):'Vibração: '+(vibrationOn?'ligada':'desligada');
+      const label=tr(vibrationOn?'Vibração: ligada':'Vibração: desligada');
       vibrationButton.setAttribute('aria-label',label);vibrationButton.setAttribute('title',label);
       vibrationButton.setAttribute('aria-pressed',String(vibrationOn));
     }
@@ -305,7 +323,7 @@
       secretNotice=secretQueue.shift();secretNoticeUntil=elapsed+2;
       secretPanel.replaceChildren();
       const title=document.createElement('strong'),detail=document.createElement('small');
-      title.textContent='SEGREDO! '+secretNotice.prize;detail.textContent=secretNotice.detail;
+      title.textContent=tr('SEGREDO! ')+tr(secretNotice.prize);detail.textContent=tr(secretNotice.detail);
       secretPanel.append(title,detail);secretPanel.className='show';
       secretGlow.className='';void secretGlow.offsetWidth;secretGlow.className='show';
       tone(880,.12,'sine',.035);tone(1175,.18,'sine',.03,.1);
@@ -1299,7 +1317,7 @@
     $('#score').textContent=String(score).padStart(3,'0');
     $('#hudBest').textContent=Math.max(best,score);
     $('#coinCount').textContent=coins;
-    $('#coinsPill').setAttribute('aria-label','Moedas: '+coins);
+    $('#coinsPill').setAttribute('aria-label',tr('Moedas: ')+coins);
     $('#coinCount').title=String(coins);
   }
 
@@ -1309,9 +1327,9 @@
     if(newRecord)recordAnnounced=true;
     if(!milestones.length&&!newRecord)return;
     const parts=[];
-    if(newRecord)parts.push('NOVO RECORDE');
-    if(milestones.length)parts.push(milestones.join(' · ')+' PONTOS');
-    $('#achievement').textContent=tr(parts.join(' · '));$('#achievement').className='show';achievementUntil=elapsed+2.6;
+    if(newRecord)parts.push(tr('NOVO RECORDE'));
+    if(milestones.length)parts.push(milestones.join(' · ')+' '+tr('PONTOS'));
+    $('#achievement').textContent=parts.join(' · ');$('#achievement').className='show';achievementUntil=elapsed+2.6;
     tone(newRecord?980:780,.12,'sine',.025);haptic(18);
   }
   function recordSummary(){
@@ -1641,7 +1659,7 @@
       expiresOn:untilPickup?'pickup':untilSpawn?'spawn':null});
     eventState.activeEffect=type;
     if(type==='earthquake')shake=Math.max(shake,7.5);
-    toast(label,{detail:untilPickup?'Até pegar outra caixa':untilSpawn?'Até aparecer a próxima caixa':duration+' segundos'});
+    toast(label,{detail:untilPickup?tr('Até pegar outra caixa'):untilSpawn?tr('Até aparecer a próxima caixa'):duration+' '+tr('segundos')});
   }
   const effectNames={slow:'Bola lenta',cameraSlow:'Câmera lenta',magnet:'Moeda magnética',
     fast:'Bola acelerada',invert:'Controles invertidos',small:'Barra menor',ghostPaddle:'Barra fantasma',ice:'Chão de gelo',earthquake:'Terremoto'};
@@ -1678,7 +1696,7 @@
     if(restHits===0){
       if(secretRun&&secretRun.basketPending){secretRun.basketPending=false;awardSecret('basket');}
       ball.trail=[];updateMusicStage();
-      toast('DE VOLTA AO DESAFIO',{kind:'neutral',detail:'Dificuldade do ponto '+score});
+      toast('DE VOLTA AO DESAFIO',{kind:'neutral',detail:tr('Dificuldade do ponto ')+score});
       nextBox=Math.max(nextBox,elapsed+2);
     }
   }
@@ -2024,9 +2042,9 @@
     $('#finalScore').textContent=score; $('#bestScore').textContent=best;
     $('#gameOverTitle').textContent=tr(title);
     $('#recordResult').textContent=tr(recordSummary());
-    $('#rank').textContent=tr('Você chegou ao '+visualState().name);
-    $('#runPrimary').textContent=tr(runStats.rebounds+' REBATIDAS · '+runStats.boxes+' CAIXAS');
-    $('#runSecondary').textContent=tr(runStats.trolls+' TROLLS · '+runStats.reliefs+' ALÍVIOS · '+runStats.coins+' MOEDAS');
+    $('#rank').textContent=tr('Você chegou ao ')+tr(visualState().name);
+    $('#runPrimary').textContent=runStats.rebounds+' '+tr(runStats.rebounds===1?'REBATIDA':'REBATIDAS')+' · '+runStats.boxes+' '+tr(runStats.boxes===1?'CAIXA':'CAIXAS');
+    $('#runSecondary').textContent=runStats.trolls+' '+tr(runStats.trolls===1?'TROLL':'TROLLS')+' · '+runStats.reliefs+' '+tr(runStats.reliefs===1?'ALÍVIO':'ALÍVIOS')+' · '+runStats.coins+' '+tr(runStats.coins===1?'MOEDA':'MOEDAS');
     if(secretRun&&secretRun.rewards.length)$('#runSecondary').textContent+=' · '+tr('SEGREDOS')+': '+secretRun.rewards.map(r=>tr(r.name)+' — '+tr(r.prize)).join(' / ');
     setTimeout(()=>show('#gameOver'),220);
   }
@@ -2052,10 +2070,10 @@
     setupRescue();
     clearInterval(reviveTimer);clearInterval(adTimer);mode='countdown';
     $('#reviveBrand').textContent=tr('BÔNUS RARO');$('#reviveTitle').textContent=tr('Segunda chance');
-    $('#reviveStatus').textContent=language==='en'?'Your extra chance: 3 seconds of protection when you return.':'Sua chance extra: 3 segundos de proteção ao voltar.';$('#watchReviveAd').style.display='none';$('#giveUp').style.display='none';
+    $('#reviveStatus').textContent=tr('Sua chance extra: 3 segundos de proteção ao voltar.');$('#watchReviveAd').style.display='none';$('#giveUp').style.display='none';
     let remaining=3;$('#reviveCountdown').textContent=remaining;show('#reviveScreen');render();
     reviveTimer=setInterval(()=>{
-      remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
+      remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:tr('VAI!');
       if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(true);last=performance.now();raf=requestAnimationFrame(loop);}
     },1000);
   }
@@ -2102,7 +2120,7 @@
     $('#reviveStatus').textContent=tr('5 segundos de proteção. Todos os efeitos anteriores foram encerrados.');$('#watchReviveAd').style.display='none';
     let remaining=3;$('#reviveCountdown').textContent=remaining;
     reviveTimer=setInterval(()=>{
-      remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:'VAI!';
+      remaining--;$('#reviveCountdown').textContent=remaining>0?remaining:tr('VAI!');
       if(remaining<=0){clearInterval(reviveTimer);mode='playing';hideAll();setMusicActive(true);last=performance.now();raf=requestAnimationFrame(loop);}
     },1000);
   }
@@ -2359,7 +2377,7 @@
       ctx.save();ctx.globalAlpha=.65+.35*pulse;ctx.strokeStyle='#b8f4ff';ctx.shadowColor='#69dfff';ctx.shadowBlur=10+6*pulse;ctx.lineWidth=3;
       ctx.beginPath();ctx.moveTo(8,y);ctx.lineTo(W-8,y);ctx.stroke();
       ctx.shadowBlur=0;ctx.fillStyle='#b8f4ff';ctx.fillRect(8,y+6,(W-16)*remaining,2);
-      ctx.globalAlpha=1;ctx.font='800 10px sans-serif';ctx.textAlign='center';ctx.fillText('PROTEÇÃO · '+Math.ceil(secondsLeft)+'s',W/2,y+22);ctx.restore();return;
+      ctx.globalAlpha=1;ctx.font='800 10px sans-serif';ctx.textAlign='center';ctx.fillText(tr('PROTEÇÃO · ')+Math.ceil(secondsLeft)+'s',W/2,y+22);ctx.restore();return;
     }
     if(eventState.barrierCharges<=0)return;
     const y=Math.min(H-24,paddle.y+paddle.h+22),x=12,w=W-24,h=8;
@@ -2374,12 +2392,12 @@
     }
     ctx.globalAlpha=.95;ctx.shadowBlur=0;ctx.fillStyle='#ffe398';
     ctx.font='800 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-    ctx.fillText('ESCUDO · 1 QUEDA',W/2,y+h+5);ctx.restore();
+    ctx.fillText(tr('ESCUDO · 1 QUEDA'),W/2,y+h+5);ctx.restore();
   }
   function drawSportChallenge(){
     if(restHits>0){
       ctx.save();ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#123';ctx.shadowBlur=6;
-      ctx.font='800 16px sans-serif';ctx.fillText('RESPIRO · '+restHits+' REBATIDA'+(restHits>1?'S':''),W/2,H*.22);ctx.restore();
+      ctx.font='800 16px sans-serif';ctx.fillText(tr('RESPIRO · ')+restHits+' '+tr(restHits===1?'REBATIDA':'REBATIDAS'),W/2,H*.22);ctx.restore();
     }
     const c=eventState.activeChallenge;if(!c)return;
     const x=c.x,y=c.y,w=c.w,remaining=Math.max(0,c.endAt-elapsed);
@@ -2402,7 +2420,7 @@
 
     ctx.shadowBlur=0;ctx.fillStyle='#ffffff';ctx.font='800 12px sans-serif';
     const hudY=y-w*.98;
-    ctx.fillText('CESTA · '+Math.ceil(remaining)+'s',x,hudY);
+    ctx.fillText(tr('CESTA · ')+Math.ceil(remaining)+'s',x,hudY);
     ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(x-w/2,hudY+8,w,3);
     ctx.fillStyle='#fff';ctx.fillRect(x-w/2,hudY+8,w*clamp(remaining/17,0,1),3);
     ctx.restore();
@@ -2423,7 +2441,7 @@
         ctx.fillStyle=o.golden?'#573304':'#fff';ctx.font=`900 ${o.size*.66}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('?',cx,cy+2);
         if(o.golden){
           ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillStyle='#fff3af';ctx.font='900 11px sans-serif';
-          ctx.textBaseline='bottom';ctx.fillText('★ DOURADA',cx,o.y-10);
+          ctx.textBaseline='bottom';ctx.fillText(tr('★ DOURADA'),cx,o.y-10);
         }
       }ctx.restore();
     }
@@ -2693,7 +2711,7 @@
   }
 
   function renderShop(){
-    $('#shopBalanceCount').textContent=coins;$('#shopBalance').setAttribute('aria-label',language==='en'?'Coins: '+coins:'Moedas: '+coins);const grid=$('#shopGrid');grid.innerHTML='';
+    $('#shopBalanceCount').textContent=coins;$('#shopBalance').setAttribute('aria-label',tr('Moedas: ')+coins);const grid=$('#shopGrid');grid.innerHTML='';
     const isBalls=shopCategory==='balls';
     const current=isBalls?(skins.find(s=>s.id===shopPreviewId)||skins[0]):(paddleSkins.find(s=>s.id===shopPreviewPaddleId)||paddleSkins[0]);
     const ownedList=isBalls?owned:ownedPaddles;
