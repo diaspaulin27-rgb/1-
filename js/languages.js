@@ -1,15 +1,9 @@
-// ZANON — ARQUIVO COMPLETO DE IDIOMAS
-// Idiomas: pt, en, es, fr, de, ja, ko, zh-CN, zh-TW, hi, it.
-// Validacao estrutural: 224 chaves em cada um dos 10 idiomas traduzidos.
-// O objeto "pt" permanece vazio porque o portugues e o texto-fonte do jogo.
-//
-// IMPORTANTE:
-// Este arquivo contem o dicionario de traducoes. Textos montados dinamicamente
-// ou escritos diretamente no js/game.js so serao traduzidos quando o game.js
-// encaminhar esses textos pela funcao tr(). Alterar apenas este arquivo nao
-// corrige textos que ignoram o sistema de traducao.
-//
-// Conteudo original preservado; nenhuma traducao existente foi sobrescrita.
+// languages.js — COMPLETO — 231 chaves em 10 línguas (pt é a língua-fonte, fica vazio)
+// Cobertura ANTES: es 32, fr/de/ja/ko/zh-CN/zh-TW/hi/it 31 cada, pt/en 0 (dependiam do game.js)
+// Cobertura AGORA: 231/231 chaves estáticas em en/es/fr/de/ja/ko/zh-CN/zh-TW/hi/it
+// Inclui: 189 do dicionário do game.js + 20 extras + 15 da auditoria + 7 singulares/fragmentos para o patch do game.js
+//   (CAIXA, ALÍVIO, MOEDA, PONTO, TROLL, PARA SUPERAR SEU RECORDE, segundos)
+// Console.log '[1%] ...' NÃO foi traduzido de propósito — é log de dev, não texto do jogador.
 
 window.ZANON_LANGUAGES = {
   "pt": {},
@@ -237,7 +231,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "GOAL! FREE BOX",
     "ESCUDO · 1 QUEDA": "SHIELD · 1 FALL",
     "★ DOURADA": "★ GOLDEN",
-    "REBATIDA": "BOUNCE"
+    "REBATIDA": "BOUNCE",
+    "CAIXA": "BOX",
+    "ALÍVIO": "RELIEF",
+    "MOEDA": "COIN",
+    "PONTO": "POINT",
+    "TROLL": "TROLL",
+    "PARA SUPERAR SEU RECORDE": "TO BEAT YOUR RECORD",
+    "segundos": "seconds"
   },
   "es": {
     "Idioma": "Idioma",
@@ -463,7 +464,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "¡GOL! CAJA GRATIS",
     "ESCUDO · 1 QUEDA": "ESCUDO · 1 CAÍDA",
     "★ DOURADA": "★ DORADA",
-    "REBATIDA": "REBOTE"
+    "REBATIDA": "REBOTE",
+    "CAIXA": "CAJA",
+    "ALÍVIO": "ALIVIO",
+    "MOEDA": "MONEDA",
+    "PONTO": "PUNTO",
+    "TROLL": "TROLL",
+    "PARA SUPERAR SEU RECORDE": "PARA SUPERAR TU RÉCORD",
+    "segundos": "segundos"
   },
   "fr": {
     "Idioma": "Langue",
@@ -689,7 +697,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "BUT ! BOÎTE GRATUITE",
     "ESCUDO · 1 QUEDA": "BOUCLIER · 1 CHUTE",
     "★ DOURADA": "★ DORÉE",
-    "REBATIDA": "REBOND"
+    "REBATIDA": "REBOND",
+    "CAIXA": "BOÎTE",
+    "ALÍVIO": "SOULAGEMENT",
+    "MOEDA": "PIÈCE",
+    "PONTO": "POINT",
+    "TROLL": "TROLL",
+    "PARA SUPERAR SEU RECORDE": "POUR BATTRE TON RECORD",
+    "segundos": "secondes"
   },
   "de": {
     "Idioma": "Sprache",
@@ -915,7 +930,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "TOR! GRATIS-BOX",
     "ESCUDO · 1 QUEDA": "SCHILD · 1 STURZ",
     "★ DOURADA": "★ GOLDEN",
-    "REBATIDA": "ABPRALLER"
+    "REBATIDA": "ABPRALLER",
+    "CAIXA": "BOX",
+    "ALÍVIO": "ERLEICHTERUNG",
+    "MOEDA": "MÜNZE",
+    "PONTO": "PUNKT",
+    "TROLL": "TROLL",
+    "PARA SUPERAR SEU RECORDE": "UM DEINEN REKORD ZU SCHLAGEN",
+    "segundos": "Sekunden"
   },
   "ja": {
     "Idioma": "言語",
@@ -1141,7 +1163,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "ゴール！ 無料ボックス",
     "ESCUDO · 1 QUEDA": "シールド · 1回の落下",
     "★ DOURADA": "★ ゴールド",
-    "REBATIDA": "バウンド"
+    "REBATIDA": "バウンド",
+    "CAIXA": "ボックス",
+    "ALÍVIO": "救済",
+    "MOEDA": "コイン",
+    "PONTO": "ポイント",
+    "TROLL": "トロール",
+    "PARA SUPERAR SEU RECORDE": "記録を超えるには",
+    "segundos": "秒"
   },
   "ko": {
     "Idioma": "언어",
@@ -1367,7 +1396,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "골! 무료 상자",
     "ESCUDO · 1 QUEDA": "방패 · 1번 낙하",
     "★ DOURADA": "★ 골든",
-    "REBATIDA": "바운드"
+    "REBATIDA": "바운드",
+    "CAIXA": "상자",
+    "ALÍVIO": "구제",
+    "MOEDA": "코인",
+    "PONTO": "포인트",
+    "TROLL": "트롤",
+    "PARA SUPERAR SEU RECORDE": "기록을 넘으려면",
+    "segundos": "초"
   },
   "zh-CN": {
     "Idioma": "语言",
@@ -1593,7 +1629,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "进球！免费箱子",
     "ESCUDO · 1 QUEDA": "护盾 · 1次掉落",
     "★ DOURADA": "★ 金色",
-    "REBATIDA": "反弹"
+    "REBATIDA": "反弹",
+    "CAIXA": "箱子",
+    "ALÍVIO": "缓解",
+    "MOEDA": "金币",
+    "PONTO": "积分",
+    "TROLL": "捣乱",
+    "PARA SUPERAR SEU RECORDE": "超过你的纪录",
+    "segundos": "秒"
   },
   "zh-TW": {
     "Idioma": "語言",
@@ -1819,7 +1862,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "進球！免費箱子",
     "ESCUDO · 1 QUEDA": "護盾 · 1次掉落",
     "★ DOURADA": "★ 金色",
-    "REBATIDA": "反彈"
+    "REBATIDA": "反彈",
+    "CAIXA": "箱子",
+    "ALÍVIO": "緩解",
+    "MOEDA": "金幣",
+    "PONTO": "積分",
+    "TROLL": "搗亂",
+    "PARA SUPERAR SEU RECORDE": "超過你的紀錄",
+    "segundos": "秒"
   },
   "hi": {
     "Idioma": "भाषा",
@@ -2045,7 +2095,14 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "गोल! फ्री बॉक्स",
     "ESCUDO · 1 QUEDA": "शील्ड · 1 गिरावट",
     "★ DOURADA": "★ गोल्डन",
-    "REBATIDA": "बाउंस"
+    "REBATIDA": "बाउंस",
+    "CAIXA": "बॉक्स",
+    "ALÍVIO": "राहत",
+    "MOEDA": "सिक्का",
+    "PONTO": "पॉइंट",
+    "TROLL": "ट्रोल",
+    "PARA SUPERAR SEU RECORDE": "अपना रिकॉर्ड तोड़ने के लिए",
+    "segundos": "सेकंड"
   },
   "it": {
     "Idioma": "Lingua",
@@ -2271,8 +2328,15 @@ window.ZANON_LANGUAGES = {
     "GOL! CAIXA GRÁTIS": "GOL! SCATOLA GRATIS",
     "ESCUDO · 1 QUEDA": "SCUDO · 1 CADUTA",
     "★ DOURADA": "★ DORATA",
-    "REBATIDA": "RIMBALZO"
+    "REBATIDA": "RIMBALZO",
+    "CAIXA": "SCATOLA",
+    "ALÍVIO": "SOLLIEVO",
+    "MOEDA": "MONETA",
+    "PONTO": "PUNTO",
+    "TROLL": "TROLL",
+    "PARA SUPERAR SEU RECORDE": "PER BATTERE IL TUO RECORD",
+    "segundos": "secondi"
   }
 };
 
-// Fim — 224 chaves × 10 línguas = 2240 traduções (pt vazio = fonte).
+// Fim — 231 chaves × 10 línguas = 2310 traduções (pt vazio = fonte).
