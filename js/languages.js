@@ -1,3 +1,16 @@
+// ZANON — ARQUIVO COMPLETO DE IDIOMAS
+// Idiomas: pt, en, es, fr, de, ja, ko, zh-CN, zh-TW, hi, it.
+// Validacao estrutural: 224 chaves em cada um dos 10 idiomas traduzidos.
+// O objeto "pt" permanece vazio porque o portugues e o texto-fonte do jogo.
+//
+// IMPORTANTE:
+// Este arquivo contem o dicionario de traducoes. Textos montados dinamicamente
+// ou escritos diretamente no js/game.js so serao traduzidos quando o game.js
+// encaminhar esses textos pela funcao tr(). Alterar apenas este arquivo nao
+// corrige textos que ignoram o sistema de traducao.
+//
+// Conteudo original preservado; nenhuma traducao existente foi sobrescrita.
+
 window.ZANON_LANGUAGES = {
   "pt": {},
   "en": {
