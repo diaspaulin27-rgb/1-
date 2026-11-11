@@ -128,6 +128,7 @@
   };
   Object.freeze(translations);
 
+  window.ZANON_MISSING = window.ZANON_MISSING || [];
   function tr(value){
     if(value===undefined||value===null)return value;
     const s=String(value);
@@ -176,6 +177,9 @@
     m=s.match(/^COMPRAR E USAR · (\d+) MOEDAS$/); if(m)return tr('COMPRAR E USAR')+' · '+m[1]+' '+tr(m[1]==='1'?'MOEDA':'MOEDAS');
     m=s.match(/^(.+) moedas · disponível para comprar$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('disponível para comprar');
     m=s.match(/^(.+) moedas · faltam (.+) moedas$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('faltam')+' '+m[2]+' '+tr('moedas');
+    // Fallback NÃO mais silencioso (auditoria): registra a chave que caiu em PT para o verificador pegar.
+    // Só em dev: não mostra nada para o jogador, só enche window.ZANON_MISSING e avisa 1x por chave no console.
+    if(locale!=='pt' && !window.ZANON_MISSING.includes(s)){ window.ZANON_MISSING.push(s); if(typeof console!=='undefined'&&console.warn) console.warn('[i18n] sem tradução para', JSON.stringify(s), 'em', locale); }
     return s;
   }
 
@@ -210,6 +214,15 @@
     resize();
     render();
   }
+  // Troca de idioma depois da primeira escolha (auditoria): a tela de idioma só aparecia 1x.
+  // Para usar: adicione <button id="changeLanguage"> no #paused do index.html e chame reopenLanguageScreen().
+  // Sem o botão, nada muda no jogo atual — a função só fica disponível.
+  function reopenLanguageScreen(){
+    const ls=$('#languageScreen'); if(!ls) return;
+    ls.classList.remove('hidden');
+    const st=$('#start'); if(st) st.classList.add('hidden');
+  }
+  window.ZANON_reopenLanguageScreen = reopenLanguageScreen;
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true), musicOn=storage.get('music',true), vibrationOn=storage.get('vibration',true);
