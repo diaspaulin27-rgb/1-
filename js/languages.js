@@ -1,8 +1,8 @@
 // languages.js — COMPLETO — 231 chaves em 10 línguas (pt é a língua-fonte, fica vazio)
-// Cobertura ANTES: es 32, fr/de/ja/ko/zh-CN/zh-TW/hi/it 31 cada, pt/en 0 (dependiam do game.js)
-// Cobertura AGORA: 231/231 chaves estáticas em en/es/fr/de/ja/ko/zh-CN/zh-TW/hi/it
-// Inclui: 189 do dicionário do game.js + 20 extras + 15 da auditoria + 7 singulares/fragmentos para o patch do game.js
-//   (CAIXA, ALÍVIO, MOEDA, PONTO, TROLL, PARA SUPERAR SEU RECORDE, segundos)
+// Única alteração desta rodada (auditoria): VINGANÇA · JOGAR DE NOVO ficou mais natural em 5 línguas
+//   EN: REMATCH · PLAY AGAIN | ES: REVANCHA | FR: REVANCHE | DE: REVANCHE | IT: RIVINCITA
+//   JA/KO/ZH/HI mantidos (リベンジ / 복수 / 复仇 / बदला já são naturais em jogo).
+//   FR ALÍVIOS mantido como SOULAGEMENTS por enquanto — trocar para RÉPITS exigiria 6 chaves, decisão para próxima rodada.
 // Console.log '[1%] ...' NÃO foi traduzido de propósito — é log de dev, não texto do jogador.
 
 window.ZANON_LANGUAGES = {
@@ -37,7 +37,7 @@ window.ZANON_LANGUAGES = {
     "ALÍVIOS": "RELIEFS",
     "MOEDAS": "COINS",
     "SEGREDOS": "SECRETS",
-    "VINGANÇA · JOGAR DE NOVO": "REVENGE · PLAY AGAIN",
+    "VINGANÇA · JOGAR DE NOVO": "REMATCH · PLAY AGAIN",
     "INÍCIO": "HOME",
     "PAUSADO": "PAUSED",
     "Respire.": "Breathe.",
@@ -270,7 +270,7 @@ window.ZANON_LANGUAGES = {
     "ALÍVIOS": "ALIVIOS",
     "MOEDAS": "MONEDAS",
     "SEGREDOS": "SECRETOS",
-    "VINGANÇA · JOGAR DE NOVO": "VENGANZA · JUGAR DE NUEVO",
+    "VINGANÇA · JOGAR DE NOVO": "REVANCHA · JUGAR DE NUEVO",
     "INÍCIO": "INICIO",
     "PAUSADO": "EN PAUSA",
     "Respire.": "Respira.",
@@ -503,7 +503,7 @@ window.ZANON_LANGUAGES = {
     "ALÍVIOS": "SOULAGEMENTS",
     "MOEDAS": "PIÈCES",
     "SEGREDOS": "SECRETS",
-    "VINGANÇA · JOGAR DE NOVO": "VENGEANCE · REJOUER",
+    "VINGANÇA · JOGAR DE NOVO": "REVANCHE · REJOUER",
     "INÍCIO": "ACCUEIL",
     "PAUSADO": "EN PAUSE",
     "Respire.": "Respire.",
@@ -736,7 +736,7 @@ window.ZANON_LANGUAGES = {
     "ALÍVIOS": "ERLEICHTERUNGEN",
     "MOEDAS": "MÜNZEN",
     "SEGREDOS": "GEHEIMNISSE",
-    "VINGANÇA · JOGAR DE NOVO": "RACHE · NOCHMAL SPIELEN",
+    "VINGANÇA · JOGAR DE NOVO": "REVANCHE · NOCHMAL SPIELEN",
     "INÍCIO": "START",
     "PAUSADO": "PAUSIERT",
     "Respire.": "Atme durch.",
@@ -2134,7 +2134,7 @@ window.ZANON_LANGUAGES = {
     "ALÍVIOS": "SOLLIEVI",
     "MOEDAS": "MONETE",
     "SEGREDOS": "SEGRETI",
-    "VINGANÇA · JOGAR DE NOVO": "VENDETTA · GIOCA ANCORA",
+    "VINGANÇA · JOGAR DE NOVO": "RIVINCITA · GIOCA ANCORA",
     "INÍCIO": "HOME",
     "PAUSADO": "IN PAUSA",
     "Respire.": "Respira.",
