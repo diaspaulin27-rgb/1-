@@ -135,8 +135,10 @@
     const locale = language || 'pt';
     const external = window.ZANON_LANGUAGES && window.ZANON_LANGUAGES[locale];
     if (locale !== 'pt' && external && Object.prototype.hasOwnProperty.call(external, s)) return external[s];
+    // Fallback corrigido (auditoria): SÓ inglês usa o dicionário interno.
+    // Antes: 'if (locale !== \'pt\' && translations[s])' fazia DE/FR/ES caírem em INGLÊS quando faltava a chave externa.
+    // Agora: DE/FR/ES/etc usam SÓ o externo. Se faltar, cai em PT e registra em ZANON_MISSING, não em inglês.
     if (locale === 'en' && translations[s]) return translations[s];
-    if (locale !== 'pt' && translations[s]) return translations[s];
     if (locale === 'pt') return s;
     // Padrões dinâmicos — funcionam em TODAS as línguas, não só em EN.
     // Antes: 'if (locale !== \'en\') return s;' bloqueava tudo abaixo para DE/ES/FR/etc.
@@ -223,6 +225,8 @@
     const st=$('#start'); if(st) st.classList.add('hidden');
   }
   window.ZANON_reopenLanguageScreen = reopenLanguageScreen;
+  // Liga o botão IDIOMA do pause (se existir no index.html) — sem ele, nada quebra.
+  try{ const cl=$('#changeLanguage'); if(cl) cl.onclick=()=>reopenLanguageScreen(); }catch(e){}
 
   let W=0,H=0,dpr=1,last=0,raf=0;
   let mode='menu', pausedFrom='playing', soundOn=storage.get('sound',true), musicOn=storage.get('music',true), vibrationOn=storage.get('vibration',true);
@@ -2812,4 +2816,46 @@
   addEventListener('resize',()=>{resize();render();},{passive:true});
   addEventListener('visibilitychange',()=>{if(document.hidden&&(mode==='playing'||mode==='dying'))$('#pause').click();});
   resize();reset();render();
+
+  // ===== VERIFICADOR DENTRO DO CÓDIGO (não aparece para o jogador) =====
+  // Como usar: no console do navegador digite  ZANON_audit()
+  // Ou abra o jogo com ?debug=1 no fim da URL e toque no botão "AUDIT" que aparece no canto.
+  // O que ele faz: confere 231 chaves nos 10 idiomas + lista window.ZANON_MISSING (textos que caíram em PT durante a partida).
+  window.ZANON_audit = function(){
+    const L = window.ZANON_LANGUAGES || {};
+    const locales = ['en','es','fr','de','ja','ko','zh-CN','zh-TW','hi','it'];
+    const all = new Set();
+    locales.forEach(loc=>Object.keys(L[loc]||{}).forEach(k=>all.add(k)));
+    console.log('[i18n audit] chaves únicas: ' + all.size);
+    let ok = true;
+    locales.forEach(loc=>{
+      const d = L[loc]||{};
+      const missing = [...all].filter(k=>!(k in d));
+      const empty = [...all].filter(k=>d[k]===''||d[k]==null);
+      if(missing.length||empty.length){ console.log('[i18n audit] FAIL ' + loc + ' ausentes:' + missing.length + ' vazias:' + empty.length, missing.slice(0,10)); ok=false; }
+      else console.log('[i18n audit] PASS ' + loc + ' ' + Object.keys(d).length + ' chaves');
+    });
+    const miss = window.ZANON_MISSING || [];
+    console.log('[i18n audit] ZANON_MISSING (caíram em PT nesta partida): ' + miss.length);
+    if(miss.length) console.log(miss);
+    else console.log('[i18n audit] Nenhum fallback em PT até agora. Jogue uma partida inteira e rode de novo.');
+    // Caso da captura
+    try{
+      console.log('[i18n audit] DE VINGANÇA: ' + (L['de']||{})['VINGANÇA · JOGAR DE NOVO']);
+      console.log('[i18n audit] DE rank: ' + tr('Você chegou ao ') + tr('Azul Bebê'));
+    }catch(e){ console.log('[i18n audit] erro no caso da captura', e); }
+    console.log('[i18n audit] resultado chaves: ' + (ok ? 'OK' : 'FALHOU'));
+    return {chavesOK: ok, totalChaves: all.size, missing: miss};
+  };
+  // Botão flutuante só com ?debug=1 — jogador normal nunca vê.
+  try{
+    if(location.search.includes('debug=1')){
+      const b=document.createElement('button');
+      b.textContent='AUDIT'; b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;padding:8px 12px;border-radius:999px;border:0;background:#ff0;font-weight:800;';
+      b.onclick=()=>window.ZANON_audit();
+      document.body.appendChild(b);
+    }
+  }catch(e){}
+  // ===== FIM VERIFICADOR =====
+
 })();
