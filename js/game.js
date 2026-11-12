@@ -129,6 +129,8 @@
   Object.freeze(translations);
 
   window.ZANON_MISSING = window.ZANON_MISSING || [];
+  const FALLBACK_LOCALE = 'en';
+  const SUPPORTED_LANGUAGES = ['pt','en','es','fr','de','it','hi','ja','ko','zh-CN','zh-TW'];
   function tr(value){
     if(value===undefined||value===null)return value;
     const s=String(value);
@@ -179,8 +181,17 @@
     m=s.match(/^COMPRAR E USAR · (\d+) MOEDAS$/); if(m)return tr('COMPRAR E USAR')+' · '+m[1]+' '+tr(m[1]==='1'?'MOEDA':'MOEDAS');
     m=s.match(/^(.+) moedas · disponível para comprar$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('disponível para comprar');
     m=s.match(/^(.+) moedas · faltam (.+) moedas$/); if(m)return tr(m[1])+' '+tr('moedas')+' · '+tr('faltam')+' '+m[2]+' '+tr('moedas');
-    // Fallback NÃO mais silencioso (auditoria): registra a chave que caiu em PT para o verificador pegar.
-    // Só em dev: não mostra nada para o jogador, só enche window.ZANON_MISSING e avisa 1x por chave no console.
+    // Fallback hierárquico (auditoria final): atual -> EN externo -> PT + log.
+    // Antes (auditoria anterior): DE/FR caíam direto em PT.
+    // Agora: DE/FR caem em EN externo (231 chaves, completo), NÃO no dicionário interno velho (192 chaves).
+    // Ainda registra em ZANON_MISSING, para não mascarar a falta — o jogador vê EN, o dev vê o log.
+    // Padrões já foram tentados acima, então aqui só chegam frases sem padrão.
+    const enExternal = window.ZANON_LANGUAGES && window.ZANON_LANGUAGES[FALLBACK_LOCALE];
+    if(locale!=='pt' && locale!==FALLBACK_LOCALE && enExternal && Object.prototype.hasOwnProperty.call(enExternal, s)){
+      if(!window.ZANON_MISSING.includes(s)){ window.ZANON_MISSING.push(s); if(typeof console!=='undefined'&&console.warn) console.warn('[i18n] sem tradução para', JSON.stringify(s), 'em', locale, '— usando EN'); }
+      return enExternal[s];
+    }
+    // Fallback final para PT + log.
     if(locale!=='pt' && !window.ZANON_MISSING.includes(s)){ window.ZANON_MISSING.push(s); if(typeof console!=='undefined'&&console.warn) console.warn('[i18n] sem tradução para', JSON.stringify(s), 'em', locale); }
     return s;
   }
@@ -199,22 +210,55 @@
       if(!p||p.closest('script,style'))continue;
       if(node.nodeValue.trim())nodes.push(node);
     }
-    nodes.forEach(n=>{const v=n.nodeValue,trim=v.trim(),translated=tr(trim);if(translated!==trim)n.nodeValue=v.replace(trim,translated);});
-    document.querySelectorAll('[aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.getAttribute('aria-label'))));
-    document.querySelectorAll('[title]').forEach(el=>el.setAttribute('title',tr(el.getAttribute('title'))));
+    // Re-tradução idempotente (auditoria): guarda o PT original na 1ª vez.
+    // Antes: na 2ª troca (DE -> FR), tentava traduzir o texto já em DE como se fosse PT, e ficava em DE.
+    // Agora: sempre traduz a partir do PT original guardado.
+    nodes.forEach(n=>{
+      if(n._ptOriginal===undefined) n._ptOriginal=n.nodeValue;
+      const orig=n._ptOriginal;
+      const trim=orig.trim();
+      if(!trim) return;
+      const translated=tr(trim);
+      if(translated===trim && orig!==n.nodeValue){
+        // Já está em PT, restaura original (caso tenha sido traduzido antes e voltou para PT)
+        n.nodeValue=orig;
+        return;
+      }
+      if(translated!==trim){
+        const lead=orig.match(/^\s*/)[0]||'', trail=orig.match(/\s*$/)[0]||'';
+        n.nodeValue=lead+translated+trail;
+      }
+    });
+    // aria-label / title também guardam o PT original em dataset, para re-traduzir certo.
+    document.querySelectorAll('[aria-label]').forEach(el=>{
+      if(!el.dataset.ptAria) el.dataset.ptAria=el.getAttribute('aria-label')||'';
+      if(el.dataset.ptAria) el.setAttribute('aria-label',tr(el.dataset.ptAria));
+    });
+    document.querySelectorAll('[title]').forEach(el=>{
+      if(!el.dataset.ptTitle) el.dataset.ptTitle=el.getAttribute('title')||'';
+      if(el.dataset.ptTitle) el.setAttribute('title',tr(el.dataset.ptTitle));
+    });
     if($('#languageTitle')) {
       const titles={pt:'Idioma',en:'Language',es:'Idioma',fr:'Langue',de:'Sprache',ja:'言語',ko:'언어','zh-CN':'语言','zh-TW':'語言',hi:'भाषा',it:'Lingua'};
       $('#languageTitle').textContent=titles[language]||'Idioma';
     }
   }
+  // Centraliza re-render após troca de idioma (auditoria): HUD, pause, loja, canvas.
+  function refreshCurrentLanguageUI(){
+    applyLanguage();
+    try{ if(typeof updateHUD==='function') updateHUD(); }catch(e){}
+    try{ if(typeof updatePauseToggles==='function') updatePauseToggles(); }catch(e){}
+    try{ if(typeof updateSoundButton==='function') updateSoundButton(); }catch(e){}
+    try{ if(typeof resize==='function') resize(); }catch(e){}
+    try{ if(typeof render==='function') render(); }catch(e){}
+  }
 
   function chooseLanguage(value){
-    language=value;storage.set('language',language);applyLanguage();
+    if(!SUPPORTED_LANGUAGES.includes(value)) value='pt';
+    language=value;storage.set('language',language);
+    refreshCurrentLanguageUI();
     $('#languageScreen').classList.add('hidden');
     $('#start').classList.remove('hidden');
-    $('#languageScreen').classList.add('hidden');
-    resize();
-    render();
   }
   // Troca de idioma depois da primeira escolha (auditoria): a tela de idioma só aparecia 1x.
   // Para usar: adicione <button id="changeLanguage"> no #paused do index.html e chame reopenLanguageScreen().
@@ -2804,7 +2848,7 @@
     if ($('#languageEnglish')) $('#languageEnglish').onclick=()=>chooseLanguage('en');
     if ($('#languagePortuguese')) $('#languagePortuguese').onclick=()=>chooseLanguage('pt');
   }
-  const supportedLanguages=['pt','en','es','fr','de','ja','ko','zh-CN','zh-TW','hi','it'];
+  const supportedLanguages=SUPPORTED_LANGUAGES;
   if(supportedLanguages.includes(language)){
     applyLanguage();
     $('#languageScreen').classList.add('hidden');
